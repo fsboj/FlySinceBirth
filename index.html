@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Fly Since Birth | FSB</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #080808;
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        /* NAVIGATION */
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 25px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            background: linear-gradient(
+                to bottom,
+                rgba(0,0,0,0.8),
+                transparent
+            );
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 3px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.6;
+        }
+
+        /* HERO */
+
+        .hero {
+            height: 100vh;
+            min-height: 650px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    #292929 0%,
+                    #111111 35%,
+                    #050505 75%
+                );
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-small {
+            font-size: 12px;
+            letter-spacing: 6px;
+            margin-bottom: 25px;
+            opacity: 0.7;
+        }
+
+        .hero h1 {
+            font-size: clamp(60px, 11vw, 160px);
+            line-height: 0.85;
+            font-weight: 900;
+            letter-spacing: -6px;
+        }
+
+        .hero-subtitle {
+            margin-top: 30px;
+            font-size: 14px;
+            letter-spacing: 5px;
+            opacity: 0.7;
+        }
+
+        .hero-button {
+            display: inline-block;
+            margin-top: 45px;
+            padding: 15px 35px;
+            border: 1px solid white;
+            color: white;
+            text-decoration: none;
+            font-size: 12px;
+            letter-spacing: 3px;
+            transition: 0.3s;
+        }
+
+        .hero-button:hover {
+            background: white;
+            color: black;
+        }
+
+        /* SECTIONS */
+
+        section {
+            padding: 120px 8%;
+        }
+
+        .section-title {
+            font-size: 14px;
+            letter-spacing: 5px;
+            margin-bottom: 50px;
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+
+        /* FEATURED */
+
+        .featured {
+            min-height: 500px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .featured-text h2 {
+            font-size: clamp(40px, 6vw, 80px);
+            line-height: 0.95;
+            margin-bottom: 25px;
+        }
+
+        .featured-text p {
+            color: #aaa;
+            max-width: 450px;
+            line-height: 1.7;
+        }
+
+        .featured-image {
+            height: 500px;
+            background: linear-gradient(
+                135deg,
+                #333,
+                #111
+            );
+        }
+
+        /* CARDS */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            height: 400px;
+            background: #151515;
+            display: flex;
+            align-items: flex-end;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .card h3 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            color: #aaa;
+            font-size: 12px;
+            letter-spacing: 2px;
+        }
+
+        /* FOOTER */
+
+        footer {
+            border-top: 1px solid #222;
+            padding: 50px 8%;
+            display: flex;
+            justify-content: space-between;
+            color: #777;
+            font-size: 12px;
+            letter-spacing: 2px;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 800px) {
+
+            nav {
+                padding: 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            section {
+                padding: 80px 6%;
+            }
+
+            .featured {
+                grid-template-columns: 1fr;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .featured-image {
+                height: 350px;
+            }
+
+            footer {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVIGATION -->
+
+    <nav>
+
+        <div class="logo">
+            FSB
+        </div>
+
+        <ul class="nav-links">
+            <li><a href="#">Music</a></li>
+            <li><a href="#">Artists</a></li>
+            <li><a href="#">Clothing</a></li>
+            <li><a href="#">Events</a></li>
+            <li><a href="#">Videos</a></li>
+        </ul>
+
+    </nav>
+
+
+    <!-- HERO -->
+
+    <header class="hero">
+
+        <div class="hero-content">
+
+            <div class="hero-small">
+                EST. FLY SINCE BIRTH
+            </div>
+
+            <h1>
+                FLY<br>SINCE<br>BIRTH
+            </h1>
+
+            <div class="hero-subtitle">
+                MUSIC • CULTURE • CLOTHING
+            </div>
+
+            <a href="#latest" class="hero-button">
+                ENTER FSB
+            </a>
+
+        </div>
+
+    </header>
+
+
+    <!-- LATEST -->
+
+    <section id="latest">
+
+        <div class="section-title">
+            01 — Latest
+        </div>
+
+        <div class="featured">
+
+            <div class="featured-text">
+
+                <h2>
+                    THE<br>
+                    MOVEMENT
+                </h2>
+
+                <p>
+                    Fly Since Birth is more than a label.
+                    Music, fashion, creativity and culture
+                    come together under one movement.
+                </p>
+
+            </div>
+
+            <div class="featured-image">
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- EXPLORE -->
+
+    <section>
+
+        <div class="section-title">
+            02 — Explore FSB
+        </div>
+
+        <div class="cards">
+
+            <div class="card">
+                <div class="card-content">
+                    <h3>Music</h3>
+                    <p>LISTEN NOW</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-content">
+                    <h3>Artists</h3>
+                    <p>MEET THE MOVEMENT</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-content">
+                    <h3>Clothing</h3>
+                    <p>SHOP FSB</p>
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- EVENTS -->
+
+    <section>
+
+        <div class="section-title">
+            03 — Upcoming
+        </div>
+
+        <div class="featured-text">
+
+            <h2>
+                UPCOMING<br>
+                EVENTS
+            </h2>
+
+            <p>
+                Live shows, releases, pop-ups and
+                everything happening within FSB.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        <div>
+            © 2026 FLY SINCE BIRTH
+        </div>
+
+        <div>
+            FSB WORLDWIDE
+        </div>
+
+    </footer>
+
+</body>
+</html>
