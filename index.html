@@ -1,539 +1,1344 @@
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-html {
-    scroll-behavior: smooth;
-}
+    <title>Fly Since Birth | FSB</title>
 
-body {
-    background: #050505;
-    color: white;
-    font-family: Arial, Helvetica, sans-serif;
-}
+    <style>
 
-/* =========================
-   NAVIGATION
-========================= */
+        /* =========================
+           RESET
+        ========================= */
 
-nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    padding: 32px 42px;
+        html {
+            scroll-behavior: smooth;
+        }
 
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+        body {
+            background: #050505;
+            color: #ffffff;
+            font-family: Arial, Helvetica, sans-serif;
+            overflow-x: hidden;
+        }
 
-    z-index: 1000;
-}
 
-.logo {
-    font-size: 23px;
-    font-weight: 900;
-    letter-spacing: 4px;
-}
+        /* =========================
+           NAVIGATION
+        ========================= */
 
-.menu-button {
-    background: none;
-    border: none;
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
 
-    color: white;
+            width: 100%;
 
-    cursor: pointer;
+            padding: 28px 42px;
 
-    font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
 
-    letter-spacing: 4px;
+            z-index: 1000;
+        }
 
-    text-transform: uppercase;
-}
+        .logo {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 4px;
+        }
 
-.menu-button:hover {
-    opacity: .55;
-}
+        .menu-button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
 
-/* =========================
-   MENU PANEL
-========================= */
+            background: none;
+            border: none;
 
-.menu-panel {
-    position: fixed;
+            color: white;
 
-    top: 0;
-    right: -100%;
+            cursor: pointer;
 
-    width: min(470px, 100%);
-    height: 100vh;
+            font-size: 11px;
+            letter-spacing: 3px;
 
-    background: #080808;
+            text-transform: uppercase;
+        }
 
-    z-index: 2000;
+        .menu-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
 
-    padding: 35px;
+        .menu-icon span {
+            display: block;
 
-    border-left: 1px solid #222;
+            width: 22px;
+            height: 1px;
 
-    transition: right .45s ease;
-}
+            background: white;
+        }
 
-.menu-panel.open {
-    right: 0;
-}
+        .menu-button:hover {
+            opacity: 0.6;
+        }
 
-.menu-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 
-    margin-bottom: 100px;
-}
+        /* =========================
+           MENU PANEL
+        ========================= */
 
-.menu-title {
-    font-size: 10px;
-    letter-spacing: 4px;
-    opacity: .45;
-}
+        .menu-panel {
+            position: fixed;
 
-.close-button {
-    background: none;
-    border: none;
+            top: 0;
+            right: -100%;
 
-    color: white;
+            width: 470px;
+            max-width: 100%;
 
-    font-size: 32px;
+            height: 100vh;
 
-    cursor: pointer;
-}
+            background: #090909;
 
-.menu-links {
-    list-style: none;
-}
+            border-left: 1px solid #242424;
 
-.menu-links li {
-    margin-bottom: 28px;
-}
+            z-index: 3000;
 
-.menu-links a {
-    color: white;
+            padding: 35px;
 
-    text-decoration: none;
+            transition: right 0.45s ease;
 
-    font-size: 52px;
+            overflow-y: auto;
+        }
 
-    font-weight: 600;
+        .menu-panel.open {
+            right: 0;
+        }
 
-    letter-spacing: -2px;
+        .menu-top {
+            display: flex;
 
-    transition: opacity .25s;
-}
+            justify-content: space-between;
+            align-items: center;
 
-.menu-links a:hover {
-    opacity: .4;
-}
+            margin-bottom: 100px;
+        }
 
-/* =========================
-   HERO
-========================= */
+        .menu-title {
+            font-size: 10px;
 
-.hero {
-    height: 100vh;
-    min-height: 700px;
+            letter-spacing: 4px;
 
-    display: flex;
+            color: #777;
+        }
 
-    align-items: center;
-    justify-content: center;
+        .close-button {
+            background: none;
+            border: none;
 
-    text-align: center;
+            color: white;
 
-    position: relative;
+            font-size: 32px;
 
-    overflow: hidden;
+            font-weight: 200;
 
-    background:
-        radial-gradient(
-            ellipse at center,
-            #252525 0%,
-            #111 40%,
-            #050505 78%
+            cursor: pointer;
+        }
+
+        .close-button:hover {
+            opacity: 0.5;
+        }
+
+        .menu-links {
+            list-style: none;
+        }
+
+        .menu-links li {
+            margin-bottom: 28px;
+        }
+
+        .menu-links a {
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 55px;
+
+            font-weight: 600;
+
+            letter-spacing: -3px;
+
+            transition: opacity 0.3s;
+        }
+
+        .menu-links a:hover {
+            opacity: 0.35;
+        }
+
+        .menu-footer {
+            position: absolute;
+
+            left: 35px;
+            right: 35px;
+            bottom: 35px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            color: #555;
+
+            font-size: 9px;
+
+            letter-spacing: 3px;
+        }
+
+
+        /* =========================
+           HERO
+        ========================= */
+
+        .hero {
+            position: relative;
+
+            height: 100vh;
+            min-height: 700px;
+
+            display: flex;
+
+            justify-content: center;
+            align-items: center;
+
+            text-align: center;
+
+            overflow: hidden;
+
+            background:
+                radial-gradient(
+                    ellipse at center,
+                    #303030 0%,
+                    #171717 35%,
+                    #090909 65%,
+                    #030303 100%
+                );
+        }
+
+        .hero::before {
+            content: "";
+
+            position: absolute;
+
+            inset: 0;
+
+            background:
+                radial-gradient(
+                    ellipse at center,
+                    transparent 25%,
+                    rgba(0,0,0,0.75) 100%
+                );
+
+            pointer-events: none;
+        }
+
+        .hero::after {
+            content: "";
+
+            position: absolute;
+
+            width: 600px;
+            height: 600px;
+
+            left: 50%;
+            top: 50%;
+
+            transform: translate(-50%, -50%);
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(255,255,255,0.045),
+                    transparent 70%
+                );
+
+            filter: blur(30px);
+
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+
+            z-index: 5;
+
+            width: 100%;
+
+            padding: 0 20px;
+        }
+
+
+        /* =========================
+           HERO SMALL TEXT
+        ========================= */
+
+        .hero-small {
+            font-size: 9px;
+
+            letter-spacing: 7px;
+
+            color: #aaa;
+
+            margin-bottom: 42px;
+
+            text-transform: uppercase;
+        }
+
+
+        /* =========================
+           FSB SCRIPT LOGO
+        ========================= */
+
+        .script-logo {
+            font-family:
+                "Brush Script MT",
+                "Segoe Script",
+                "Lucida Handwriting",
+                "Apple Chancery",
+                cursive;
+
+            font-style: italic;
+
+            font-weight: 400;
+
+            color: #ffffff;
+
+            line-height: 0.75;
+
+            letter-spacing: -4px;
+
+            text-shadow:
+                0 0 18px rgba(255,255,255,0.04);
+        }
+
+        .script-top {
+            font-size: clamp(75px, 12vw, 170px);
+
+            white-space: nowrap;
+
+            margin-left: -10px;
+        }
+
+        .script-bottom {
+            font-size: clamp(95px, 15vw, 205px);
+
+            margin-top: 12px;
+
+            text-align: center;
+
+            transform: translateX(0);
+        }
+
+
+        /* =========================
+           HERO TAGLINE
+        ========================= */
+
+        .hero-subtitle {
+            margin-top: 55px;
+
+            font-size: 11px;
+
+            letter-spacing: 6px;
+
+            color: #d0d0d0;
+        }
+
+
+        /* =========================
+           ENTER BUTTON
+        ========================= */
+
+        .hero-button {
+            display: inline-block;
+
+            margin-top: 43px;
+
+            padding: 15px 42px;
+
+            border: 1px solid rgba(255,255,255,0.7);
+
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 10px;
+
+            letter-spacing: 4px;
+
+            text-transform: uppercase;
+
+            transition:
+                background 0.3s,
+                color 0.3s;
+        }
+
+        .hero-button:hover {
+            background: white;
+
+            color: black;
+        }
+
+
+        /* =========================
+           SECTIONS
+        ========================= */
+
+        section {
+            padding: 130px 8%;
+        }
+
+        .section-title {
+            font-size: 10px;
+
+            letter-spacing: 5px;
+
+            color: #777;
+
+            margin-bottom: 60px;
+
+            text-transform: uppercase;
+        }
+
+
+        /* =========================
+           PROJECT FSB
+        ========================= */
+
+        .project {
+            min-height: 520px;
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 70px;
+
+            align-items: center;
+        }
+
+        .project-text h2 {
+            font-size: clamp(55px, 7vw, 105px);
+
+            line-height: 0.82;
+
+            font-weight: 900;
+
+            letter-spacing: -5px;
+
+            margin-bottom: 30px;
+        }
+
+        .project-text p {
+            max-width: 480px;
+
+            color: #999;
+
+            font-size: 14px;
+
+            line-height: 1.8;
+        }
+
+        .project-image {
+            height: 520px;
+
+            position: relative;
+
+            overflow: hidden;
+
+            border: 1px solid #222;
+
+            background:
+                radial-gradient(
+                    circle at 50% 40%,
+                    #414141 0%,
+                    #242424 25%,
+                    #101010 65%,
+                    #050505 100%
+                );
+        }
+
+        .project-image::after {
+            content: "FSB";
+
+            position: absolute;
+
+            right: -20px;
+            bottom: -70px;
+
+            font-size: 190px;
+
+            font-weight: 900;
+
+            color: rgba(255,255,255,0.035);
+        }
+
+
+        /* =========================
+           CARDS
+        ========================= */
+
+        .cards {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 18px;
+        }
+
+        .card {
+            position: relative;
+
+            height: 390px;
+
+            display: flex;
+
+            align-items: flex-end;
+
+            padding: 30px;
+
+            overflow: hidden;
+
+            border: 1px solid #222;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #242424,
+                    #0c0c0c
+                );
+
+            transition:
+                transform 0.35s ease,
+                background 0.35s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+
+            background: #1c1c1c;
+        }
+
+        .card-content {
+            position: relative;
+
+            z-index: 2;
+        }
+
+        .card h3 {
+            font-size: 30px;
+
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            color: #777;
+
+            font-size: 10px;
+
+            letter-spacing: 3px;
+        }
+
+        .card-arrow {
+            margin-top: 25px;
+
+            font-size: 22px;
+
+            color: #aaa;
+        }
+
+
+        /* =========================
+           EVENTS
+        ========================= */
+
+        .events {
+            border-top: 1px solid #222;
+
+            border-bottom: 1px solid #222;
+        }
+
+        .events h2 {
+            font-size: clamp(55px, 8vw, 115px);
+
+            line-height: 0.82;
+
+            letter-spacing: -5px;
+
+            margin-bottom: 30px;
+        }
+
+        .events p {
+            max-width: 500px;
+
+            color: #888;
+
+            line-height: 1.8;
+
+            font-size: 14px;
+        }
+
+
+        /* =========================
+           FOOTER
+        ========================= */
+
+        footer {
+            padding: 45px 8%;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            color: #555;
+
+            font-size: 9px;
+
+            letter-spacing: 3px;
+        }
+
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 800px) {
+
+            nav {
+                padding: 22px;
+            }
+
+            .logo {
+                font-size: 20px;
+            }
+
+            .hero {
+                min-height: 650px;
+            }
+
+            .hero-small {
+                font-size: 8px;
+
+                letter-spacing: 4px;
+            }
+
+            .script-top {
+                font-size: 68px;
+
+                letter-spacing: -3px;
+            }
+
+            .script-bottom {
+                font-size: 92px;
+
+                margin-top: 9px;
+
+                letter-spacing: -3px;
+            }
+
+            .hero-subtitle {
+                font-size: 8px;
+
+                letter-spacing: 3px;
+
+                margin-top: 45px;
+            }
+
+            .project {
+                grid-template-columns: 1fr;
+
+                gap: 40px;
+            }
+
+            .project-image {
+                height: 350px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                height: 320px;
+            }
+
+            .menu-panel {
+                width: 100%;
+
+                padding: 25px;
+            }
+
+            .menu-links a {
+                font-size: 43px;
+            }
+
+            .menu-footer {
+                left: 25px;
+                right: 25px;
+                bottom: 25px;
+            }
+
+            footer {
+                flex-direction: column;
+
+                gap: 20px;
+            }
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+
+    <!-- =========================
+         NAVIGATION
+    ========================= -->
+
+    <nav>
+
+        <div class="logo">
+            FSB
+        </div>
+
+
+        <button
+            class="menu-button"
+            onclick="openMenu()">
+
+            <span class="menu-icon">
+
+                <span></span>
+                <span></span>
+                <span></span>
+
+            </span>
+
+            MENU
+
+        </button>
+
+    </nav>
+
+
+
+    <!-- =========================
+         MENU PANEL
+    ========================= -->
+
+    <div
+        id="menuPanel"
+        class="menu-panel">
+
+
+        <div class="menu-top">
+
+            <div class="menu-title">
+                FLY SINCE BIRTH
+            </div>
+
+
+            <button
+                class="close-button"
+                onclick="closeMenu()">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <ul class="menu-links">
+
+            <li>
+                <a
+                    href="#music"
+                    onclick="closeMenu()">
+
+                    Music
+
+                </a>
+            </li>
+
+
+            <li>
+                <a
+                    href="#artists"
+                    onclick="closeMenu()">
+
+                    Artists
+
+                </a>
+            </li>
+
+
+            <li>
+                <a
+                    href="#clothing"
+                    onclick="closeMenu()">
+
+                    Clothing
+
+                </a>
+            </li>
+
+
+            <li>
+                <a
+                    href="#videos"
+                    onclick="closeMenu()">
+
+                    Videos
+
+                </a>
+            </li>
+
+
+            <li>
+                <a
+                    href="#events"
+                    onclick="closeMenu()">
+
+                    Events
+
+                </a>
+            </li>
+
+        </ul>
+
+
+        <div class="menu-footer">
+
+            <span>
+                FSB
+            </span>
+
+            <span>
+                WORLDWIDE
+            </span>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================
+         HERO
+    ========================= -->
+
+    <header class="hero">
+
+
+        <div class="hero-content">
+
+
+            <div class="hero-small">
+                EST. FLY SINCE BIRTH
+            </div>
+
+
+            <div class="script-logo script-top">
+                Fly Since
+            </div>
+
+
+            <div class="script-logo script-bottom">
+                Birth
+            </div>
+
+
+            <div class="hero-subtitle">
+                MUSIC • CLOTHING • CULTURE
+            </div>
+
+
+            <a
+                href="#project"
+                class="hero-button">
+
+                ENTER FSB
+
+            </a>
+
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =========================
+         PROJECT FSB
+    ========================= -->
+
+    <section id="project">
+
+
+        <div class="section-title">
+            01 — Project FSB
+        </div>
+
+
+        <div class="project">
+
+
+            <div class="project-text">
+
+
+                <h2>
+                    PROJECT<br>
+                    FSB
+                </h2>
+
+
+                <p>
+                    Fly Since Birth brings together
+                    music, clothing, culture and
+                    creativity under one movement.
+                </p>
+
+
+            </div>
+
+
+            <div class="project-image"></div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================
+         MUSIC
+    ========================= -->
+
+    <section id="music">
+
+
+        <div class="section-title">
+            02 — Music
+        </div>
+
+
+        <div class="cards">
+
+
+            <div class="card">
+
+                <div class="card-content">
+
+                    <h3>
+                        Latest
+                    </h3>
+
+                    <p>
+                        NEW RELEASES
+                    </p>
+
+                    <div class="card-arrow">
+                        →
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-content">
+
+                    <h3>
+                        Albums
+                    </h3>
+
+                    <p>
+                        FSB MUSIC
+                    </p>
+
+                    <div class="card-arrow">
+                        →
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-content">
+
+                    <h3>
+                        Playlists
+                    </h3>
+
+                    <p>
+                        LISTEN NOW
+                    </p>
+
+                    <div class="card-arrow">
+                        →
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================
+         ARTISTS
+    ========================= -->
+
+    <section id="artists">
+
+
+        <div class="section-title">
+            03 — Artists
+        </div>
+
+
+        <div class="cards">
+
+
+            <div class="card">
+
+                <div class="card-content">
+
+                    <h3>
+                        Artist 01
+                    </h3>
+
+                    <p>
+                        FSB ARTIST
+                    </p>
+
+                    <div class="card-arrow">
+                        →
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-content">
+
+                    <h3>
+                        Artist 02
+                    </h3>
+
+                    <p>
+                        FSB ARTIST
+                    </p>
+
+                    <div class="card-arrow">
+                        →
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-content">
+
+                    <h3>
+                        Artist 03
+                    </h3>
+
+                    <p>
+                        FSB ARTIST
+                    </p>
+
+                    <div class="card-arrow">
+                        →
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================
+         CLOTHING
+    ========================= -->
+
+    <section id="clothing">
+
+
+        <div class="section-title">
+            04 — Clothing
+        </div>
+
+
+        <div class="project">
+
+
+            <div class="project-text">
+
+
+                <h2>
+                    FSB<br>
+                    CLOTHING
+                </h2>
+
+
+                <p>
+                    FSB apparel, limited drops and
+                    upcoming collections.
+                </p>
+
+
+                <a
+                    href="#"
+                    class="hero-button">
+
+                    SHOP FSB
+
+                </a>
+
+
+            </div>
+
+
+            <div class="project-image"></div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================
+         VIDEOS
+    ========================= -->
+
+    <section id="videos">
+
+
+        <div class="section-title">
+            05 — Videos
+        </div>
+
+
+        <div class="cards">
+
+
+            <div class="card">
+
+                <div class="card-content">
+
+                    <h3>
+                        Music Videos
+                    </h3>
+
+                    <p>
+                        WATCH FSB
+                    </p>
+
+                    <div class="card-arrow">
+                        →
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-content">
+
+                    <h3>
+                        Visuals
+                    </h3>
+
+                    <p>
+                        FSB MEDIA
+                    </p>
+
+                    <div class="card-arrow">
+                        →
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-content">
+
+                    <h3>
+                        Behind The Scenes
+                    </h3>
+
+                    <p>
+                        FSB WORLDWIDE
+                    </p>
+
+                    <div class="card-arrow">
+                        →
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================
+         EVENTS
+    ========================= -->
+
+    <section
+        id="events"
+        class="events">
+
+
+        <div class="section-title">
+            06 — Events
+        </div>
+
+
+        <h2>
+            UPCOMING<br>
+            EVENTS
+        </h2>
+
+
+        <p>
+            Live shows, releases, pop-ups and
+            everything happening within FSB.
+        </p>
+
+
+        <a
+            href="#"
+            class="hero-button">
+
+            VIEW EVENTS
+
+        </a>
+
+
+    </section>
+
+
+
+    <!-- =========================
+         FOOTER
+    ========================= -->
+
+    <footer>
+
+        <div>
+            © 2026 FLY SINCE BIRTH
+        </div>
+
+
+        <div>
+            FSB WORLDWIDE
+        </div>
+
+    </footer>
+
+
+
+    <!-- =========================
+         JAVASCRIPT
+    ========================= -->
+
+    <script>
+
+        function openMenu() {
+
+            document
+                .getElementById("menuPanel")
+                .classList
+                .add("open");
+
+        }
+
+
+        function closeMenu() {
+
+            document
+                .getElementById("menuPanel")
+                .classList
+                .remove("open");
+
+        }
+
+
+        /* Close menu when ESC is pressed */
+
+        document.addEventListener(
+            "keydown",
+            function(event) {
+
+                if (event.key === "Escape") {
+
+                    closeMenu();
+
+                }
+
+            }
         );
-}
 
-/* subtle cinematic vignette */
+    </script>
 
-.hero::after {
-    content: "";
 
-    position: absolute;
-
-    inset: 0;
-
-    background:
-        radial-gradient(
-            ellipse at center,
-            transparent 25%,
-            rgba(0,0,0,.75) 100%
-        );
-
-    pointer-events: none;
-}
-
-.hero-content {
-    position: relative;
-
-    z-index: 2;
-
-    width: 100%;
-}
-
-/* =========================
-   FSB SCRIPT
-========================= */
-
-.hero-small {
-    font-size: 9px;
-
-    letter-spacing: 7px;
-
-    opacity: .45;
-
-    margin-bottom: 42px;
-
-    text-transform: uppercase;
-}
-
-.script-logo {
-    font-family:
-        "Brush Script MT",
-        "Segoe Script",
-        "Lucida Handwriting",
-        cursive;
-
-    font-style: italic;
-
-    font-weight: 400;
-
-    color: #fff;
-
-    line-height: .72;
-
-    letter-spacing: -5px;
-
-    text-shadow:
-        0 0 20px rgba(255,255,255,.05);
-}
-
-/* FLY SINCE */
-
-.script-top {
-    font-size: clamp(75px, 12vw, 175px);
-
-    white-space: nowrap;
-
-    margin-left: -15px;
-}
-
-/* BIRTH */
-
-.script-bottom {
-    font-size: clamp(95px, 15vw, 210px);
-
-    margin-top: 12px;
-
-    text-align: center;
-
-    transform: translateX(0);
-
-    position: relative;
-
-    left: 0;
-}
-
-/* =========================
-   TAGLINE
-========================= */
-
-.hero-subtitle {
-    margin-top: 52px;
-
-    font-size: 11px;
-
-    letter-spacing: 6px;
-
-    opacity: .7;
-}
-
-/* =========================
-   BUTTON
-========================= */
-
-.hero-button {
-    display: inline-block;
-
-    margin-top: 42px;
-
-    padding: 15px 42px;
-
-    border: 1px solid rgba(255,255,255,.7);
-
-    color: white;
-
-    text-decoration: none;
-
-    font-size: 10px;
-
-    letter-spacing: 4px;
-
-    transition: all .3s ease;
-}
-
-.hero-button:hover {
-    background: white;
-
-    color: black;
-}
-
-/* =========================
-   SECTIONS
-========================= */
-
-section {
-    padding: 130px 8%;
-}
-
-.section-title {
-    font-size: 10px;
-
-    letter-spacing: 5px;
-
-    margin-bottom: 55px;
-
-    opacity: .45;
-
-    text-transform: uppercase;
-}
-
-/* =========================
-   PROJECT FSB
-========================= */
-
-.project {
-    display: grid;
-
-    grid-template-columns: 1fr 1fr;
-
-    gap: 65px;
-
-    align-items: center;
-}
-
-.project-text h2 {
-    font-size: clamp(55px, 7vw, 105px);
-
-    line-height: .82;
-
-    font-weight: 900;
-
-    letter-spacing: -5px;
-
-    margin-bottom: 30px;
-}
-
-.project-text p {
-    max-width: 470px;
-
-    color: #999;
-
-    line-height: 1.8;
-
-    font-size: 14px;
-}
-
-.project-image {
-    height: 520px;
-
-    background:
-        radial-gradient(
-            circle at center,
-            #303030,
-            #121212 65%,
-            #050505
-        );
-
-    border: 1px solid #202020;
-}
-
-/* =========================
-   CARDS
-========================= */
-
-.cards {
-    display: grid;
-
-    grid-template-columns:
-        repeat(3, 1fr);
-
-    gap: 18px;
-}
-
-.card {
-    height: 390px;
-
-    background:
-        linear-gradient(
-            145deg,
-            #202020,
-            #0d0d0d
-        );
-
-    border: 1px solid #202020;
-
-    display: flex;
-
-    align-items: flex-end;
-
-    padding: 30px;
-
-    transition:
-        transform .35s ease,
-        background .35s ease;
-}
-
-.card:hover {
-    transform: translateY(-8px);
-
-    background: #191919;
-}
-
-.card h3 {
-    font-size: 30px;
-
-    margin-bottom: 8px;
-}
-
-.card p {
-    font-size: 10px;
-
-    letter-spacing: 3px;
-
-    color: #777;
-}
-
-/* =========================
-   EVENTS
-========================= */
-
-.events {
-    border-top: 1px solid #202020;
-
-    border-bottom: 1px solid #202020;
-}
-
-.events h2 {
-    font-size: clamp(55px, 8vw, 115px);
-
-    line-height: .82;
-
-    letter-spacing: -5px;
-
-    margin-bottom: 30px;
-}
-
-.events p {
-    color: #888;
-
-    max-width: 500px;
-
-    line-height: 1.8;
-}
-
-/* =========================
-   FOOTER
-========================= */
-
-footer {
-    padding: 45px 8%;
-
-    display: flex;
-
-    justify-content: space-between;
-
-    color: #555;
-
-    font-size: 10px;
-
-    letter-spacing: 3px;
-}
-
-/* =========================
-   MOBILE
-========================= */
-
-@media (max-width: 800px) {
-
-    nav {
-        padding: 24px;
-    }
-
-    .hero {
-        min-height: 650px;
-    }
-
-    .hero-small {
-        letter-spacing: 4px;
-    }
-
-    .script-top {
-        font-size: 68px;
-    }
-
-    .script-bottom {
-        font-size: 92px;
-
-        margin-top: 8px;
-    }
-
-    .hero-subtitle {
-        font-size: 8px;
-
-        letter-spacing: 3px;
-    }
-
-    .project {
-        grid-template-columns: 1fr;
-    }
-
-    .project-image {
-        height: 350px;
-    }
-
-    .cards {
-        grid-template-columns: 1fr;
-    }
-
-    .card {
-        height: 320px;
-    }
-
-    .menu-panel {
-        width: 100%;
-    }
-
-    .menu-links a {
-        font-size: 42px;
-    }
-
-    footer {
-        flex-direction: column;
-
-        gap: 20px;
-    }
-}
-</style>
+</body>
+</html>
+```
