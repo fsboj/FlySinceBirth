@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>FSB Admin</title>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: #050505;
+    color: #ffffff;
+    font-family: Arial, Helvetica, sans-serif;
+    overflow-x: hidden;
+}
+
+
+/* =====================================================
+   ADMIN
+===================================================== */
+
+.admin {
+    min-height: 100vh;
+    padding: 45px;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding-bottom: 30px;
+
+    border-bottom: 1px solid #242424;
+
+    margin-bottom: 35px;
+}
+
+.admin-logo {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.admin-logo img {
+    width: 55px;
+    height: 55px;
+
+    object-fit: contain;
+}
+
+.admin-title {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+.admin-status {
+    color: #777;
+
+    font-size: 9px;
+
+    letter-spacing: 4px;
+}
+
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+.admin-nav {
+    display: flex;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
+
+    margin-bottom: 35px;
+}
+
+.admin-nav button {
+    background: transparent;
+
+    color: #888;
+
+    border: 1px solid #242424;
+
+    padding: 12px 18px;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+
+    cursor: pointer;
+
+    transition: 0.25s;
+}
+
+.admin-nav button:hover,
+.admin-nav button.active {
+    background: white;
+
+    color: black;
+
+    border-color: white;
+}
+
+
+/* =====================================================
+   PANELS
+===================================================== */
+
+.panel {
+    display: none;
+
+    border: 1px solid #242424;
+
+    background: #090909;
+
+    padding: 30px;
+}
+
+.panel.active {
+    display: block;
+}
+
+.panel-header {
+    margin-bottom: 30px;
+}
+
+.panel-title {
+    font-size: 28px;
+
+    font-weight: 700;
+
+    letter-spacing: -1px;
+}
+
+.panel-description {
+    margin-top: 8px;
+
+    color: #777;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   FORM
+===================================================== */
+
+.form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+.form-group.full {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    color: #777;
+
+    font-size: 9px;
+
+    letter-spacing: 3px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+
+    background: #050505;
+
+    color: white;
+
+    border: 1px solid #242424;
+
+    padding: 14px;
+
+    outline: none;
+
+    font-family: inherit;
+
+    font-size: 13px;
+}
+
+.form-group textarea {
+    min-height: 120px;
+
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #666;
+}
+
+
+/* =====================================================
+   ITEMS
+===================================================== */
+
+.item-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+
+    margin-top: 25px;
+}
+
+.admin-item {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 18px;
+
+    border: 1px solid #242424;
+
+    background: #050505;
+}
+
+.item-info {
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+}
+
+.item-image {
+    width: 60px;
+
+    height: 60px;
+
+    border: 1px solid #242424;
+
+    object-fit: cover;
+
+    background: #111;
+}
+
+.item-name {
+    font-size: 14px;
+
+    font-weight: 600;
+}
+
+.item-meta {
+    margin-top: 5px;
+
+    color: #666;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+}
+
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.actions {
+    display: flex;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    margin-top: 25px;
+}
+
+.button {
+    padding: 13px 22px;
+
+    border: 1px solid #555;
+
+    background: transparent;
+
+    color: white;
+
+    cursor: pointer;
+
+    font-size: 9px;
+
+    letter-spacing: 3px;
+
+    transition: 0.25s;
+}
+
+.button:hover {
+    background: white;
+
+    color: black;
+}
+
+.button.danger {
+    border-color: #552424;
+
+    color: #cc7777;
+}
+
+.button.danger:hover {
+    background: #cc7777;
+
+    color: black;
+}
+
+.button.primary {
+    background: white;
+
+    color: black;
+
+    border-color: white;
+}
+
+
+/* =====================================================
+   IMAGE UPLOAD
+===================================================== */
+
+.upload-area {
+    border: 1px dashed #333;
+
+    padding: 35px;
+
+    text-align: center;
+
+    cursor: pointer;
+
+    transition: 0.25s;
+}
+
+.upload-area:hover {
+    border-color: #777;
+}
+
+.upload-area input {
+    display: none;
+}
+
+.upload-area span {
+    color: #777;
+
+    font-size: 10px;
+
+    letter-spacing: 3px;
+}
+
+
+/* =====================================================
+   SAVE BAR
+===================================================== */
+
+.save-bar {
+    position: sticky;
+
+    bottom: 20px;
+
+    z-index: 100;
+
+    margin-top: 35px;
+
+    padding: 18px;
+
+    background: rgba(10,10,10,0.96);
+
+    border: 1px solid #242424;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 20px;
+}
+
+.save-status {
+    color: #777;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 800px) {
+
+    .admin {
+        padding: 25px 18px;
+    }
+
+    .admin-header {
+        align-items: flex-start;
+
+        gap: 20px;
+
+        flex-direction: column;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group.full {
+        grid-column: auto;
+    }
+
+    .admin-item {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+    .panel {
+        padding: 20px;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="admin">
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header class="admin-header">
+
+    <div class="admin-logo">
+
+        <img
+            src="fsblogo.PNG"
+            alt="FSB">
+
+        <div class="admin-title">
+            FSB ADMIN
+        </div>
+
+    </div>
+
+    <div class="admin-status">
+        CONTROL PANEL
+    </div>
+
+</header>
+
+
+<!-- =====================================================
+     ADMIN NAVIGATION
+===================================================== -->
+
+<nav class="admin-nav">
+
+    <button
+        class="active"
+        onclick="showPanel('site', this)">
+        SITE
+    </button>
+
+    <button
+        onclick="showPanel('photos', this)">
+        PHOTOS
+    </button>
+
+    <button
+        onclick="showPanel('text', this)">
+        TEXT
+    </button>
+
+    <button
+        onclick="showPanel('menu', this)">
+        MENU
+    </button>
+
+    <button
+        onclick="showPanel('music', this)">
+        MUSIC
+    </button>
+
+    <button
+        onclick="showPanel('artists', this)">
+        ARTISTS
+    </button>
+
+    <button
+        onclick="showPanel('merch', this)">
+        MERCH
+    </button>
+
+    <button
+        onclick="showPanel('videos', this)">
+        VIDEOS
+    </button>
+
+    <button
+        onclick="showPanel('events', this)">
+        EVENTS
+    </button>
+
+    <button
+        onclick="showPanel('sections', this)">
+        SECTIONS
+    </button>
+
+</nav>
+
+
+<!-- =====================================================
+     SITE
+===================================================== -->
+
+<section
+    id="site"
+    class="panel active">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Site Settings
+        </div>
+
+        <div class="panel-description">
+            General settings for the Fly Since Birth website.
+        </div>
+
+    </div>
+
+
+    <div class="form-grid">
+
+        <div class="form-group">
+
+            <label>
+                SITE TITLE
+            </label>
+
+            <input
+                type="text"
+                value="Fly Since Birth | FSB">
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                FOOTER TEXT
+            </label>
+
+            <input
+                type="text"
+                value="© 2026 FLY SINCE BIRTH">
+
+        </div>
+
+
+        <div class="form-group full">
+
+            <label>
+                FOOTER RIGHT TEXT
+            </label>
+
+            <input
+                type="text"
+                value="FSB WORLDWIDE">
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     PHOTOS
+===================================================== -->
+
+<section
+    id="photos"
+    class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Photos
+        </div>
+
+        <div class="panel-description">
+            Change images used throughout the website.
+        </div>
+
+    </div>
+
+
+    <div class="item-list">
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="Flysincebirthwhite.png">
+
+                <div>
+
+                    <div class="item-name">
+                        Hero Logo
+                    </div>
+
+                    <div class="item-meta">
+                        Flysincebirthwhite.png
+                    </div>
+
+                </div>
+
+            </div>
+
+            <button class="button">
+                CHANGE
+            </button>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="fsbchrome.PNG">
+
+                <div>
+
+                    <div class="item-name">
+                        Project FSB
+                    </div>
+
+                    <div class="item-meta">
+                        fsbchrome.PNG
+                    </div>
+
+                </div>
+
+            </div>
+
+            <button class="button">
+                CHANGE
+            </button>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="flysincebirthchrome.PNG">
+
+                <div>
+
+                    <div class="item-name">
+                        Merch
+                    </div>
+
+                    <div class="item-meta">
+                        flysincebirthchrome.PNG
+                    </div>
+
+                </div>
+
+            </div>
+
+            <button class="button">
+                CHANGE
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     TEXT
+===================================================== -->
+
+<section
+    id="text"
+    class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Text
+        </div>
+
+        <div class="panel-description">
+            Change current website lettering and descriptions.
+        </div>
+
+    </div>
+
+
+    <div class="form-grid">
+
+        <div class="form-group">
+
+            <label>
+                HERO TAGLINE
+            </label>
+
+            <input
+                type="text"
+                value="MUSIC • CLOTHING • CULTURE">
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                HERO BUTTON
+            </label>
+
+            <input
+                type="text"
+                value="ENTER FSB">
+
+        </div>
+
+
+        <div class="form-group full">
+
+            <label>
+                PROJECT DESCRIPTION
+            </label>
+
+            <textarea>Fly Since Birth is more than a brand. It is a creative platform connecting music, clothing, culture and visual expression.</textarea>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                MERCH HEADING
+            </label>
+
+            <input
+                type="text"
+                value="FSB MERCH">
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                MERCH BUTTON
+            </label>
+
+            <input
+                type="text"
+                value="SHOP FSB">
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     MENU
+===================================================== -->
+
+<section
+    id="menu"
+    class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Menu Items
+        </div>
+
+        <div class="panel-description">
+            Add, remove and rename menu navigation items.
+        </div>
+
+    </div>
+
+
+    <div class="item-list">
+
+        <div class="admin-item">
+
+            <div>
+                <div class="item-name">
+                    Music
+                </div>
+
+                <div class="item-meta">
+                    #music
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div>
+                <div class="item-name">
+                    Artists
+                </div>
+
+                <div class="item-meta">
+                    #artists
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div>
+                <div class="item-name">
+                    Clothing
+                </div>
+
+                <div class="item-meta">
+                    #clothing
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div>
+                <div class="item-name">
+                    Videos
+                </div>
+
+                <div class="item-meta">
+                    #videos
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div>
+                <div class="item-name">
+                    Events
+                </div>
+
+                <div class="item-meta">
+                    #events
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="actions">
+
+        <button class="button primary">
+            + ADD MENU ITEM
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     MUSIC
+===================================================== -->
+
+<section
+    id="music"
+    class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Music
+        </div>
+
+        <div class="panel-description">
+            Manage your Music cards.
+        </div>
+
+    </div>
+
+
+    <div class="item-list">
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <div class="item-image"></div>
+
+                <div>
+
+                    <div class="item-name">
+                        Latest Releases
+                    </div>
+
+                    <div class="item-meta">
+                        music-1
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <div class="item-image"></div>
+
+                <div>
+
+                    <div class="item-name">
+                        Albums
+                    </div>
+
+                    <div class="item-meta">
+                        music-2
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <div class="item-image"></div>
+
+                <div>
+
+                    <div class="item-name">
+                        Singles
+                    </div>
+
+                    <div class="item-meta">
+                        music-3
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <div class="item-image"></div>
+
+                <div>
+
+                    <div class="item-name">
+                        Playlists
+                    </div>
+
+                    <div class="item-meta">
+                        music-4
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="actions">
+
+        <button class="button primary">
+            + ADD MUSIC CARD
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     ARTISTS
+===================================================== -->
+
+<section
+    id="artists"
+    class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Artists
+        </div>
+
+        <div class="panel-description">
+            Add, remove and edit artist profiles.
+        </div>
+
+    </div>
+
+
+    <div class="item-list">
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="fsblogo.PNG">
+
+                <div>
+
+                    <div class="item-name">
+                        Artist 01
+                    </div>
+
+                    <div class="item-meta">
+                        artist-1
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="fsblogo.PNG">
+
+                <div>
+
+                    <div class="item-name">
+                        Artist 02
+                    </div>
+
+                    <div class="item-meta">
+                        artist-2
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="fsblogo.PNG">
+
+                <div>
+
+                    <div class="item-name">
+                        Artist 03
+                    </div>
+
+                    <div class="item-meta">
+                        artist-3
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="actions">
+
+        <button class="button primary">
+            + ADD ARTIST
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     MERCH
+===================================================== -->
+
+<section
+    id="merch"
+    class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Merch
+        </div>
+
+        <div class="panel-description">
+            Manage merch images and hover cycling.
+        </div>
+
+    </div>
+
+
+    <div class="form-grid">
+
+        <div class="form-group">
+
+            <label>
+                HOVER DELAY
+            </label>
+
+            <input
+                type="number"
+                value="3"
+                min="1">
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                HOVER CYCLE
+            </label>
+
+            <select>
+
+                <option>
+                    Enabled
+                </option>
+
+                <option>
+                    Disabled
+                </option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <div class="item-list">
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="flysincebirthchrome.PNG">
+
+                <div>
+
+                    <div class="item-name">
+                        Merch Image 01
+                    </div>
+
+                    <div class="item-meta">
+                        flysincebirthchrome.PNG
+                    </div>
+
+                </div>
+
+            </div>
+
+            <button class="button">
+                CHANGE
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="actions">
+
+        <button class="button primary">
+            + ADD MERCH IMAGE
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     VIDEOS
+===================================================== -->
+
+<section
+    id="videos"
+    class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Videos
+        </div>
+
+        <div class="panel-description">
+            Manage video cards and cycling images.
+        </div>
+
+    </div>
+
+
+    <div class="item-list">
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="fsbchrome.PNG">
+
+                <div>
+
+                    <div class="item-name">
+                        Video 01
+                    </div>
+
+                    <div class="item-meta">
+                        video-1
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="flysincebirthchrome.PNG">
+
+                <div>
+
+                    <div class="item-name">
+                        Video 02
+                    </div>
+
+                    <div class="item-meta">
+                        video-2
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="fsbchrome.PNG">
+
+                <div>
+
+                    <div class="item-name">
+                        Video 03
+                    </div>
+
+                    <div class="item-meta">
+                        video-3
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="actions">
+
+        <button class="button primary">
+            + ADD VIDEO
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     EVENTS
+===================================================== -->
+
+<section
+    id="events"
+    class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Events
+        </div>
+
+        <div class="panel-description">
+            Add, edit and remove FSB events.
+        </div>
+
+    </div>
+
+
+    <div class="item-list">
+
+        <div class="admin-item">
+
+            <div>
+
+                <div class="item-name">
+                    No Events Yet
+                </div>
+
+                <div class="item-meta">
+                    Add your first event below.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="actions">
+
+        <button class="button primary">
+            + ADD EVENT
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     SECTIONS
+===================================================== -->
+
+<section
+    id="sections"
+    class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Sections
+        </div>
+
+        <div class="panel-description">
+            Add, remove, rename and manage website sections.
+        </div>
+
+    </div>
+
+
+    <div class="item-list">
+
+        <div class="admin-item">
+
+            <div>
+                <div class="item-name">
+                    Project FSB
+                </div>
+
+                <div class="item-meta">
+                    #project
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div>
+                <div class="item-name">
+                    Music
+                </div>
+
+                <div class="item-meta">
+                    #music
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div>
+                <div class="item-name">
+                    Artists
+                </div>
+
+                <div class="item-meta">
+                    #artists
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div>
+                <div class="item-name">
+                    FSB Merch
+                </div>
+
+                <div class="item-meta">
+                    #clothing
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div>
+                <div class="item-name">
+                    Videos
+                </div>
+
+                <div class="item-meta">
+                    #videos
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-item">
+
+            <div>
+                <div class="item-name">
+                    Events
+                </div>
+
+                <div class="item-meta">
+                    #events
+                </div>
+            </div>
+
+            <div class="actions">
+
+                <button class="button">
+                    EDIT
+                </button>
+
+                <button class="button danger">
+                    REMOVE
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="actions">
+
+        <button class="button primary">
+            + ADD SECTION
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     SAVE / PREVIEW
+===================================================== -->
+
+<div class="save-bar">
+
+    <div class="save-status" id="saveStatus">
+        NO UNSAVED CHANGES
+    </div>
+
+
+    <div class="actions">
+
+        <button
+            class="button"
+            onclick="previewSite()">
+
+            PREVIEW
+
+        </button>
+
+
+        <button
+            class="button primary"
+            onclick="saveChanges()">
+
+            SAVE CHANGES
+
+        </button>
+
+    </div>
+
+</div>
+
+
+</div>
+
+
+<script>
+
+
+/* =====================================================
+   PANEL NAVIGATION
+===================================================== */
+
+function showPanel(panelId, button) {
+
+    const panels =
+        document.querySelectorAll(".panel");
+
+    const buttons =
+        document.querySelectorAll(".admin-nav button");
+
+
+    panels.forEach(function(panel) {
+
+        panel.classList.remove("active");
+
+    });
+
+
+    buttons.forEach(function(btn) {
+
+        btn.classList.remove("active");
+
+    });
+
+
+    const selectedPanel =
+        document.getElementById(panelId);
+
+    if (selectedPanel) {
+
+        selectedPanel.classList.add("active");
+
+    }
+
+
+    if (button) {
+
+        button.classList.add("active");
+
+    }
+
+}
+
+
+/* =====================================================
+   PREVIEW
+===================================================== */
+
+function previewSite() {
+
+    window.open(
+        "index.html",
+        "_blank"
+    );
+
+}
+
+
+/* =====================================================
+   SAVE
+===================================================== */
+
+function saveChanges() {
+
+    const status =
+        document.getElementById("saveStatus");
+
+
+    status.textContent =
+        "CHANGES SAVED LOCALLY";
+
+
+    setTimeout(function() {
+
+        status.textContent =
+            "NO UNSAVED CHANGES";
+
+    }, 2500);
+
+}
+
+</script>
+
+
+</body>
+
+</html>
