@@ -408,7 +408,7 @@ body {
 
     transform: translateY(-50%);
 
-    width: 400px;
+    width: 500px;
     height: 500px;
 
     border: none;
@@ -419,16 +419,44 @@ body {
     align-items: center;
 
     z-index: 1;
-
     overflow: visible;
+
+    perspective: 1200px;
 }
 
-.project-image img {
+.vinyl-image {
     width: 100%;
-    height: auto;
-    max-height: 470px;
+    height: 100%;
+
     object-fit: contain;
-    opacity: 0.95;
+    display: block;
+
+    transform-origin: center center;
+
+    transition: transform 0.15s ease-out;
+}
+
+.vinyl-title {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    color: white;
+
+    font-size: 30px;
+    font-weight: 700;
+
+    letter-spacing: 3px;
+
+    text-align: center;
+    white-space: nowrap;
+
+    z-index: 5;
+
+    pointer-events: none;
 }
 
 
@@ -920,13 +948,18 @@ footer {
 
   <div class="project">
 
-    <div class="project-image">
+  <div class="project-image">
 
-        <img
-            src="fsbchrome.PNG"
-            alt="FSB Chrome">
+    <img
+        src="vinyl.png"
+        class="vinyl-image"
+        alt="FSB Vinyl">
 
+    <div class="vinyl-title">
+        Fly Since Birth
     </div>
+
+</div>
 
 
     <div class="project-text">
@@ -1356,7 +1389,20 @@ document.addEventListener(
 
     }
 );
+const vinyl = document.querySelector(".vinyl-image");
 
+window.addEventListener("scroll", function () {
+
+    if (!vinyl) return;
+
+    const scrollY = window.scrollY;
+
+    const rotation = Math.min(scrollY * 0.12, 90);
+
+    vinyl.style.transform =
+        `rotateX(${rotation}deg)`;
+
+});
 </script>
 
 
