@@ -1950,22 +1950,70 @@ function previewSite() {
    SAVE
 ===================================================== */
 
-function saveChanges() {
+async function saveChanges() {
 
     const status =
         document.getElementById("saveStatus");
 
+    status.textContent = "SAVING...";
 
-    status.textContent =
-        "CHANGES SAVED LOCALLY";
+    const content = [
+        {
+            key: "hero_tagline",
+            value: document.getElementById("heroTagline").value
+        },
+        {
+            key: "hero_button",
+            value: document.getElementById("heroButton").value
+        },
+        {
+            key: "project_description",
+            value: document.getElementById("projectDescription").value
+        },
+        {
+            key: "merch_heading",
+            value: document.getElementById("merchHeading").value
+        },
+        {
+            key: "merch_button",
+            value: document.getElementById("merchButton").value
+        }
+    ];
 
+    try {
 
-    setTimeout(function() {
+        for (const item of content) {
 
-        status.textContent =
-            "NO UNSAVED CHANGES";
+            const { error } =
+                await supabaseClient
+                    .from("site_content")
+                    .upsert(
+                        {
+                            key: item.key,
+                            value: item.value,
+                            updated_at: new Date().toISOString()
+                        },
+                        {
+                            onConflict: "key"
+                        }
+                    );
 
-    }, 2500);
+            if (error) {
+                throw error;
+            }
+        }
+
+        status.textContent = "CHANGES SAVED";
+
+    } catch (error) {
+
+        console.error(error);
+
+        status.textContent = "SAVE FAILED";
+
+    }
+
+}
 
 }
 
