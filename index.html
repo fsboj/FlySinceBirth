@@ -273,7 +273,27 @@ body {
     filter:
         brightness(1.05)
         contrast(1.05);
+.hero-vinyl {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(850px, 90vw);
+    height: min(850px, 90vw);
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    transition: opacity 0.15s ease-out;
+}
 
+.hero-vinyl img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
 }
 
 
@@ -402,61 +422,26 @@ body {
 
 .project-image {
     position: absolute;
-
     left: 60px;
     top: 50%;
-
     transform: translateY(-50%);
-
-    width: 500px;
+    width: 400px;
     height: 500px;
-
     border: none;
     background: transparent;
-
     display: flex;
     justify-content: center;
     align-items: center;
-
     z-index: 1;
     overflow: visible;
-
-    perspective: 1200px;
 }
 
-.vinyl-image {
+.project-image img {
     width: 100%;
-    height: 100%;
-
+    height: auto;
+    max-height: 470px;
     object-fit: contain;
-    display: block;
-
-    transform-origin: center center;
-
-    transition: transform 0.15s ease-out;
-}
-
-.vinyl-title {
-    position: absolute;
-
-    left: 50%;
-    top: 50%;
-
-    transform: translate(-50%, -50%);
-
-    color: white;
-
-    font-size: 30px;
-    font-weight: 700;
-
-    letter-spacing: 3px;
-
-    text-align: center;
-    white-space: nowrap;
-
-    z-index: 5;
-
-    pointer-events: none;
+    opacity: 0.95;
 }
 
 
@@ -910,10 +895,17 @@ footer {
             currently in your GitHub repository.
         -->
 
-        <img
-            src="Flysincebirthwhite.png"
-            class="fsb-wordmark"
-            alt="Fly Since Birth">
+    <div class="hero-vinyl">
+    <img
+        src="vinyl.png"
+        alt=""
+    >
+</div>
+
+<img
+    src="Flysincebirthwhite.png"
+    class="fsb-wordmark"
+    alt="Fly Since Birth">
 
 
         <div class="tagline">
@@ -946,18 +938,11 @@ footer {
     class="section">
 
 
-  <div class="project">
-
   <div class="project-image">
 
     <img
-        src="vinyl.png"
-        class="vinyl-image"
-        alt="FSB Vinyl">
-
-    <div class="vinyl-title">
-        Fly Since Birth
-    </div>
+        src="fsbchrome.PNG"
+        alt="FSB Chrome">
 
 </div>
 
@@ -1389,18 +1374,20 @@ document.addEventListener(
 
     }
 );
-const vinyl = document.querySelector(".vinyl-image");
+const heroVinyl = document.querySelector(".hero-vinyl");
 
 window.addEventListener("scroll", function () {
 
-    if (!vinyl) return;
+    if (!heroVinyl) return;
 
-    const scrollY = window.scrollY;
+    const fadeDistance = 500;
 
-    const rotation = Math.min(scrollY * 0.12, 90);
+    const opacity = Math.max(
+        0,
+        1 - window.scrollY / fadeDistance
+    );
 
-    vinyl.style.transform =
-        `rotateX(${rotation}deg)`;
+    heroVinyl.style.opacity = opacity;
 
 });
 </script>
