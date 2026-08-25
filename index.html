@@ -637,16 +637,44 @@ body {
     min-height: 400px;
 }
 
-.events p {
-    margin-top: 30px;
+.events-list {
+    margin-top: 35px;
+}
+
+.event-card {
+    border-top: 1px solid #242424;
+
+    padding: 25px 0;
+
+    max-width: 800px;
+}
+
+.event-card:last-child {
+    border-bottom: 1px solid #242424;
+}
+
+.event-date {
+    color: #777;
+
+    font-size: 9px;
+
+    letter-spacing: 3px;
+
+    margin-bottom: 10px;
+}
+
+.event-title {
+    font-size: 24px;
+
+    font-weight: 700;
+}
+
+.event-location {
+    margin-top: 8px;
 
     color: #888;
 
-    max-width: 500px;
-
-    line-height: 1.8;
-
-    font-size: 14px;
+    font-size: 13px;
 }
 
 
@@ -954,7 +982,7 @@ footer {
 
     <div class="music-grid">
 
-        <div class="music-card">
+       <div class="music-card" data-id="music-1">
 
             <div>
 
@@ -971,8 +999,7 @@ footer {
         </div>
 
 
-        <div class="music-card">
-
+      <div class="music-card" data-id="music-2">
             <div>
 
                 <div class="card-title">
@@ -988,8 +1015,7 @@ footer {
         </div>
 
 
-        <div class="music-card">
-
+        <div class="music-card" data-id="music-3">
             <div>
 
                 <div class="card-title">
@@ -1005,7 +1031,7 @@ footer {
         </div>
 
 
-        <div class="music-card">
+        <div class="music-card" data-id="music-4">
 
             <div>
 
@@ -1040,23 +1066,59 @@ footer {
     </h2>
 
 
-    <div class="artist-grid">
+<div class="artist-grid">
 
-        <div class="artist-card">
+    <div class="artist-card" data-id="artist-1">
 
-            <img
-                src="fsblogo.PNG"
-                alt="Artist 01">
+        <img
+            src="fsblogo.PNG"
+            alt="Artist 01">
 
-            <div class="artist-info">
+        <div class="artist-info">
 
-                <div class="card-title">
-                    Artist 01
-                </div>
-
+            <div class="card-title">
+                Artist 01
             </div>
 
         </div>
+
+    </div>
+
+
+    <div class="artist-card" data-id="artist-2">
+
+        <img
+            src="fsblogo.PNG"
+            alt="Artist 02">
+
+        <div class="artist-info">
+
+            <div class="card-title">
+                Artist 02
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="artist-card" data-id="artist-3">
+
+        <img
+            src="fsblogo.PNG"
+            alt="Artist 03">
+
+        <div class="artist-info">
+
+            <div class="card-title">
+                Artist 03
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 
         <div class="artist-card">
@@ -1158,7 +1220,7 @@ footer {
     </h2>
 
 
-    <div class="video-grid">
+   <div class="video-card" data-id="video-1">
 
         <div class="video-card">
 
@@ -1169,7 +1231,7 @@ footer {
         </div>
 
 
-        <div class="video-card">
+        <div class="video-card" data-id="video-2">
 
             <img
                 src="flysincebirthchrome.PNG"
@@ -1178,7 +1240,7 @@ footer {
         </div>
 
 
-        <div class="video-card">
+       <div class="video-card" data-id="video-3">
 
             <img
                 src="fsbchrome.PNG"
@@ -1206,8 +1268,13 @@ footer {
 
 
     <p>
-        Live shows, releases, pop-ups and
-        everything happening within FSB.
+    <div
+    id="events-list"
+    class="events-list">
+
+    <!-- Events added from Admin will appear here -->
+
+</div>
     </p>
 
 
