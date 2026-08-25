@@ -1324,7 +1324,96 @@ const supabaseClient = supabase.createClient(
 );
 
 </script>
-   
+<script>
+
+async function loadSiteContent() {
+
+    const { data, error } = await supabaseClient
+        .from("site_content")
+        .select("key, value");
+
+    if (error) {
+        console.error("Could not load site content:", error);
+        return;
+    }
+
+    const content = {};
+
+    data.forEach(function(item) {
+        content[item.key] = item.value;
+    });
+
+
+    if (content.hero_tagline) {
+
+        const element =
+            document.querySelector(".tagline");
+
+        if (element) {
+            element.textContent =
+                content.hero_tagline;
+        }
+
+    }
+
+
+    if (content.hero_button) {
+
+        const element =
+            document.querySelector(".hero .outline-button");
+
+        if (element) {
+            element.textContent =
+                content.hero_button;
+        }
+
+    }
+
+
+    if (content.project_description) {
+
+        const element =
+            document.querySelector(".project-text p");
+
+        if (element) {
+            element.textContent =
+                content.project_description;
+        }
+
+    }
+
+
+    if (content.merch_heading) {
+
+        const element =
+            document.querySelector(".clothing-text .section-heading");
+
+        if (element) {
+            element.innerHTML =
+                content.merch_heading;
+        }
+
+    }
+
+
+    if (content.merch_button) {
+
+        const element =
+            document.querySelector(".clothing-text .outline-button");
+
+        if (element) {
+            element.textContent =
+                content.merch_button;
+        }
+
+    }
+
+}
+
+
+loadSiteContent();
+
+</script>   
 <script>
 
 function openMenu() {
