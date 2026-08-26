@@ -1303,7 +1303,8 @@ async function loadSiteContent() {
         console.error("Could not load site content:", error);
         return;
     }
-
+console.log("SITE CONTENT:", data);
+   
     const content = {};
 
     data.forEach(function(item) {
