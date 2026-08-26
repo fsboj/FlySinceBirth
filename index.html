@@ -1303,8 +1303,9 @@ async function loadSiteContent() {
         console.error("Could not load site content:", error);
         return;
     }
-console.log("SITE CONTENT:", data);
-   
+
+    console.log("SITE CONTENT:", data);
+
     const content = {};
 
     data.forEach(function(item) {
@@ -1312,68 +1313,251 @@ console.log("SITE CONTENT:", data);
     });
 
 
-    if (content.hero_tagline) {
+    /* =====================================================
+       HERO
+    ===================================================== */
 
-        const element =
-            document.querySelector(".tagline");
+    if (content.hero_tagline) {
+        const element = document.querySelector(".tagline");
 
         if (element) {
-            element.textContent =
-                content.hero_tagline;
+            element.textContent = content.hero_tagline;
         }
-
     }
-
 
     if (content.hero_button) {
-
-        const element =
-            document.querySelector(".hero .outline-button");
+        const element = document.querySelector(".hero .outline-button");
 
         if (element) {
-            element.textContent =
-                content.hero_button;
+            element.textContent = content.hero_button;
         }
-
     }
 
+
+    /* =====================================================
+       PROJECT
+    ===================================================== */
+
+    if (content.project_fsb) {
+        const element = document.querySelector("#project .section-heading");
+
+        if (element) {
+            element.innerHTML = content.project_fsb;
+        }
+    }
 
     if (content.project_description) {
-
-        const element =
-            document.querySelector(".project-text p");
+        const element = document.querySelector(".project-text p");
 
         if (element) {
-            element.textContent =
-                content.project_description;
+            element.textContent = content.project_description;
         }
-
     }
 
+    if (content.project_learn_more) {
+        const element = document.querySelector(".project-text .outline-button");
+
+        if (element) {
+            element.textContent = content.project_learn_more;
+        }
+    }
+
+
+    /* =====================================================
+       MUSIC
+    ===================================================== */
+
+    if (content.music_heading) {
+        const element = document.querySelector("#music .section-heading");
+
+        if (element) {
+            element.textContent = content.music_heading;
+        }
+    }
+
+    if (content.latest_releases) {
+        const element = document.querySelector("#music .music-card:nth-child(1) .card-title");
+
+        if (element) {
+            element.textContent = content.latest_releases;
+        }
+    }
+
+    if (content.listen_now) {
+        const element = document.querySelector("#music .music-card:nth-child(1) .card-subtitle");
+
+        if (element) {
+            element.textContent = content.listen_now;
+        }
+    }
+
+    if (content.albums) {
+        const element = document.querySelector("#music .music-card:nth-child(2) .card-title");
+
+        if (element) {
+            element.textContent = content.albums;
+        }
+    }
+
+    if (content.explore) {
+        const element = document.querySelector("#music .music-card:nth-child(2) .card-subtitle");
+
+        if (element) {
+            element.textContent = content.explore;
+        }
+    }
+
+    if (content.singles) {
+        const element = document.querySelector("#music .music-card:nth-child(3) .card-title");
+
+        if (element) {
+            element.textContent = content.singles;
+        }
+    }
+
+    if (content.new_music) {
+        const element = document.querySelector("#music .music-card:nth-child(3) .card-subtitle");
+
+        if (element) {
+            element.textContent = content.new_music;
+        }
+    }
+
+    if (content.playlists) {
+        const element = document.querySelector("#music .music-card:nth-child(4) .card-title");
+
+        if (element) {
+            element.textContent = content.playlists;
+        }
+    }
+
+    if (content.stream_fsb) {
+        const element = document.querySelector("#music .music-card:nth-child(4) .card-subtitle");
+
+        if (element) {
+            element.textContent = content.stream_fsb;
+        }
+    }
+
+
+    /* =====================================================
+       ARTISTS
+    ===================================================== */
+
+    if (content.artists_heading) {
+        const element = document.querySelector("#artists .section-heading");
+
+        if (element) {
+            element.textContent = content.artists_heading;
+        }
+    }
+
+
+    /* =====================================================
+       MERCH
+    ===================================================== */
 
     if (content.merch_heading) {
-
-        const element =
-            document.querySelector(".clothing-text .section-heading");
+        const element = document.querySelector(".clothing-text .section-heading");
 
         if (element) {
-            element.innerHTML =
-                content.merch_heading;
+            element.innerHTML = content.merch_heading;
         }
+    }
 
+    if (content.merch_description) {
+        const element = document.querySelector(".clothing-text p");
+
+        if (element) {
+            element.textContent = content.merch_description;
+        }
+    }
+
+    if (content.merch_button) {
+        const element = document.querySelector(".clothing-text .outline-button");
+
+        if (element) {
+            element.textContent = content.merch_button;
+        }
     }
 
 
-    if (content.merch_button) {
+    /* =====================================================
+       VIDEOS
+    ===================================================== */
 
-        const element =
-            document.querySelector(".clothing-text .outline-button");
+    if (content.videos_heading) {
+        const element = document.querySelector("#videos .section-heading");
 
         if (element) {
-            element.textContent =
-                content.merch_button;
+            element.textContent = content.videos_heading;
         }
+    }
 
+
+    /* =====================================================
+       EVENTS
+    ===================================================== */
+
+    if (content.events_heading) {
+        const element = document.querySelector("#events .section-heading");
+
+        if (element) {
+            element.textContent = content.events_heading;
+        }
+    }
+
+    if (content.view_events) {
+        const element = document.querySelector("#events .outline-button");
+
+        if (element) {
+            element.textContent = content.view_events;
+        }
+    }
+
+
+    /* =====================================================
+       MENU
+    ===================================================== */
+
+    if (content.menu_music) {
+        const element = document.querySelector('.menu a[href="#music"]');
+
+        if (element) {
+            element.textContent = content.menu_music;
+        }
+    }
+
+    if (content.menu_artists) {
+        const element = document.querySelector('.menu a[href="#artists"]');
+
+        if (element) {
+            element.textContent = content.menu_artists;
+        }
+    }
+
+    if (content.menu_clothing) {
+        const element = document.querySelector('.menu a[href="#clothing"]');
+
+        if (element) {
+            element.textContent = content.menu_clothing;
+        }
+    }
+
+    if (content.menu_videos) {
+        const element = document.querySelector('.menu a[href="#videos"]');
+
+        if (element) {
+            element.textContent = content.menu_videos;
+        }
+    }
+
+    if (content.menu_events) {
+        const element = document.querySelector('.menu a[href="#events"]');
+
+        if (element) {
+            element.textContent = content.menu_events;
+        }
     }
 
 }
