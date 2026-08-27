@@ -2175,7 +2175,142 @@ async function saveChanges() {
         status.textContent = "SAVE FAILED";
     }
 }
+/* =====================================================
+   IMAGE UPLOAD
+===================================================== */
 
+async function uploadSiteImage(
+    contentKey,
+    inputId,
+    previewId,
+    nameId
+) {
+
+    const input = document.getElementById(inputId);
+
+    if (!input || !input.files || !input.files[0]) {
+        return;
+    }
+
+    const file = input.files[0];
+
+    const status =
+        document.getElementById("saveStatus");
+
+    if (status) {
+        status.textContent = "UPLOADING...";
+    }
+
+    try {
+
+        const fileExtension =
+            file.name.split(".").pop();
+
+        const filePath =
+            contentKey + "_" +
+            Date.now() + "." +
+            fileExtension;
+
+
+        /* UPLOAD IMAGE */
+
+        const { error: uploadError } =
+            await supabaseClient
+                .storage
+                .from("site-images")
+                .upload(
+                    filePath,
+                    file,
+                    {
+                        cacheControl: "3600",
+                        upsert: true
+                    }
+                );
+
+
+        if (uploadError) {
+            throw uploadError;
+        }
+
+
+        /* GET PUBLIC URL */
+
+        const { data: publicData } =
+            supabaseClient
+                .storage
+                .from("site-images")
+                .getPublicUrl(filePath);
+
+
+        const publicUrl =
+            publicData.publicUrl;
+
+
+        /* SAVE IMAGE URL TO SITE CONTENT */
+
+        const { error: databaseError } =
+            await supabaseClient
+                .from("site_content")
+                .upsert(
+                    {
+                        key: contentKey,
+                        value: publicUrl,
+                        updated_at:
+                            new Date().toISOString()
+                    },
+                    {
+                        onConflict: "key"
+                    }
+                );
+
+
+        if (databaseError) {
+            throw databaseError;
+        }
+
+
+        /* UPDATE PREVIEW */
+
+        const preview =
+            document.getElementById(previewId);
+
+        if (preview) {
+            preview.src = publicUrl;
+        }
+
+
+        /* UPDATE FILE NAME */
+
+        const name =
+            document.getElementById(nameId);
+
+        if (name) {
+            name.textContent = file.name;
+        }
+
+
+        if (status) {
+            status.textContent =
+                "IMAGE SAVED";
+        }
+
+    } catch (error) {
+
+        console.error(
+            "IMAGE UPLOAD ERROR:",
+            error
+        );
+
+        if (status) {
+            status.textContent =
+                "IMAGE UPLOAD FAILED";
+        }
+
+        alert(
+            "Image upload failed. Check the browser console for details."
+        );
+    }
+}
 </script>
 
 
