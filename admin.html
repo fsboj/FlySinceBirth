@@ -1508,7 +1508,90 @@ body {
         <button class="button primary">
             + ADD MERCH IMAGE
         </button>
+<!-- TOP LEFT IMAGE -->
 
+<div class="admin-item">
+
+    <div class="item-info">
+
+        <img
+            id="topLeftImagePreview"
+            class="item-image"
+            src="fsblogo.PNG">
+
+        <div>
+
+            <div class="item-name">
+                Top Left Image
+            </div>
+
+            <div
+                class="item-meta"
+                id="topLeftImageName">
+                fsblogo.PNG
+            </div>
+
+        </div>
+
+    </div>
+
+    <input
+        type="file"
+        id="topLeftImageInput"
+        accept="image/*"
+        style="display:none"
+        onchange="uploadSiteImage('top_left_image', 'topLeftImageInput', 'topLeftImagePreview', 'topLeftImageName')">
+
+    <button
+        class="button"
+        onclick="document.getElementById('topLeftImageInput').click()">
+        CHANGE
+    </button>
+
+</div>
+
+
+<!-- MENU IMAGE -->
+
+<div class="admin-item">
+
+    <div class="item-info">
+
+        <img
+            id="menuImagePreview"
+            class="item-image"
+            src="FlySinceBirthgd.PNG">
+
+        <div>
+
+            <div class="item-name">
+                Menu Image
+            </div>
+
+            <div
+                class="item-meta"
+                id="menuImageName">
+                FlySinceBirthgd.PNG
+            </div>
+
+        </div>
+
+    </div>
+
+    <input
+        type="file"
+        id="menuImageInput"
+        accept="image/*"
+        style="display:none"
+        onchange="uploadSiteImage('menu_image', 'menuImageInput', 'menuImagePreview', 'menuImageName')">
+
+    <button
+        class="button"
+        onclick="document.getElementById('menuImageInput').click()">
+        CHANGE
+    </button>
+
+</div>
     </div>
 
 </section>
