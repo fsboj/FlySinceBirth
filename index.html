@@ -1325,7 +1325,32 @@ async function loadSiteContent() {
         }
 
     }
+    /* PROJECT FSB IMAGE */
 
+    if (content.project_image) {
+
+        const projectImage =
+            document.querySelector(".project-image img");
+
+        if (projectImage) {
+            projectImage.src = content.project_image;
+        }
+
+    }
+
+
+    /* MERCH IMAGE */
+
+    if (content.merch_image) {
+
+        const merchImage =
+            document.querySelector(".clothing-box img");
+
+        if (merchImage) {
+            merchImage.src = content.merch_image;
+        }
+
+    }
     /* =====================================================
        HERO
     ===================================================== */
