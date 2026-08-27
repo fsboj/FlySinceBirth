@@ -899,10 +899,10 @@ body {
         <div class="admin-item">
 
             <div>
-                <div class="item-name">
-                    Music
-                </div>
-
+                <input
+    id="menuMusic"
+    type="text"
+    value="Music">
                 <div class="item-meta">
                     #music
                 </div>
@@ -926,10 +926,10 @@ body {
         <div class="admin-item">
 
             <div>
-                <div class="item-name">
-                    Artists
-                </div>
-
+                <input
+    id="menuArtists"
+    type="text"
+    value="Artists">
                 <div class="item-meta">
                     #artists
                 </div>
@@ -953,9 +953,10 @@ body {
         <div class="admin-item">
 
             <div>
-                <div class="item-name">
-                    Clothing
-                </div>
+               <input
+    id="menuClothing"
+    type="text"
+    value="Clothing">
 
                 <div class="item-meta">
                     #clothing
@@ -980,10 +981,10 @@ body {
         <div class="admin-item">
 
             <div>
-                <div class="item-name">
-                    Videos
-                </div>
-
+               <input
+    id="menuVideos"
+    type="text"
+    value="Videos">
                 <div class="item-meta">
                     #videos
                 </div>
@@ -1007,9 +1008,10 @@ body {
         <div class="admin-item">
 
             <div>
-                <div class="item-name">
-                    Events
-                </div>
+              <input
+    id="menuEvents"
+    type="text"
+    value="Events">
 
                 <div class="item-meta">
                     #events
@@ -2063,10 +2065,30 @@ async function saveChanges() {
             key: "merch_description",
             value: document.getElementById("merchDescription").value
         },
-        {
-            key: "merch_button",
-            value: document.getElementById("merchButton").value
-        },
+       {
+    key: "merch_button",
+    value: document.getElementById("merchButton").value
+},
+{
+    key: "menu_music",
+    value: document.getElementById("menuMusic").value
+},
+{
+    key: "menu_artists",
+    value: document.getElementById("menuArtists").value
+},
+{
+    key: "menu_clothing",
+    value: document.getElementById("menuClothing").value
+},
+{
+    key: "menu_videos",
+    value: document.getElementById("menuVideos").value
+},
+{
+    key: "menu_events",
+    value: document.getElementById("menuEvents").value
+},
         {
             key: "videos_heading",
             value: document.getElementById("videosHeading").value
