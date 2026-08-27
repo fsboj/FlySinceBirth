@@ -1311,7 +1311,20 @@ async function loadSiteContent() {
     data.forEach(function(item) {
         content[item.key] = item.value;
     });
+    /* =====================================================
+       SITE IMAGES
+    ===================================================== */
 
+    if (content.hero_image) {
+
+        const heroImage =
+            document.querySelector(".hero img");
+
+        if (heroImage) {
+            heroImage.src = content.hero_image;
+        }
+
+    }
 
     /* =====================================================
        HERO
