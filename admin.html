@@ -2130,7 +2130,40 @@ async function loadSiteImages() {
     }
 
     data.forEach(function(item) {
+if (item.key === "top_left_image") {
 
+    const preview =
+        document.getElementById("topLeftImagePreview");
+
+    const name =
+        document.getElementById("topLeftImageName");
+
+    if (preview) {
+        preview.src = item.value;
+    }
+
+    if (name) {
+        name.textContent = "Supabase image";
+    }
+}
+
+
+if (item.key === "menu_image") {
+
+    const preview =
+        document.getElementById("menuImagePreview");
+
+    const name =
+        document.getElementById("menuImageName");
+
+    if (preview) {
+        preview.src = item.value;
+    }
+
+    if (name) {
+        name.textContent = "Supabase image";
+    }
+}
         if (item.key === "hero_image") {
 
             const preview =
