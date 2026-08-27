@@ -2030,7 +2030,82 @@ function previewSite() {
 /* =====================================================
    SAVE
 ===================================================== */
+async function loadSiteImages() {
 
+    const { data, error } = await supabaseClient
+        .from("site_content")
+        .select("key, value")
+        .in("key", [
+            "hero_image",
+            "project_image",
+            "merch_image"
+        ]);
+
+    if (error) {
+        console.error("Could not load site images:", error);
+        return;
+    }
+
+    data.forEach(function(item) {
+
+        if (item.key === "hero_image") {
+
+            const preview =
+                document.getElementById("heroImagePreview");
+
+            const name =
+                document.getElementById("heroImageName");
+
+            if (preview) {
+                preview.src = item.value;
+            }
+
+            if (name) {
+                name.textContent = "Supabase image";
+            }
+        }
+
+
+        if (item.key === "project_image") {
+
+            const preview =
+                document.getElementById("projectImagePreview");
+
+            const name =
+                document.getElementById("projectImageName");
+
+            if (preview) {
+                preview.src = item.value;
+            }
+
+            if (name) {
+                name.textContent = "Supabase image";
+            }
+        }
+
+
+        if (item.key === "merch_image") {
+
+            const preview =
+                document.getElementById("merchImagePreview");
+
+            const name =
+                document.getElementById("merchImageName");
+
+            if (preview) {
+                preview.src = item.value;
+            }
+
+            if (name) {
+                name.textContent = "Supabase image";
+            }
+        }
+
+    });
+
+}
+    loadSiteImages();
+    
 async function saveChanges() {
 
     const status = document.getElementById("saveStatus");
