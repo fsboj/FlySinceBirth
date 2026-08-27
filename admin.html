@@ -761,76 +761,114 @@ body {
     </div>
 
 
-    <div class="form-grid">
+<div class="form-grid">
 
-        <div class="form-group">
-
-            <label>
-                HERO TAGLINE
-            </label>
-
-            <input
-    id="heroTagline"
-    type="text"
-    value="MUSIC • CLOTHING • CULTURE">
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                HERO BUTTON
-            </label>
-
-            <input
-    id="heroButton"
-    type="text"
-    value="ENTER FSB">
-            
-        </div>
-
-
-        <div class="form-group full">
-
-            <label>
-                PROJECT DESCRIPTION
-            </label>
-
-           <textarea
-    id="projectDescription">Fly Since Birth is more than a brand. It is a creative platform connecting music, clothing, culture and visual expression.</textarea>
-            
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                MERCH HEADING
-            </label>
-
-          <input
-    id="merchHeading"
-    type="text"
-    value="MERCH TEST">
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                MERCH BUTTON
-            </label>
-
-           <input
-    id="merchButton"
-    type="text"
-    value="SHOP FSB">
-
-        </div>
-
+    <div class="form-group">
+        <label>HERO TAGLINE</label>
+        <input id="heroTagline" type="text" value="MUSIC • CLOTHING • CULTURE">
     </div>
+
+    <div class="form-group">
+        <label>HERO BUTTON</label>
+        <input id="heroButton" type="text" value="ENTER FSB">
+    </div>
+
+    <div class="form-group full">
+        <label>PROJECT FSB</label>
+        <input id="projectFsb" type="text" value="PROJECT&lt;br&gt;FSB">
+    </div>
+
+    <div class="form-group full">
+        <label>PROJECT DESCRIPTION</label>
+        <textarea id="projectDescription">Fly Since Birth is more than a brand. It is a creative platform connecting music, clothing, culture and visual expression.</textarea>
+    </div>
+
+    <div class="form-group">
+        <label>LEARN MORE</label>
+        <input id="projectLearnMore" type="text" value="LEARN MORE">
+    </div>
+
+    <div class="form-group">
+        <label>MUSIC</label>
+        <input id="musicHeading" type="text" value="MUSIC">
+    </div>
+
+    <div class="form-group">
+        <label>LATEST RELEASES</label>
+        <input id="latestReleases" type="text" value="Latest Releases">
+    </div>
+
+    <div class="form-group">
+        <label>LISTEN NOW</label>
+        <input id="listenNow" type="text" value="LISTEN NOW">
+    </div>
+
+    <div class="form-group">
+        <label>ALBUMS</label>
+        <input id="albums" type="text" value="Albums">
+    </div>
+
+    <div class="form-group">
+        <label>EXPLORE</label>
+        <input id="explore" type="text" value="EXPLORE">
+    </div>
+
+    <div class="form-group">
+        <label>SINGLES</label>
+        <input id="singles" type="text" value="Singles">
+    </div>
+
+    <div class="form-group">
+        <label>NEW MUSIC</label>
+        <input id="newMusic" type="text" value="NEW MUSIC">
+    </div>
+
+    <div class="form-group">
+        <label>PLAYLISTS</label>
+        <input id="playlists" type="text" value="Playlists">
+    </div>
+
+    <div class="form-group">
+        <label>STREAM FSB</label>
+        <input id="streamFsb" type="text" value="STREAM FSB">
+    </div>
+
+    <div class="form-group">
+        <label>ARTISTS</label>
+        <input id="artistsHeading" type="text" value="ARTISTS">
+    </div>
+
+    <div class="form-group">
+        <label>MERCH HEADING</label>
+        <input id="merchHeading" type="text" value="FSB&lt;br&gt;MERCH">
+    </div>
+
+    <div class="form-group full">
+        <label>MERCH DESCRIPTION</label>
+        <textarea id="merchDescription">FSB clothing, collections, limited drops and upcoming releases.</textarea>
+    </div>
+
+    <div class="form-group">
+        <label>MERCH BUTTON</label>
+        <input id="merchButton" type="text" value="SHOP FSB">
+    </div>
+
+    <div class="form-group">
+        <label>VIDEOS</label>
+        <input id="videosHeading" type="text" value="VIDEOS">
+    </div>
+
+    <div class="form-group">
+        <label>EVENTS</label>
+        <input id="eventsHeading" type="text" value="EVENTS">
+    </div>
+
+    <div class="form-group">
+        <label>VIEW EVENTS</label>
+        <input id="viewEvents" type="text" value="VIEW EVENTS">
+    </div>
+
+</div>
 
 </section>
 
@@ -1952,8 +1990,7 @@ function previewSite() {
 
 async function saveChanges() {
 
-    const status =
-        document.getElementById("saveStatus");
+    const status = document.getElementById("saveStatus");
 
     status.textContent = "SAVING...";
 
@@ -1967,16 +2004,80 @@ async function saveChanges() {
             value: document.getElementById("heroButton").value
         },
         {
+            key: "project_fsb",
+            value: document.getElementById("projectFsb").value
+        },
+        {
             key: "project_description",
             value: document.getElementById("projectDescription").value
+        },
+        {
+            key: "project_learn_more",
+            value: document.getElementById("projectLearnMore").value
+        },
+        {
+            key: "music_heading",
+            value: document.getElementById("musicHeading").value
+        },
+        {
+            key: "latest_releases",
+            value: document.getElementById("latestReleases").value
+        },
+        {
+            key: "listen_now",
+            value: document.getElementById("listenNow").value
+        },
+        {
+            key: "albums",
+            value: document.getElementById("albums").value
+        },
+        {
+            key: "explore",
+            value: document.getElementById("explore").value
+        },
+        {
+            key: "singles",
+            value: document.getElementById("singles").value
+        },
+        {
+            key: "new_music",
+            value: document.getElementById("newMusic").value
+        },
+        {
+            key: "playlists",
+            value: document.getElementById("playlists").value
+        },
+        {
+            key: "stream_fsb",
+            value: document.getElementById("streamFsb").value
+        },
+        {
+            key: "artists_heading",
+            value: document.getElementById("artistsHeading").value
         },
         {
             key: "merch_heading",
             value: document.getElementById("merchHeading").value
         },
         {
+            key: "merch_description",
+            value: document.getElementById("merchDescription").value
+        },
+        {
             key: "merch_button",
             value: document.getElementById("merchButton").value
+        },
+        {
+            key: "videos_heading",
+            value: document.getElementById("videosHeading").value
+        },
+        {
+            key: "events_heading",
+            value: document.getElementById("eventsHeading").value
+        },
+        {
+            key: "view_events",
+            value: document.getElementById("viewEvents").value
         }
     ];
 
@@ -1984,19 +2085,18 @@ async function saveChanges() {
 
         for (const item of content) {
 
-            const { error } =
-                await supabaseClient
-                    .from("site_content")
-                    .upsert(
-                        {
-                            key: item.key,
-                            value: item.value,
-                            updated_at: new Date().toISOString()
-                        },
-                        {
-                            onConflict: "key"
-                        }
-                    );
+            const { error } = await supabaseClient
+                .from("site_content")
+                .upsert(
+                    {
+                        key: item.key,
+                        value: item.value,
+                        updated_at: new Date().toISOString()
+                    },
+                    {
+                        onConflict: "key"
+                    }
+                );
 
             if (error) {
                 throw error;
@@ -2010,9 +2110,7 @@ async function saveChanges() {
         console.error(error);
 
         status.textContent = "SAVE FAILED";
-
     }
-
 }
 
 </script>
