@@ -630,9 +630,7 @@ body {
      PHOTOS
 ===================================================== -->
 
-<section
-    id="photos"
-    class="panel">
+<section id="photos" class="panel">
 
     <div class="panel-header">
 
@@ -649,21 +647,27 @@ body {
 
     <div class="item-list">
 
+
+        <!-- HERO IMAGE -->
+
         <div class="admin-item">
 
             <div class="item-info">
 
                 <img
+                    id="heroImagePreview"
                     class="item-image"
                     src="Flysincebirthwhite.png">
 
                 <div>
 
                     <div class="item-name">
-                        Hero Logo
+                        Hero Image
                     </div>
 
-                    <div class="item-meta">
+                    <div
+                        class="item-meta"
+                        id="heroImageName">
                         Flysincebirthwhite.png
                     </div>
 
@@ -671,18 +675,30 @@ body {
 
             </div>
 
-            <button class="button">
+            <input
+                type="file"
+                id="heroImageInput"
+                accept="image/*"
+                style="display:none"
+                onchange="uploadSiteImage('hero_image', 'heroImageInput', 'heroImagePreview', 'heroImageName')">
+
+            <button
+                class="button"
+                onclick="document.getElementById('heroImageInput').click()">
                 CHANGE
             </button>
 
         </div>
 
 
+        <!-- PROJECT FSB -->
+
         <div class="admin-item">
 
             <div class="item-info">
 
                 <img
+                    id="projectImagePreview"
                     class="item-image"
                     src="fsbchrome.PNG">
 
@@ -692,7 +708,9 @@ body {
                         Project FSB
                     </div>
 
-                    <div class="item-meta">
+                    <div
+                        class="item-meta"
+                        id="projectImageName">
                         fsbchrome.PNG
                     </div>
 
@@ -700,18 +718,30 @@ body {
 
             </div>
 
-            <button class="button">
+            <input
+                type="file"
+                id="projectImageInput"
+                accept="image/*"
+                style="display:none"
+                onchange="uploadSiteImage('project_image', 'projectImageInput', 'projectImagePreview', 'projectImageName')">
+
+            <button
+                class="button"
+                onclick="document.getElementById('projectImageInput').click()">
                 CHANGE
             </button>
 
         </div>
 
 
+        <!-- MERCH -->
+
         <div class="admin-item">
 
             <div class="item-info">
 
                 <img
+                    id="merchImagePreview"
                     class="item-image"
                     src="flysincebirthchrome.PNG">
 
@@ -721,7 +751,9 @@ body {
                         Merch
                     </div>
 
-                    <div class="item-meta">
+                    <div
+                        class="item-meta"
+                        id="merchImageName">
                         flysincebirthchrome.PNG
                     </div>
 
@@ -729,16 +761,25 @@ body {
 
             </div>
 
-            <button class="button">
+            <input
+                type="file"
+                id="merchImageInput"
+                accept="image/*"
+                style="display:none"
+                onchange="uploadSiteImage('merch_image', 'merchImageInput', 'merchImagePreview', 'merchImageName')">
+
+            <button
+                class="button"
+                onclick="document.getElementById('merchImageInput').click()">
                 CHANGE
             </button>
 
         </div>
 
+
     </div>
 
 </section>
-
 
 <!-- =====================================================
      TEXT
