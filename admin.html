@@ -1254,10 +1254,11 @@ body {
 
     <div class="actions">
 
-        <button class="button primary">
-            + ADD MUSIC CARD
-        </button>
-
+      <button
+    class="button primary"
+    onclick="addMusic()">
+    + ADD MUSIC CARD
+</button>
     </div>
 
 </section>
@@ -2775,9 +2776,7 @@ async function loadMusic() {
     const container =
         document.querySelector("#music .item-list");
 
-    if (!container) {
-        return;
-    }
+    if (!container) return;
 
     const { data, error } =
         await supabaseClient
@@ -2799,7 +2798,7 @@ async function loadMusic() {
 
     container.innerHTML = "";
 
-    for (const music of data || []) {
+    (data || []).forEach(function(music) {
 
         const item =
             document.createElement("div");
@@ -2807,129 +2806,230 @@ async function loadMusic() {
         item.className =
             "admin-item";
 
+        item.innerHTML = `
 
-        const info =
-            document.createElement("div");
+            <div class="item-info">
 
-        info.className =
-            "item-info";
+                <img
+                    class="item-image"
+                    src="${music.image_url || ""}"
+                    alt="${escapeHtml(music.title || "Music")}"
+                >
 
+                <div>
 
-        const image =
-            document.createElement("img");
+                    <div class="item-name">
+                        ${escapeHtml(
+                            music.title ||
+                            "Untitled"
+                        )}
+                    </div>
 
-        image.className =
-            "item-image";
+                    <div class="item-meta">
+                        ${escapeHtml(
+                            music.artist ||
+                            music.category ||
+                            "MUSIC"
+                        )}
+                    </div>
 
-        image.alt =
-            music.title || "Music";
+                </div>
 
+            </div>
 
-        if (music.image_url) {
-            image.src =
-                music.image_url;
-        }
+            <div class="actions">
 
+                <button
+                    class="button"
+                    onclick="editMusic('${music.id}')">
+                    EDIT
+                </button>
 
-        const text =
-            document.createElement("div");
+                <button
+                    class="button danger"
+                    onclick="removeMusic('${music.id}')">
+                    REMOVE
+                </button>
 
-
-        const name =
-            document.createElement("div");
-
-        name.className =
-            "item-name";
-
-        name.textContent =
-            music.title ||
-            "Untitled";
-
-
-        const meta =
-            document.createElement("div");
-
-        meta.className =
-            "item-meta";
-
-        meta.textContent =
-            music.category ||
-            music.type ||
-            "MUSIC";
-
-
-        text.appendChild(name);
-        text.appendChild(meta);
-
-
-        info.appendChild(image);
-        info.appendChild(text);
-
-
-        const actions =
-            document.createElement("div");
-
-        actions.className =
-            "actions";
-
-
-        const editButton =
-            document.createElement("button");
-
-        editButton.className =
-            "button";
-
-        editButton.textContent =
-            "EDIT";
-
-
-        editButton.onclick =
-            function() {
-
-                editMusic(
-                    music.id
-                );
-
-            };
-
-
-        const removeButton =
-            document.createElement("button");
-
-        removeButton.className =
-            "button danger";
-
-        removeButton.textContent =
-            "REMOVE";
-
-
-        removeButton.onclick =
-            function() {
-
-                removeMusic(
-                    music.id
-                );
-
-            };
-
-
-        actions.appendChild(
-            editButton
-        );
-
-        actions.appendChild(
-            removeButton
-        );
-
-
-        item.appendChild(info);
-        item.appendChild(actions);
-
+            </div>
+        `;
 
         container.appendChild(item);
+
+    });
+}
+async function addMusic() {
+
+    const title =
+        prompt("Music title:");
+
+    if (!title) return;
+
+    const artist =
+        prompt("Artist name:");
+
+    const category =
+        prompt(
+            "Category (Latest Releases, Albums, Singles, Playlists):"
+        );
+
+    const link =
+        prompt(
+            "Streaming URL:"
+        );
+
+    const { error } =
+        await supabaseClient
+            .from("music")
+            .insert({
+                title: title,
+                artist: artist || "",
+                category: category || "",
+                link_url: link || "",
+                sort_order: 999
+            });
+
+    if (error) {
+
+        console.error(
+            "ADD MUSIC ERROR:",
+            error
+        );
+
+        alert(
+            "Could not add music: " +
+            error.message
+        );
+
+        return;
     }
+
+    await loadMusic();
+
+    setStatus(
+        "MUSIC ADDED"
+    );
 }
 
+
+async function editMusic(id) {
+
+    const { data: music, error } =
+        await supabaseClient
+            .from("music")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+    if (error) {
+
+        alert(
+            "Could not load music: " +
+            error.message
+        );
+
+        return;
+    }
+
+
+    const title =
+        prompt(
+            "Music title:",
+            music.title || ""
+        );
+
+    if (title === null) return;
+
+
+    const artist =
+        prompt(
+            "Artist name:",
+            music.artist || ""
+        );
+
+
+    const category =
+        prompt(
+            "Category:",
+            music.category || ""
+        );
+
+
+    const link =
+        prompt(
+            "Streaming URL:",
+            music.link_url || ""
+        );
+
+
+    const { error: updateError } =
+        await supabaseClient
+            .from("music")
+            .update({
+                title: title,
+                artist: artist || "",
+                category: category || "",
+                link_url: link || "",
+                updated_at:
+                    new Date().toISOString()
+            })
+            .eq("id", id);
+
+
+    if (updateError) {
+
+        alert(
+            "Could not update music: " +
+            updateError.message
+        );
+
+        return;
+    }
+
+
+    await loadMusic();
+
+    setStatus(
+        "MUSIC UPDATED"
+    );
+}
+
+
+async function removeMusic(id) {
+
+    if (
+        !confirm(
+            "Remove this music item?"
+        )
+    ) {
+        return;
+    }
+
+
+    const { error } =
+        await supabaseClient
+            .from("music")
+            .delete()
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(
+            "Could not remove music: " +
+            error.message
+        );
+
+        return;
+    }
+
+
+    await loadMusic();
+
+    setStatus(
+        "MUSIC REMOVED"
+    );
+}
 /* =====================================================
    ARTISTS
 ===================================================== */
