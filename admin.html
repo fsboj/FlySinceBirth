@@ -2204,39 +2204,44 @@ async function saveChanges() {
 ===================================================== */
 
 async function uploadSiteImage(
-    contentKey,
+    imageKey,
     inputId,
     previewId,
     nameId
 ) {
 
-    const input = document.getElementById(inputId);
+    const input =
+        document.getElementById(inputId);
 
-    if (!input || !input.files || !input.files[0]) {
+    if (
+        !input ||
+        !input.files ||
+        !input.files[0]
+    ) {
         return;
     }
 
     const file = input.files[0];
 
-    const status =
-        document.getElementById("saveStatus");
-
-    if (status) {
-        status.textContent = "UPLOADING...";
-    }
-
     try {
 
-        const fileExtension =
-            file.name.split(".").pop();
+        setStatus("UPLOADING...");
+
+        const extension =
+            file.name
+                .split(".")
+                .pop()
+                .toLowerCase();
 
         const filePath =
-            contentKey + "_" +
-            Date.now() + "." +
-            fileExtension;
+            imageKey +
+            "_" +
+            Date.now() +
+            "." +
+            extension;
 
 
-        /* UPLOAD IMAGE */
+        /* UPLOAD FILE */
 
         const { error: uploadError } =
             await supabaseClient
@@ -2251,10 +2256,114 @@ async function uploadSiteImage(
                     }
                 );
 
-
         if (uploadError) {
             throw uploadError;
         }
+
+
+        /* GET PUBLIC URL */
+
+        const { data: publicData } =
+            supabaseClient
+                .storage
+                .from("site-images")
+                .getPublicUrl(filePath);
+
+        const publicUrl =
+            publicData.publicUrl;
+
+
+        /* SAVE URL TO site_images */
+
+        const { data: existing, error: findError } =
+            await supabaseClient
+                .from("site_images")
+                .select("id")
+                .eq("key", imageKey)
+                .maybeSingle();
+
+        if (findError) {
+            throw findError;
+        }
+
+
+        if (existing) {
+
+            const { error } =
+                await supabaseClient
+                    .from("site_images")
+                    .update({
+                        image_url: publicUrl,
+                        alt_text: imageKey,
+                        alt: imageKey,
+                        updated_at:
+                            new Date().toISOString()
+                    })
+                    .eq(
+                        "id",
+                        existing.id
+                    );
+
+            if (error) {
+                throw error;
+            }
+
+        } else {
+
+            const { error } =
+                await supabaseClient
+                    .from("site_images")
+                    .insert({
+                        key: imageKey,
+                        image_url: publicUrl,
+                        alt_text: imageKey,
+                        alt: imageKey
+                    });
+
+            if (error) {
+                throw error;
+            }
+        }
+
+
+        /* UPDATE PREVIEW */
+
+        const preview =
+            document.getElementById(previewId);
+
+        if (preview) {
+            preview.src = publicUrl;
+        }
+
+
+        const name =
+            document.getElementById(nameId);
+
+        if (name) {
+            name.textContent =
+                file.name;
+        }
+
+
+        setStatus("IMAGE SAVED");
+
+    } catch (error) {
+
+        console.error(
+            "IMAGE UPLOAD ERROR:",
+            error
+        );
+
+        setStatus(
+            "IMAGE UPLOAD FAILED"
+        );
+
+        alert(
+            "Image upload failed: " +
+            error.message
+        );
+    }
+}
 
 
         /* GET PUBLIC URL */
