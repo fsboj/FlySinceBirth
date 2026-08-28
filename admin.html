@@ -2772,19 +2772,163 @@ async function loadAllSiteImages() {
 
 async function loadMusic() {
 
-    const { data, error } = await supabaseClient
-        .from("music")
-        .select("*")
-        .order("sort_order", { ascending: true });
+    const container =
+        document.querySelector("#music .item-list");
 
-    if (error) {
-        console.error("MUSIC ERROR:", error);
+    if (!container) {
         return;
     }
 
-    console.log("MUSIC:", data);
-}
+    const { data, error } =
+        await supabaseClient
+            .from("music")
+            .select("*")
+            .order("sort_order", {
+                ascending: true
+            });
 
+    if (error) {
+
+        console.error(
+            "MUSIC LOAD ERROR:",
+            error
+        );
+
+        return;
+    }
+
+    container.innerHTML = "";
+
+    for (const music of data || []) {
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "admin-item";
+
+
+        const info =
+            document.createElement("div");
+
+        info.className =
+            "item-info";
+
+
+        const image =
+            document.createElement("img");
+
+        image.className =
+            "item-image";
+
+        image.alt =
+            music.title || "Music";
+
+
+        if (music.image_url) {
+            image.src =
+                music.image_url;
+        }
+
+
+        const text =
+            document.createElement("div");
+
+
+        const name =
+            document.createElement("div");
+
+        name.className =
+            "item-name";
+
+        name.textContent =
+            music.title ||
+            "Untitled";
+
+
+        const meta =
+            document.createElement("div");
+
+        meta.className =
+            "item-meta";
+
+        meta.textContent =
+            music.category ||
+            music.type ||
+            "MUSIC";
+
+
+        text.appendChild(name);
+        text.appendChild(meta);
+
+
+        info.appendChild(image);
+        info.appendChild(text);
+
+
+        const actions =
+            document.createElement("div");
+
+        actions.className =
+            "actions";
+
+
+        const editButton =
+            document.createElement("button");
+
+        editButton.className =
+            "button";
+
+        editButton.textContent =
+            "EDIT";
+
+
+        editButton.onclick =
+            function() {
+
+                editMusic(
+                    music.id
+                );
+
+            };
+
+
+        const removeButton =
+            document.createElement("button");
+
+        removeButton.className =
+            "button danger";
+
+        removeButton.textContent =
+            "REMOVE";
+
+
+        removeButton.onclick =
+            function() {
+
+                removeMusic(
+                    music.id
+                );
+
+            };
+
+
+        actions.appendChild(
+            editButton
+        );
+
+        actions.appendChild(
+            removeButton
+        );
+
+
+        item.appendChild(info);
+        item.appendChild(actions);
+
+
+        container.appendChild(item);
+    }
+}
 
 /* =====================================================
    ARTISTS
