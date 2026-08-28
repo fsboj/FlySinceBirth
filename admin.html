@@ -1401,9 +1401,11 @@ body {
 
     <div class="actions">
 
-        <button class="button primary">
-            + ADD ARTIST
-        </button>
+    <button
+    class="button primary"
+    onclick="addArtist()">
+    + ADD ARTIST
+</button>
 
     </div>
 
@@ -1765,32 +1767,34 @@ body {
     </div>
 
 
-    <div class="item-list">
+   <div
+    id="eventsList"
+    class="item-list">
 
-        <div class="admin-item">
+    <div class="admin-item">
 
-            <div>
-
-                <div class="item-name">
-                    No Events Yet
-                </div>
-
-                <div class="item-meta">
-                    Add your first event below.
-                </div>
-
-            </div>
-
+        <div class="item-name">
+            Loading Events...
         </div>
+
+        <div class="item-meta">
+            Loading from Supabase
+        </div>
+
+    </div>
+
+</div>
 
     </div>
 
 
     <div class="actions">
 
-        <button class="button primary">
-            + ADD EVENT
-        </button>
+        <button
+    class="button primary"
+    onclick="addEvent()">
+    + ADD EVENT
+</button>
 
     </div>
 
@@ -3251,40 +3255,572 @@ async function removeMusic(id) {
 
 async function loadArtists() {
 
-    const { data, error } = await supabaseClient
-        .from("artists")
-        .select("*")
-        .order("sort_order", { ascending: true });
+    const container =
+        document.querySelector("#artists .item-list");
+
+    if (!container) return;
+
+    const { data, error } =
+        await supabaseClient
+            .from("artists")
+            .select("*")
+            .order("sort_order", {
+                ascending: true
+            });
 
     if (error) {
-        console.error("ARTISTS ERROR:", error);
+
+        console.error(
+            "ARTISTS LOAD ERROR:",
+            error
+        );
+
         return;
     }
 
-    console.log("ARTISTS:", data);
+    container.innerHTML = "";
+
+    (data || []).forEach(function(artist) {
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "admin-item";
+
+        item.innerHTML = `
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="${artist.image_url || "fsblogo.PNG"}"
+                    alt="${escapeHtml(
+                        artist.name || "Artist"
+                    )}"
+                >
+
+                <div>
+
+                    <div class="item-name">
+                        ${escapeHtml(
+                            artist.name ||
+                            "Unnamed Artist"
+                        )}
+                    </div>
+
+                    <div class="item-meta">
+                        ${escapeHtml(
+                            artist.slug ||
+                            "ARTIST"
+                        )}
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button
+                    class="button"
+                    onclick="editArtist('${artist.id}')">
+                    EDIT
+                </button>
+
+                <button
+                    class="button danger"
+                    onclick="removeArtist('${artist.id}')">
+                    REMOVE
+                </button>
+
+            </div>
+        `;
+
+        container.appendChild(item);
+
+    });
+}
+async function addArtist() {
+
+    const name =
+        prompt("Artist name:");
+
+    if (!name) return;
+
+    const slug =
+        prompt("Artist slug:") || "";
+
+    const imageUrl =
+        prompt("Artist image URL:") || "";
+
+
+    const { data } =
+        await supabaseClient
+            .from("artists")
+            .select("sort_order")
+            .order(
+                "sort_order",
+                {
+                    ascending: false
+                }
+            )
+            .limit(1);
+
+
+    const nextOrder =
+        data && data.length
+            ? (data[0].sort_order || 0) + 1
+            : 1;
+
+
+    const { error } =
+        await supabaseClient
+            .from("artists")
+            .insert({
+                name: name,
+                slug: slug,
+                image_url: imageUrl,
+                sort_order: nextOrder
+            });
+
+
+    if (error) {
+
+        alert(
+            "Could not add artist:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    await loadArtists();
+
+    setStatus("ARTIST ADDED");
 }
 
 
+async function editArtist(id) {
+
+    const { data, error } =
+        await supabaseClient
+            .from("artists")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+
+    if (error) {
+
+        alert(
+            "Could not load artist:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    const name =
+        prompt(
+            "Artist name:",
+            data.name || ""
+        );
+
+    if (name === null) return;
+
+
+    const slug =
+        prompt(
+            "Artist slug:",
+            data.slug || ""
+        );
+
+    if (slug === null) return;
+
+
+    const imageUrl =
+        prompt(
+            "Artist image URL:",
+            data.image_url || ""
+        );
+
+    if (imageUrl === null) return;
+
+
+    const { error: updateError } =
+        await supabaseClient
+            .from("artists")
+            .update({
+                name: name,
+                slug: slug,
+                image_url: imageUrl
+            })
+            .eq("id", id);
+
+
+    if (updateError) {
+
+        alert(
+            "Could not update artist:\n\n" +
+            updateError.message
+        );
+
+        return;
+    }
+
+
+    await loadArtists();
+
+    setStatus("ARTIST UPDATED");
+}
+
+
+async function removeArtist(id) {
+
+    if (
+        !confirm(
+            "Are you sure you want to remove this artist?"
+        )
+    ) {
+        return;
+    }
+
+
+    const { error } =
+        await supabaseClient
+            .from("artists")
+            .delete()
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(
+            "Could not remove artist:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    await loadArtists();
+
+    setStatus("ARTIST REMOVED");
+}
 /* =====================================================
    EVENTS
 ===================================================== */
 
 async function loadEvents() {
 
-    const { data, error } = await supabaseClient
-        .from("events")
-        .select("*")
-        .order("sort_order", { ascending: true });
+    const container =
+        document.getElementById("eventsList");
+
+    if (!container) return;
+
+    const { data, error } =
+        await supabaseClient
+            .from("events")
+            .select("*")
+            .order("sort_order", {
+                ascending: true
+            });
 
     if (error) {
-        console.error("EVENTS ERROR:", error);
+
+        console.error(
+            "EVENTS LOAD ERROR:",
+            error
+        );
+
+        container.innerHTML = `
+            <div class="admin-item">
+                <div class="item-name">
+                    ERROR LOADING EVENTS
+                </div>
+
+                <div class="item-meta">
+                    ${escapeHtml(error.message)}
+                </div>
+            </div>
+        `;
+
         return;
     }
 
-    console.log("EVENTS:", data);
+    container.innerHTML = "";
+
+    (data || []).forEach(function(event) {
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "admin-item";
+
+        item.innerHTML = `
+
+            <div class="item-info">
+
+                <div class="item-image">
+                    ${
+                        event.image_url
+                            ? `<img
+                                src="${event.image_url}"
+                                style="width:100%;height:100%;object-fit:cover;"
+                              >`
+                            : ""
+                    }
+                </div>
+
+                <div>
+
+                    <div class="item-name">
+                        ${escapeHtml(
+                            event.title ||
+                            event.name ||
+                            "Untitled Event"
+                        )}
+                    </div>
+
+                    <div class="item-meta">
+                        ${escapeHtml(
+                            event.date ||
+                            event.event_date ||
+                            "DATE NOT SET"
+                        )}
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <button
+                    class="button"
+                    onclick="editEvent('${event.id}')">
+                    EDIT
+                </button>
+
+                <button
+                    class="button danger"
+                    onclick="removeEvent('${event.id}')">
+                    REMOVE
+                </button>
+
+            </div>
+        `;
+
+        container.appendChild(item);
+    });
+}
+async function addEvent() {
+
+    const title =
+        prompt("Event name:");
+
+    if (!title) return;
+
+    const date =
+        prompt("Event date:");
+
+    const location =
+        prompt("Event location:") || "";
+
+    const link =
+        prompt("Event link:") || "";
+
+    const imageUrl =
+        prompt("Event image URL:") || "";
+
+
+    const { data } =
+        await supabaseClient
+            .from("events")
+            .select("sort_order")
+            .order(
+                "sort_order",
+                {
+                    ascending: false
+                }
+            )
+            .limit(1);
+
+
+    const nextOrder =
+        data && data.length
+            ? (data[0].sort_order || 0) + 1
+            : 1;
+
+
+    const { error } =
+        await supabaseClient
+            .from("events")
+            .insert({
+                title: title,
+                date: date || "",
+                location: location,
+                link_url: link,
+                image_url: imageUrl,
+                sort_order: nextOrder
+            });
+
+
+    if (error) {
+
+        alert(
+            "Could not add event:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    await loadEvents();
+
+    setStatus("EVENT ADDED");
 }
 
 
+async function editEvent(id) {
+
+    const { data, error } =
+        await supabaseClient
+            .from("events")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+
+    if (error) {
+
+        alert(
+            "Could not load event:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    const title =
+        prompt(
+            "Event name:",
+            data.title ||
+            data.name ||
+            ""
+        );
+
+    if (title === null) return;
+
+
+    const date =
+        prompt(
+            "Event date:",
+            data.date ||
+            data.event_date ||
+            ""
+        );
+
+    if (date === null) return;
+
+
+    const location =
+        prompt(
+            "Event location:",
+            data.location || ""
+        );
+
+    if (location === null) return;
+
+
+    const link =
+        prompt(
+            "Event link:",
+            data.link_url || ""
+        );
+
+    if (link === null) return;
+
+
+    const imageUrl =
+        prompt(
+            "Event image URL:",
+            data.image_url || ""
+        );
+
+    if (imageUrl === null) return;
+
+
+    const { error: updateError } =
+        await supabaseClient
+            .from("events")
+            .update({
+                title: title,
+                date: date,
+                location: location,
+                link_url: link,
+                image_url: imageUrl
+            })
+            .eq("id", id);
+
+
+    if (updateError) {
+
+        alert(
+            "Could not update event:\n\n" +
+            updateError.message
+        );
+
+        return;
+    }
+
+
+    await loadEvents();
+
+    setStatus("EVENT UPDATED");
+}
+
+
+async function removeEvent(id) {
+
+    if (
+        !confirm(
+            "Are you sure you want to remove this event?"
+        )
+    ) {
+        return;
+    }
+
+
+    const { error } =
+        await supabaseClient
+            .from("events")
+            .delete()
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(
+            "Could not remove event:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    await loadEvents();
+
+    setStatus("EVENT REMOVED");
+}
 /* =====================================================
    SECTION BACKGROUNDS
 ===================================================== */
