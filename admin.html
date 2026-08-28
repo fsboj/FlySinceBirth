@@ -1970,104 +1970,81 @@ function previewSite() {
 async function loadSiteImages() {
 
     const { data, error } = await supabaseClient
-        .from("site_content")
-        .select("key, value")
+        .from("site_images")
+        .select("*")
         .in("key", [
-    "hero_image",
-    "project_image",
-    "merch_image",
-    "top_left_image",
-    "menu_image"
-]);
+            "hero_image",
+            "project_image",
+            "merch_image",
+            "top_left_image",
+            "menu_image"
+        ]);
 
     if (error) {
-        console.error("Could not load site images:", error);
+        console.error("SITE IMAGES LOAD ERROR:", error);
+        return;
+    }
+
+    if (!data) {
         return;
     }
 
     data.forEach(function(item) {
-if (item.key === "top_left_image") {
 
-    const preview =
-        document.getElementById("topLeftImagePreview");
+        const previewMap = {
 
-    const name =
-        document.getElementById("topLeftImageName");
+            hero_image: [
+                "heroImagePreview",
+                "heroImageName"
+            ],
 
-    if (preview) {
-        preview.src = item.value;
-    }
+            project_image: [
+                "projectImagePreview",
+                "projectImageName"
+            ],
 
-    if (name) {
-        name.textContent = "Supabase image";
-    }
-}
+            merch_image: [
+                "merchImagePreview",
+                "merchImageName"
+            ],
 
+            top_left_image: [
+                "topLeftImagePreview",
+                "topLeftImageName"
+            ],
 
-if (item.key === "menu_image") {
+            menu_image: [
+                "menuImagePreview",
+                "menuImageName"
+            ]
 
-    const preview =
-        document.getElementById("menuImagePreview");
+        };
 
-    const name =
-        document.getElementById("menuImageName");
+        const ids = previewMap[item.key];
 
-    if (preview) {
-        preview.src = item.value;
-    }
-
-    if (name) {
-        name.textContent = "Supabase image";
-    }
-}
-        if (item.key === "hero_image") {
-
-            const preview =
-                document.getElementById("heroImagePreview");
-
-            const name =
-                document.getElementById("heroImageName");
-
-            if (preview) {
-                preview.src = item.value;
-            }
-
-            if (name) {
-                name.textContent = "Supabase image";
-            }
+        if (!ids) {
+            return;
         }
 
+        const preview =
+            document.getElementById(ids[0]);
 
-        if (item.key === "project_image") {
+        const name =
+            document.getElementById(ids[1]);
 
-            const preview =
-                document.getElementById("projectImagePreview");
-
-            const name =
-                document.getElementById("projectImageName");
-
-            if (preview) {
-                preview.src = item.value;
-            }
-
-            if (name) {
-                name.textContent = "Supabase image";
-            }
+        if (preview && item.image_url) {
+            preview.src = item.image_url;
         }
 
+        if (name) {
+            name.textContent =
+                item.image_url
+                    ? "Supabase image"
+                    : "No image";
+        }
 
-        if (item.key === "merch_image") {
-
-            const preview =
-                document.getElementById("merchImagePreview");
-
-            const name =
-                document.getElementById("merchImageName");
-
-            if (preview) {
-                preview.src = item.value;
-            }
-
+    });
+}
             if (name) {
                 name.textContent = "Supabase image";
             }
