@@ -1622,101 +1622,23 @@ body {
 
     <div class="item-list">
 
-        <div class="admin-item">
+       <div
+    id="videosList"
+    class="item-list">
 
-            <div class="item-info">
+    <div class="admin-item">
 
-                <img
-                    class="item-image"
-                    src="fsbchrome.PNG">
-
-                <div>
-
-                    <div class="item-name">
-                        Video 01
-                    </div>
-
-                    <div class="item-meta">
-                        video-1
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="actions">
-
-                <button class="button">
-                    EDIT
-                </button>
-
-                <button class="button danger">
-                    REMOVE
-                </button>
-
-            </div>
-
+        <div class="item-name">
+            Loading Videos...
         </div>
 
-
-        <div class="admin-item">
-
-            <div class="item-info">
-
-                <img
-                    class="item-image"
-                    src="flysincebirthchrome.PNG">
-
-                <div>
-
-                    <div class="item-name">
-                        Video 02
-                    </div>
-
-                    <div class="item-meta">
-                        video-2
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="actions">
-
-                <button class="button">
-                    EDIT
-                </button>
-
-                <button class="button danger">
-                    REMOVE
-                </button>
-
-            </div>
-
+        <div class="item-meta">
+            Loading from Supabase
         </div>
 
+    </div>
 
-        <div class="admin-item">
-
-            <div class="item-info">
-
-                <img
-                    class="item-image"
-                    src="fsbchrome.PNG">
-
-                <div>
-
-                    <div class="item-name">
-                        Video 03
-                    </div>
-
-                    <div class="item-meta">
-                        video-3
-                    </div>
-
-                </div>
-
-            </div>
+</div>
 
             <div class="actions">
 
@@ -1737,9 +1659,11 @@ body {
 
     <div class="actions">
 
-        <button class="button primary">
-            + ADD VIDEO
-        </button>
+      <button
+    class="button primary"
+    onclick="addVideo()">
+    + ADD VIDEO
+</button>
 
     </div>
 
@@ -3821,6 +3745,318 @@ async function removeEvent(id) {
 
     setStatus("EVENT REMOVED");
 }
+    /* =====================================================
+   VIDEOS
+===================================================== */
+
+async function loadVideos() {
+
+    const container =
+        document.getElementById("videosList");
+
+    if (!container) return;
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("videos")
+            .select("*")
+            .order("sort_order", {
+                ascending: true
+            });
+
+
+    if (error) {
+
+        console.error(
+            "VIDEOS LOAD ERROR:",
+            error
+        );
+
+        container.innerHTML = `
+            <div class="admin-item">
+
+                <div class="item-name">
+                    ERROR LOADING VIDEOS
+                </div>
+
+                <div class="item-meta">
+                    ${escapeHtml(error.message)}
+                </div>
+
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    (data || []).forEach(function(video) {
+
+        const item =
+            document.createElement("div");
+
+
+        item.className =
+            "admin-item";
+
+
+        item.innerHTML = `
+
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="${video.image_url || "fsbchrome.PNG"}"
+                    alt="${escapeHtml(
+                        video.title ||
+                        "Video"
+                    )}"
+                >
+
+                <div>
+
+                    <div class="item-name">
+                        ${escapeHtml(
+                            video.title ||
+                            "Untitled Video"
+                        )}
+                    </div>
+
+                    <div class="item-meta">
+                        ${escapeHtml(
+                            video.video_url ||
+                            "NO VIDEO URL"
+                        )}
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="actions">
+
+                <button
+                    class="button"
+                    onclick="editVideo('${video.id}')">
+                    EDIT
+                </button>
+
+
+                <button
+                    class="button danger"
+                    onclick="removeVideo('${video.id}')">
+                    REMOVE
+                </button>
+
+            </div>
+
+        `;
+
+
+        container.appendChild(item);
+
+    });
+}
+
+
+/* =====================================================
+   ADD VIDEO
+===================================================== */
+
+async function addVideo() {
+
+    const title =
+        prompt("Video title:");
+
+    if (!title) return;
+
+
+    const videoUrl =
+        prompt("Video URL:") || "";
+
+
+    const imageUrl =
+        prompt("Thumbnail image URL:") || "";
+
+
+    const { data } =
+        await supabaseClient
+            .from("videos")
+            .select("sort_order")
+            .order(
+                "sort_order",
+                {
+                    ascending: false
+                }
+            )
+            .limit(1);
+
+
+    const nextOrder =
+        data && data.length
+            ? (data[0].sort_order || 0) + 1
+            : 1;
+
+
+    const { error } =
+        await supabaseClient
+            .from("videos")
+            .insert({
+                title: title,
+                video_url: videoUrl,
+                image_url: imageUrl,
+                sort_order: nextOrder
+            });
+
+
+    if (error) {
+
+        alert(
+            "Could not add video:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    await loadVideos();
+
+    setStatus(
+        "VIDEO ADDED"
+    );
+}
+
+
+/* =====================================================
+   EDIT VIDEO
+===================================================== */
+
+async function editVideo(id) {
+
+    const { data, error } =
+        await supabaseClient
+            .from("videos")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+
+    if (error) {
+
+        alert(
+            "Could not load video:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    const title =
+        prompt(
+            "Video title:",
+            data.title || ""
+        );
+
+
+    if (title === null) return;
+
+
+    const videoUrl =
+        prompt(
+            "Video URL:",
+            data.video_url || ""
+        );
+
+
+    if (videoUrl === null) return;
+
+
+    const imageUrl =
+        prompt(
+            "Thumbnail image URL:",
+            data.image_url || ""
+        );
+
+
+    if (imageUrl === null) return;
+
+
+    const { error: updateError } =
+        await supabaseClient
+            .from("videos")
+            .update({
+                title: title,
+                video_url: videoUrl,
+                image_url: imageUrl
+            })
+            .eq("id", id);
+
+
+    if (updateError) {
+
+        alert(
+            "Could not update video:\n\n" +
+            updateError.message
+        );
+
+        return;
+    }
+
+
+    await loadVideos();
+
+    setStatus(
+        "VIDEO UPDATED"
+    );
+}
+
+
+/* =====================================================
+   REMOVE VIDEO
+===================================================== */
+
+async function removeVideo(id) {
+
+    if (
+        !confirm(
+            "Are you sure you want to remove this video?"
+        )
+    ) {
+        return;
+    }
+
+
+    const { error } =
+        await supabaseClient
+            .from("videos")
+            .delete()
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(
+            "Could not remove video:\n\n" +
+            error.message
+        );
+
+        return;
+    }
+
+
+    await loadVideos();
+
+    setStatus(
+        "VIDEO REMOVED"
+    );
+}
 /* =====================================================
    SECTION BACKGROUNDS
 ===================================================== */
@@ -3868,7 +4104,8 @@ async function loadAdminData() {
 
     await loadArtists();
 
-    await loadEvents();
+    await loaawait loadEvents();
+await loadVideos();dEvents();
 
     await loadSectionBackgrounds();
 
