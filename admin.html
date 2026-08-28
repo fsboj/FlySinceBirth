@@ -1801,9 +1801,11 @@ body {
      SECTIONS
 ===================================================== -->
 
-<section
-    id="sections"
-    class="panel">
+<!-- =====================================================
+     SECTIONS
+===================================================== -->
+
+<section id="sections" class="panel">
 
     <div class="panel-header">
 
@@ -1812,182 +1814,34 @@ body {
         </div>
 
         <div class="panel-description">
-            Add, remove, rename and manage website sections.
+            Manage website sections, images and backgrounds.
         </div>
 
     </div>
 
-
-    <div class="item-list">
-
-        <div class="admin-item">
-
-            <div>
-                <div class="item-name">
-                    Project FSB
-                </div>
-
-                <div class="item-meta">
-                    #project
-                </div>
-            </div>
-
-            <div class="actions">
-
-                <button class="button">
-                    EDIT
-                </button>
-
-                <button class="button danger">
-                    REMOVE
-                </button>
-
-            </div>
-
-        </div>
-
+    <div id="sectionsList" class="item-list">
 
         <div class="admin-item">
-
-            <div>
-                <div class="item-name">
-                    Music
-                </div>
-
-                <div class="item-meta">
-                    #music
-                </div>
-            </div>
-
-            <div class="actions">
-
-                <button class="button">
-                    EDIT
-                </button>
-
-                <button class="button danger">
-                    REMOVE
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="admin-item">
-
-            <div>
-                <div class="item-name">
-                    Artists
-                </div>
-
-                <div class="item-meta">
-                    #artists
+            <div class="item-info">
+                <div>
+                    <div class="item-name">
+                        Loading Sections...
+                    </div>
+                    <div class="item-meta">
+                        Loading from Supabase
+                    </div>
                 </div>
             </div>
-
-            <div class="actions">
-
-                <button class="button">
-                    EDIT
-                </button>
-
-                <button class="button danger">
-                    REMOVE
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="admin-item">
-
-            <div>
-                <div class="item-name">
-                    FSB Merch
-                </div>
-
-                <div class="item-meta">
-                    #clothing
-                </div>
-            </div>
-
-            <div class="actions">
-
-                <button class="button">
-                    EDIT
-                </button>
-
-                <button class="button danger">
-                    REMOVE
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="admin-item">
-
-            <div>
-                <div class="item-name">
-                    Videos
-                </div>
-
-                <div class="item-meta">
-                    #videos
-                </div>
-            </div>
-
-            <div class="actions">
-
-                <button class="button">
-                    EDIT
-                </button>
-
-                <button class="button danger">
-                    REMOVE
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="admin-item">
-
-            <div>
-                <div class="item-name">
-                    Events
-                </div>
-
-                <div class="item-meta">
-                    #events
-                </div>
-            </div>
-
-            <div class="actions">
-
-                <button class="button">
-                    EDIT
-                </button>
-
-                <button class="button danger">
-                    REMOVE
-                </button>
-
-            </div>
-
         </div>
 
     </div>
-
 
     <div class="actions">
 
-        <button class="button primary">
-            + ADD SECTION
+        <button
+            class="button"
+            onclick="loadSections()">
+            REFRESH
         </button>
 
     </div>
@@ -2119,10 +1973,12 @@ async function loadSiteImages() {
         .from("site_content")
         .select("key, value")
         .in("key", [
-            "hero_image",
-            "project_image",
-            "merch_image"
-        ]);
+    "hero_image",
+    "project_image",
+    "merch_image",
+    "top_left_image",
+    "menu_image"
+]);
 
     if (error) {
         console.error("Could not load site images:", error);
@@ -2502,6 +2358,177 @@ async function uploadSiteImage(
         );
     }
 }
+  /* =====================================================
+   FSB ADMIN - SUPABASE CONTENT MANAGER
+===================================================== */
+
+
+/* =====================================================
+   SITE IMAGES
+===================================================== */
+
+async function loadAllSiteImages() {
+
+    const { data, error } = await supabaseClient
+        .from("site_images")
+        .select("*")
+        .order("id", { ascending: true });
+
+    if (error) {
+        console.error("SITE IMAGES ERROR:", error);
+        return;
+    }
+
+    console.log("SITE IMAGES:", data);
+
+    data.forEach(function(item) {
+
+        if (!item.key || !item.image_url) return;
+
+        const previewMap = {
+
+            hero_image: "heroImagePreview",
+            project_image: "projectImagePreview",
+            merch_image: "merchImagePreview",
+            top_left_image: "topLeftImagePreview",
+            menu_image: "menuImagePreview"
+
+        };
+
+        const previewId = previewMap[item.key];
+
+        if (previewId) {
+
+            const preview =
+                document.getElementById(previewId);
+
+            if (preview) {
+                preview.src = item.image_url;
+            }
+        }
+    });
+}
+
+
+/* =====================================================
+   MUSIC
+===================================================== */
+
+async function loadMusic() {
+
+    const { data, error } = await supabaseClient
+        .from("music")
+        .select("*")
+        .order("sort_order", { ascending: true });
+
+    if (error) {
+        console.error("MUSIC ERROR:", error);
+        return;
+    }
+
+    console.log("MUSIC:", data);
+}
+
+
+/* =====================================================
+   ARTISTS
+===================================================== */
+
+async function loadArtists() {
+
+    const { data, error } = await supabaseClient
+        .from("artists")
+        .select("*")
+        .order("sort_order", { ascending: true });
+
+    if (error) {
+        console.error("ARTISTS ERROR:", error);
+        return;
+    }
+
+    console.log("ARTISTS:", data);
+}
+
+
+/* =====================================================
+   EVENTS
+===================================================== */
+
+async function loadEvents() {
+
+    const { data, error } = await supabaseClient
+        .from("events")
+        .select("*")
+        .order("sort_order", { ascending: true });
+
+    if (error) {
+        console.error("EVENTS ERROR:", error);
+        return;
+    }
+
+    console.log("EVENTS:", data);
+}
+
+
+/* =====================================================
+   SECTION BACKGROUNDS
+===================================================== */
+
+async function loadSectionBackgrounds() {
+
+    const { data, error } = await supabaseClient
+        .from("site_images")
+        .select("*")
+        .in("key", [
+            "hero_background",
+            "project_background",
+            "music_background",
+            "artists_background",
+            "merch_background",
+            "videos_background",
+            "events_background"
+        ]);
+
+    if (error) {
+        console.error(
+            "SECTION BACKGROUND ERROR:",
+            error
+        );
+
+        return;
+    }
+
+    console.log(
+        "SECTION BACKGROUNDS:",
+        data
+    );
+}
+
+
+/* =====================================================
+   LOAD EVERYTHING
+===================================================== */
+
+async function loadAdminData() {
+
+    await loadAllSiteImages();
+
+    await loadMusic();
+
+    await loadArtists();
+
+    await loadEvents();
+
+    await loadSectionBackgrounds();
+
+    console.log(
+        "FSB ADMIN DATA LOADED"
+    );
+}
+
+
+loadAdminData();
+    
 </script>
 
 
