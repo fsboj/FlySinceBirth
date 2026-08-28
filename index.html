@@ -1351,6 +1351,46 @@ async function loadSiteContent() {
         }
 
     }
+       /* MERCH IMAGE */
+
+    if (content.merch_image) {
+
+        const merchImage =
+            document.querySelector(".clothing-box img");
+
+        if (merchImage) {
+            merchImage.src = content.merch_image;
+        }
+
+    }
+
+
+    /* TOP LEFT IMAGE */
+
+    if (content.top_left_image) {
+
+        const topLeftImage =
+            document.querySelector(".nav-logo img");
+
+        if (topLeftImage) {
+            topLeftImage.src = content.top_left_image;
+        }
+
+    }
+
+
+    /* MENU IMAGE */
+
+    if (content.menu_image) {
+
+        const menuImage =
+            document.querySelector(".menu-small img");
+
+        if (menuImage) {
+            menuImage.src = content.menu_image;
+        }
+
+    }
     /* =====================================================
        HERO
     ===================================================== */
