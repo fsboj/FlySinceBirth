@@ -8,7 +8,323 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>FSB Admin</title>
+/* =========================================================
+   FSB ADMIN CMS — STAGE 2
+   ========================================================= */
 
+:root {
+    --fsb-bg: #050505;
+    --fsb-panel: #0c0c0c;
+    --fsb-panel-2: #111111;
+    --fsb-border: #252525;
+    --fsb-border-light: #353535;
+    --fsb-text: #ffffff;
+    --fsb-muted: #777777;
+    --fsb-sidebar: 245px;
+}
+
+/* Main CMS layout */
+
+body {
+    background: var(--fsb-bg) !important;
+}
+
+.admin {
+    display: flex !important;
+    min-height: 100vh;
+    padding: 0 !important;
+}
+
+/* Sidebar */
+
+.admin-header {
+    width: var(--fsb-sidebar);
+    min-width: var(--fsb-sidebar);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    padding: 28px 18px !important;
+    margin: 0 !important;
+    border-right: 1px solid var(--fsb-border) !important;
+    border-bottom: 0 !important;
+    background: #080808;
+    z-index: 100;
+}
+
+.admin-logo {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 10px 25px;
+    border-bottom: 1px solid var(--fsb-border);
+}
+
+.admin-logo img {
+    width: 42px !important;
+    height: 42px !important;
+}
+
+.admin-title {
+    font-size: 18px !important;
+    letter-spacing: 2px !important;
+}
+
+.admin-status {
+    margin-top: 15px;
+    margin-left: 10px;
+    font-size: 8px !important;
+    letter-spacing: 2px !important;
+}
+
+/* Navigation */
+
+.admin-nav {
+    width: 100%;
+    display: flex !important;
+    flex-direction: column;
+    gap: 4px !important;
+    margin: 25px 0 0 !important;
+}
+
+.admin-nav button {
+    width: 100%;
+    text-align: left;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 5px;
+    color: #777 !important;
+    padding: 13px 12px !important;
+    font-size: 9px !important;
+    letter-spacing: 2px !important;
+    transition: all .2s ease;
+}
+
+.admin-nav button:hover {
+    background: #151515 !important;
+    color: #fff !important;
+}
+
+.admin-nav button.active {
+    background: #fff !important;
+    color: #000 !important;
+}
+
+/* Main content */
+
+.panel {
+    width: calc(100% - var(--fsb-sidebar));
+    min-height: 100vh;
+    margin-left: var(--fsb-sidebar);
+    padding: 45px !important;
+    border: 0 !important;
+    background: var(--fsb-bg) !important;
+}
+
+.panel:not(.active) {
+    display: none !important;
+}
+
+.panel.active {
+    display: block !important;
+}
+
+/* Panel headings */
+
+.panel-header {
+    padding-bottom: 22px;
+    margin-bottom: 28px !important;
+    border-bottom: 1px solid var(--fsb-border);
+}
+
+.panel-title {
+    font-size: 30px !important;
+    letter-spacing: -1px !important;
+}
+
+.panel-description {
+    color: var(--fsb-muted) !important;
+    font-size: 11px !important;
+    margin-top: 8px;
+}
+
+/* Cards */
+
+.admin-item {
+    background: var(--fsb-panel) !important;
+    border: 1px solid var(--fsb-border) !important;
+    border-radius: 8px;
+    padding: 18px !important;
+    transition: border-color .2s ease;
+}
+
+.admin-item:hover {
+    border-color: var(--fsb-border-light) !important;
+}
+
+.item-name {
+    font-size: 13px !important;
+}
+
+.item-meta {
+    color: #666 !important;
+    font-size: 8px !important;
+    letter-spacing: 1.5px !important;
+}
+
+/* Buttons */
+
+.button {
+    border-radius: 5px !important;
+    background: #111 !important;
+    border: 1px solid #333 !important;
+    color: #aaa !important;
+    transition: all .2s ease;
+}
+
+.button:hover {
+    background: #fff !important;
+    color: #000 !important;
+    border-color: #fff !important;
+}
+
+.button.primary {
+    background: #fff !important;
+    color: #000 !important;
+    border-color: #fff !important;
+}
+
+.button.danger {
+    color: #c66 !important;
+    border-color: #3b2222 !important;
+}
+
+.button.danger:hover {
+    background: #c66 !important;
+    color: #000 !important;
+}
+
+/* Forms */
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    background: #080808 !important;
+    border: 1px solid var(--fsb-border) !important;
+    border-radius: 5px;
+    color: #fff !important;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #777 !important;
+}
+
+.form-group label {
+    color: #777 !important;
+    font-size: 8px !important;
+    letter-spacing: 2px !important;
+}
+
+/* Image previews */
+
+.item-image {
+    width: 70px !important;
+    height: 70px !important;
+    border-radius: 4px;
+    background: #151515 !important;
+    object-fit: cover;
+}
+
+/* Upload areas */
+
+.upload-area {
+    background: #080808;
+    border: 1px dashed #333 !important;
+    border-radius: 7px;
+    transition: border-color .2s ease;
+}
+
+.upload-area:hover {
+    border-color: #777 !important;
+}
+
+/* Save bar */
+
+.save-bar {
+    background: rgba(8,8,8,.96) !important;
+    border: 1px solid var(--fsb-border) !important;
+    border-radius: 7px;
+    backdrop-filter: blur(10px);
+}
+
+.save-status {
+    color: #777 !important;
+}
+
+/* Modal */
+
+.modal {
+    background: rgba(0,0,0,.82) !important;
+    backdrop-filter: blur(5px);
+}
+
+.modal-box {
+    background: #0b0b0b !important;
+    border: 1px solid #333 !important;
+    border-radius: 8px;
+}
+
+/* Mobile */
+
+@media (max-width: 900px) {
+
+    .admin-header {
+        width: 190px;
+        min-width: 190px;
+    }
+
+    .panel {
+        width: calc(100% - 190px);
+        margin-left: 190px;
+        padding: 30px !important;
+    }
+
+}
+
+@media (max-width: 650px) {
+
+    .admin {
+        display: block !important;
+    }
+
+    .admin-header {
+        position: relative;
+        width: 100%;
+        height: auto;
+        min-width: 0;
+        border-right: 0 !important;
+        border-bottom: 1px solid var(--fsb-border) !important;
+    }
+
+    .admin-nav {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .panel {
+        width: 100%;
+        margin-left: 0;
+        padding: 25px 18px !important;
+    }
+
+}
 <style>
 
 * {
