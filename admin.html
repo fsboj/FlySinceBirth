@@ -3259,9 +3259,9 @@ async function loadEvents() {
 
                 <div class="item-image">
                     ${
-                        event.image_url
+                       event.image
                             ? `<img
-                                src="${event.image_url}"
+                                event.image
                                 style="width:100%;height:100%;object-fit:cover;"
                               >`
                             : ""
@@ -3356,7 +3356,7 @@ async function addEvent() {
                 title: title,
                 date: date || "",
                 location: location,
-                link_url: link,
+                link: link,
                 image_url: imageUrl,
                 sort_order: nextOrder
             });
