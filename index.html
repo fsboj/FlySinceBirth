@@ -1006,59 +1006,10 @@ footer {
 
 <div class="artist-grid">
 
-    <div class="artist-card" data-id="artist-1">
-
-        <img
-            src="fsblogo.PNG"
-            alt="Artist 01">
-
-        <div class="artist-info">
-
-            <div class="card-title">
-                Artist 01
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <div class="artist-card" data-id="artist-2">
-
-        <img
-            src="fsblogo.PNG"
-            alt="Artist 02">
-
-        <div class="artist-info">
-
-            <div class="card-title">
-                Artist 02
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <div class="artist-card" data-id="artist-3">
-
-        <img
-            src="fsblogo.PNG"
-            alt="Artist 03">
-
-        <div class="artist-info">
-
-            <div class="card-title">
-                Artist 03
-            </div>
-
-        </div>
-
-    </div>
-
+<div
+    id="artistGrid"
+    class="artist-grid">
 </div>
-
-
     </div>
 
 </section>
@@ -1456,6 +1407,87 @@ async function loadSiteImages() {
     });
 
 }
+async function loadArtists() {
+
+    const grid =
+        document.getElementById("artistGrid");
+
+    if (!grid) return;
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("artists")
+            .select("*")
+            .order("sort_order", {
+                ascending: true
+            });
+
+
+    if (error) {
+
+        console.error(
+            "Could not load artists:",
+            error
+        );
+
+        return;
+    }
+
+
+    grid.innerHTML = "";
+
+
+    (data || []).forEach(function(artist) {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "artist-card";
+
+
+        const image =
+            document.createElement("img");
+
+        image.src =
+            artist.image_url ||
+            "fsblogo.PNG";
+
+        image.alt =
+            artist.name ||
+            "Artist";
+
+
+        const info =
+            document.createElement("div");
+
+        info.className =
+            "artist-info";
+
+
+        const name =
+            document.createElement("div");
+
+        name.className =
+            "card-title";
+
+        name.textContent =
+            artist.name ||
+            "Artist";
+
+
+        info.appendChild(name);
+
+        card.appendChild(image);
+        card.appendChild(info);
+
+        grid.appendChild(card);
+
+    });
+
+}
+   
 async function loadSiteContent() {
 
     const { data, error } = await supabaseClient
@@ -1807,6 +1839,7 @@ async function loadSiteContent() {
 loadSiteContent();
 loadSiteImages();
 loadMusic();
+loadArtists();
    
 </script>   
 <script>
