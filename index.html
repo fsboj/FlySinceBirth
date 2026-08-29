@@ -1574,12 +1574,12 @@ async function loadArtists() {
             "video-card";
 
 
-        if (video.image_url) {
+       if (video.image) {
 
             const image =
                 document.createElement("img");
 
-          image.src = video.image_url;
+         image.src = video.image;
            
             image.alt =
                 video.title ||
@@ -1590,13 +1590,13 @@ async function loadArtists() {
         }
 
 
-        if (video.video_url) {
+        if (video.link) {
 
             card.onclick =
                 function() {
 
                     window.open(
-                        video.video_url,
+                        video.link,
                         "_blank"
                     );
 
@@ -1900,7 +1900,7 @@ async function loadSiteContent() {
         }
     }
 
-}});
+});
 }
 
 
