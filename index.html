@@ -1686,8 +1686,7 @@ async function loadArtists() {
         card.appendChild(location);
 
 
-        if (event.link_url) {
-
+        if (event.link) {
             card.style.cursor =
                 "pointer";
 
@@ -1695,7 +1694,7 @@ async function loadArtists() {
                 function() {
 
                     window.open(
-                       event.link_url,
+                       event.link,
                         "_blank"
                     );
 
@@ -1901,6 +1900,7 @@ async function loadSiteContent() {
     }
 
 });
+  
 }
 
 
