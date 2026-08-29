@@ -2885,7 +2885,6 @@ async function editMusic(id) {
         await supabaseClient
             .from("music")
             .update({
-               .update({
     title: title,
     link: link || ""
 })
