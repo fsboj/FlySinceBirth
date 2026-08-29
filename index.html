@@ -1400,10 +1400,10 @@ async function loadSiteImages() {
             "music-card";
 
 
-        if (music.image_url) {
+       if (music.image) {
 
-            card.style.backgroundImage =
-                `url("${music.image_url}")`;
+    card.style.backgroundImage =
+        `url("${music.image}")`;
 
             card.style.backgroundSize =
                 "cover";
@@ -1426,11 +1426,7 @@ async function loadSiteImages() {
                 </div>
 
                 <div class="card-subtitle">
-                    ${escapeHtml(
-                        music.artist ||
-                        music.category ||
-                        "LISTEN NOW"
-                    )}
+                  LISTEN NOW
                 </div>
 
             </div>
@@ -1438,15 +1434,15 @@ async function loadSiteImages() {
         `;
 
 
-        if (music.link_url) {
+if (music.link) {
 
             card.onclick =
                 function() {
 
-                    window.open(
-                        music.link_url,
-                        "_blank"
-                    );
+window.open(
+    music.link,
+    "_blank"
+);
 
                 };
 
