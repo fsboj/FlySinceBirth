@@ -2740,9 +2740,9 @@ async function loadMusic() {
                 <div class="item-image">
 
                     ${
-                        music.image_url
+                        music.image
                             ? `<img
-                                src="${music.image_url}"
+                                src="${music.image}"
                                 style="width:100%;height:100%;object-fit:cover;"
                               >`
                             : ""
@@ -2752,20 +2752,16 @@ async function loadMusic() {
 
                 <div>
 
-                    <div class="item-name">
-                        ${escapeHtml(
-                            music.title ||
-                            "Untitled"
-                        )}
-                    </div>
+                   <div class="item-name">
+    ${escapeHtml(
+        music.title ||
+        "Untitled"
+    )}
+</div>
 
-                    <div class="item-meta">
-                        ${escapeHtml(
-                            music.artist ||
-                            music.category ||
-                            "MUSIC"
-                        )}
-                    </div>
+<div class="item-meta">
+    MUSIC
+</div>
 
                 </div>
 
@@ -2816,9 +2812,6 @@ async function addMusic() {
             .from("music")
             .insert({
                 title: title,
-                artist: artist || "",
-                category: category || "",
-                link_url: link || "",
                 sort_order: 999
             });
 
@@ -2871,27 +2864,13 @@ async function editMusic(id) {
             music.title || ""
         );
 
-    if (title === null) return;
-
-
-    const artist =
-        prompt(
-            "Artist name:",
-            music.artist || ""
-        );
-
-
-    const category =
-        prompt(
-            "Category:",
-            music.category || ""
-        );
+    if (title === null) return
 
 
     const link =
         prompt(
             "Streaming URL:",
-            music.link_url || ""
+            music.link || ""
         );
 
 
@@ -2900,11 +2879,8 @@ async function editMusic(id) {
             .from("music")
             .update({
                 title: title,
-                artist: artist || "",
-                category: category || "",
-                link_url: link || "",
-                updated_at:
-                    new Date().toISOString()
+               image: image || "",
+                link: link || ""
             })
             .eq("id", id);
 
@@ -3601,7 +3577,7 @@ async function loadVideos() {
 
                 <img
                     class="item-image"
-                    src="${video.image_url || "fsbchrome.PNG"}"
+                    src="${video.image || "fsbchrome.PNG"}"
                     alt="${escapeHtml(
                         video.title ||
                         "Video"
@@ -3619,7 +3595,7 @@ async function loadVideos() {
 
                     <div class="item-meta">
                         ${escapeHtml(
-                            video.video_url ||
+                           video.link ||
                             "NO VIDEO URL"
                         )}
                     </div>
@@ -3699,8 +3675,8 @@ async function addVideo() {
             .from("videos")
             .insert({
                 title: title,
-                video_url: videoUrl,
-                image_url: imageUrl,
+                link: videoUrl,
+                image: imageUrl,
                 sort_order: nextOrder
             });
 
@@ -3762,7 +3738,7 @@ async function editVideo(id) {
     const videoUrl =
         prompt(
             "Video URL:",
-            data.video_url || ""
+            data.link || ""
         );
 
 
@@ -3783,10 +3759,10 @@ async function editVideo(id) {
         await supabaseClient
             .from("videos")
             .update({
-                title: title,
-                video_url: videoUrl,
-                image_url: imageUrl
-            })
+    title: title,
+    link: videoUrl,
+    image: imageUrl
+})
             .eq("id", id);
 
 
