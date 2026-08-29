@@ -2813,13 +2813,14 @@ async function addMusic() {
             "Streaming URL:"
         );
 
-    const { error } =
-        await supabaseClient
-            .from("music")
-            .insert({
-                title: title,
-                sort_order: 999
-            });
+const { error } =
+    await supabaseClient
+        .from("music")
+        .insert({
+            title: title,
+            link: link || "",
+            sort_order: 999
+        });
 
     if (error) {
 
@@ -2884,10 +2885,10 @@ async function editMusic(id) {
         await supabaseClient
             .from("music")
             .update({
-                title: title,
-               image: image || "",
-                link: link || ""
-            })
+               .update({
+    title: title,
+    link: link || ""
+})
             .eq("id", id);
 
 
