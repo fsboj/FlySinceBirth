@@ -1074,38 +1074,11 @@ footer {
     <h2 class="section-heading">
         VIDEOS
     </h2>
+<div
+    id="videoGrid"
+    class="video-grid">
+</div>
 
-
-   <div class="video-card" data-id="video-1">
-
-        <div class="video-card">
-
-            <img
-                src="fsbchrome.PNG"
-                alt="FSB Video">
-
-        </div>
-
-
-        <div class="video-card" data-id="video-2">
-
-            <img
-                src="flysincebirthchrome.PNG"
-                alt="Fly Since Birth Video">
-
-        </div>
-
-
-       <div class="video-card" data-id="video-3">
-
-            <img
-                src="fsbchrome.PNG"
-                alt="FSB Video">
-
-        </div>
-
-
-    </div>
 
 </section>
 
@@ -1487,7 +1460,83 @@ async function loadArtists() {
     });
 
 }
-   
+   async function loadVideos() {
+
+    const grid =
+        document.getElementById("videoGrid");
+
+    if (!grid) return;
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("videos")
+            .select("*")
+            .order("sort_order", {
+                ascending: true
+            });
+
+
+    if (error) {
+
+        console.error(
+            "Could not load videos:",
+            error
+        );
+
+        return;
+    }
+
+
+    grid.innerHTML = "";
+
+
+    (data || []).forEach(function(video) {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "video-card";
+
+
+        if (video.image_url) {
+
+            const image =
+                document.createElement("img");
+
+            image.src =
+                video.image_url;
+
+            image.alt =
+                video.title ||
+                "FSB Video";
+
+            card.appendChild(image);
+
+        }
+
+
+        if (video.video_url) {
+
+            card.onclick =
+                function() {
+
+                    window.open(
+                        video.video_url,
+                        "_blank"
+                    );
+
+                };
+
+        }
+
+
+        grid.appendChild(card);
+
+    });
+
+}
 async function loadSiteContent() {
 
     const { data, error } = await supabaseClient
@@ -1840,6 +1889,7 @@ loadSiteContent();
 loadSiteImages();
 loadMusic();
 loadArtists();
+loadVideos();
    
 </script>   
 <script>
