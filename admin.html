@@ -3357,7 +3357,7 @@ async function addEvent() {
                 date: date || "",
                 location: location,
                 link: link,
-                image_url: imageUrl,
+                image: imageUrl,
                 sort_order: nextOrder
             });
 
@@ -3434,7 +3434,7 @@ async function editEvent(id) {
     const link =
         prompt(
             "Event link:",
-            data.link_url || ""
+           data.link || ""
         );
 
     if (link === null) return;
@@ -3443,7 +3443,7 @@ async function editEvent(id) {
     const imageUrl =
         prompt(
             "Event image URL:",
-            data.image_url || ""
+            data.image || ""
         );
 
     if (imageUrl === null) return;
@@ -3456,8 +3456,8 @@ async function editEvent(id) {
                 title: title,
                 date: date,
                 location: location,
-                link_url: link,
-                image_url: imageUrl
+               link: link,
+                image: imageUrl
             })
             .eq("id", id);
 
