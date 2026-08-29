@@ -1348,6 +1348,18 @@ async function loadSiteImages() {
     }
 
 }
+   function escapeHtml(value) {
+
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+   
    async function loadMusic() {
 
     const grid =
@@ -1718,87 +1730,7 @@ async function loadSiteContent() {
 
     data.forEach(function(item) {
         content[item.key] = item.value;
-    });
-    /* =====================================================
-       SITE IMAGES
-    ===================================================== */
 
-    if (content.hero_image) {
-
-        const heroImage =
-            document.querySelector(".hero img");
-
-        if (heroImage) {
-            heroImage.src = content.hero_image;
-        }
-
-    }
-    /* PROJECT FSB IMAGE */
-
-    if (content.project_image) {
-
-        const projectImage =
-            document.querySelector(".project-image img");
-
-        if (projectImage) {
-            projectImage.src = content.project_image;
-        }
-
-    }
-
-
-    /* MERCH IMAGE */
-
-    if (content.merch_image) {
-
-        const merchImage =
-            document.querySelector(".clothing-box img");
-
-        if (merchImage) {
-            merchImage.src = content.merch_image;
-        }
-
-    }
-       /* MERCH IMAGE */
-
-    if (content.merch_image) {
-
-        const merchImage =
-            document.querySelector(".clothing-box img");
-
-        if (merchImage) {
-            merchImage.src = content.merch_image;
-        }
-
-    }
-
-
-    /* TOP LEFT IMAGE */
-
-    if (content.top_left_image) {
-
-        const topLeftImage =
-            document.querySelector(".nav-logo img");
-
-        if (topLeftImage) {
-            topLeftImage.src = content.top_left_image;
-        }
-
-    }
-
-
-    /* MENU IMAGE */
-
-    if (content.menu_image) {
-
-        const menuImage =
-            document.querySelector(".menu-small img");
-
-        if (menuImage) {
-            menuImage.src = content.menu_image;
-        }
-
-    }
     /* =====================================================
        HERO
     ===================================================== */
@@ -1849,81 +1781,8 @@ async function loadSiteContent() {
     }
 
 
-    /* =====================================================
-       MUSIC
-    ===================================================== */
 
-    if (content.music_heading) {
-        const element = document.querySelector("#music .section-heading");
-
-        if (element) {
-            element.textContent = content.music_heading;
-        }
-    }
-
-    if (content.latest_releases) {
-        const element = document.querySelector("#music .music-card:nth-child(1) .card-title");
-
-        if (element) {
-            element.textContent = content.latest_releases;
-        }
-    }
-
-    if (content.listen_now) {
-        const element = document.querySelector("#music .music-card:nth-child(1) .card-subtitle");
-
-        if (element) {
-            element.textContent = content.listen_now;
-        }
-    }
-
-    if (content.albums) {
-        const element = document.querySelector("#music .music-card:nth-child(2) .card-title");
-
-        if (element) {
-            element.textContent = content.albums;
-        }
-    }
-
-    if (content.explore) {
-        const element = document.querySelector("#music .music-card:nth-child(2) .card-subtitle");
-
-        if (element) {
-            element.textContent = content.explore;
-        }
-    }
-
-    if (content.singles) {
-        const element = document.querySelector("#music .music-card:nth-child(3) .card-title");
-
-        if (element) {
-            element.textContent = content.singles;
-        }
-    }
-
-    if (content.new_music) {
-        const element = document.querySelector("#music .music-card:nth-child(3) .card-subtitle");
-
-        if (element) {
-            element.textContent = content.new_music;
-        }
-    }
-
-    if (content.playlists) {
-        const element = document.querySelector("#music .music-card:nth-child(4) .card-title");
-
-        if (element) {
-            element.textContent = content.playlists;
-        }
-    }
-
-    if (content.stream_fsb) {
-        const element = document.querySelector("#music .music-card:nth-child(4) .card-subtitle");
-
-        if (element) {
-            element.textContent = content.stream_fsb;
-        }
-    }
+   
 
 
     /* =====================================================
