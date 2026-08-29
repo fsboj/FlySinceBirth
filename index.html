@@ -982,72 +982,10 @@ footer {
 
     <div class="music-grid">
 
-       <div class="music-card" data-id="music-1">
-
-            <div>
-
-                <div class="card-title">
-                    Latest Releases
-                </div>
-
-                <div class="card-subtitle">
-                    LISTEN NOW
-                </div>
-
-            </div>
-
-        </div>
-
-
-      <div class="music-card" data-id="music-2">
-            <div>
-
-                <div class="card-title">
-                    Albums
-                </div>
-
-                <div class="card-subtitle">
-                    EXPLORE
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="music-card" data-id="music-3">
-            <div>
-
-                <div class="card-title">
-                    Singles
-                </div>
-
-                <div class="card-subtitle">
-                    NEW MUSIC
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="music-card" data-id="music-4">
-
-            <div>
-
-                <div class="card-title">
-                    Playlists
-                </div>
-
-                <div class="card-subtitle">
-                    STREAM FSB
-                </div>
-
-            </div>
-
-        </div>
-
-
+<div
+    id="musicGrid"
+    class="music-grid">
+</div>
     </div>
 
 </section>
@@ -1292,7 +1230,232 @@ const supabaseClient = supabase.createClient(
 
 </script>
 <script>
+async function loadSiteImages() {
 
+    const { data, error } =
+        await supabaseClient
+            .from("site_images")
+            .select("key, image_url");
+
+
+    if (error) {
+
+        console.error(
+            "Could not load site images:",
+            error
+        );
+
+        return;
+    }
+
+
+    const images = {};
+
+    (data || []).forEach(function(item) {
+
+        if (item.key && item.image_url) {
+
+            images[item.key] =
+                item.image_url;
+
+        }
+
+    });
+
+
+    /* HERO */
+
+    if (images.hero_image) {
+
+        const element =
+            document.querySelector(
+                ".hero .fsb-wordmark"
+            );
+
+        if (element) {
+
+            element.src =
+                images.hero_image;
+
+        }
+
+    }
+
+
+    /* PROJECT FSB */
+
+    if (images.project_image) {
+
+        const element =
+            document.querySelector(
+                ".project-image img"
+            );
+
+        if (element) {
+
+            element.src =
+                images.project_image;
+
+        }
+
+    }
+
+
+    /* MERCH */
+
+    if (images.merch_image) {
+
+        const element =
+            document.querySelector(
+                ".clothing-box img"
+            );
+
+        if (element) {
+
+            element.src =
+                images.merch_image;
+
+        }
+
+    }
+
+
+    /* TOP LEFT */
+
+    if (images.top_left_image) {
+
+        const element =
+            document.querySelector(
+                ".nav-logo img"
+            );
+
+        if (element) {
+
+            element.src =
+                images.top_left_image;
+
+        }
+
+    }
+
+
+    /* MENU */
+
+    if (images.menu_image) {
+
+        const element =
+            document.querySelector(
+                ".menu-small img"
+            );
+
+        if (element) {
+
+            element.src =
+                images.menu_image;
+
+        }
+
+    }
+
+}
+   async function loadMusic() {
+
+    const grid =
+        document.getElementById("musicGrid");
+
+    if (!grid) return;
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("music")
+            .select("*")
+            .order("sort_order", {
+                ascending: true
+            });
+
+
+    if (error) {
+
+        console.error(
+            "Could not load music:",
+            error
+        );
+
+        return;
+    }
+
+
+    grid.innerHTML = "";
+
+
+    (data || []).forEach(function(music) {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "music-card";
+
+
+        if (music.image_url) {
+
+            card.style.backgroundImage =
+                `url("${music.image_url}")`;
+
+            card.style.backgroundSize =
+                "cover";
+
+            card.style.backgroundPosition =
+                "center";
+
+        }
+
+
+        card.innerHTML = `
+
+            <div>
+
+                <div class="card-title">
+                    ${escapeHtml(
+                        music.title ||
+                        "Untitled"
+                    )}
+                </div>
+
+                <div class="card-subtitle">
+                    ${escapeHtml(
+                        music.artist ||
+                        music.category ||
+                        "LISTEN NOW"
+                    )}
+                </div>
+
+            </div>
+
+        `;
+
+
+        if (music.link_url) {
+
+            card.onclick =
+                function() {
+
+                    window.open(
+                        music.link_url,
+                        "_blank"
+                    );
+
+                };
+
+        }
+
+
+        grid.appendChild(card);
+
+    });
+
+}
 async function loadSiteContent() {
 
     const { data, error } = await supabaseClient
@@ -1642,7 +1805,9 @@ async function loadSiteContent() {
 
 
 loadSiteContent();
-
+loadSiteImages();
+loadMusic();
+   
 </script>   
 <script>
 
