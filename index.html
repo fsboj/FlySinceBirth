@@ -1498,7 +1498,7 @@ async function loadArtists() {
             document.createElement("img");
 
         image.src =
-            artist.image_url ||
+            artist.image ||
             "fsblogo.PNG";
 
         image.alt =
@@ -1579,9 +1579,8 @@ async function loadArtists() {
             const image =
                 document.createElement("img");
 
-            image.src =
-                video.image_url;
-
+          image.src = video.image_url;
+           
             image.alt =
                 video.title ||
                 "FSB Video";
@@ -1696,7 +1695,7 @@ async function loadArtists() {
                 function() {
 
                     window.open(
-                        event.link_url,
+                       event.link_url,
                         "_blank"
                     );
 
@@ -1726,7 +1725,7 @@ async function loadSiteContent() {
 
     data.forEach(function(item) {
         content[item.key] = item.value;
-
+});
     /* =====================================================
        HERO
     ===================================================== */
@@ -1901,6 +1900,7 @@ async function loadSiteContent() {
         }
     }
 
+}});
 }
 
 
