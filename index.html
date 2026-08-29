@@ -1537,6 +1537,104 @@ async function loadArtists() {
     });
 
 }
+   async function loadEvents() {
+
+    const container =
+        document.getElementById("events-list");
+
+    if (!container) return;
+
+    const { data, error } =
+        await supabaseClient
+            .from("events")
+            .select("*")
+            .order("sort_order", {
+                ascending: true
+            });
+
+    if (error) {
+
+        console.error(
+            "Could not load events:",
+            error
+        );
+
+        return;
+    }
+
+    container.innerHTML = "";
+
+    (data || []).forEach(function(event) {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "event-card";
+
+
+        const date =
+            document.createElement("div");
+
+        date.className =
+            "event-date";
+
+        date.textContent =
+            event.date ||
+            event.event_date ||
+            "";
+
+
+        const title =
+            document.createElement("div");
+
+        title.className =
+            "event-title";
+
+        title.textContent =
+            event.title ||
+            event.name ||
+            "Event";
+
+
+        const location =
+            document.createElement("div");
+
+        location.className =
+            "event-location";
+
+        location.textContent =
+            event.location ||
+            "";
+
+
+        card.appendChild(date);
+        card.appendChild(title);
+        card.appendChild(location);
+
+
+        if (event.link_url) {
+
+            card.style.cursor =
+                "pointer";
+
+            card.onclick =
+                function() {
+
+                    window.open(
+                        event.link_url,
+                        "_blank"
+                    );
+
+                };
+
+        }
+
+
+        container.appendChild(card);
+
+    });
+}
 async function loadSiteContent() {
 
     const { data, error } = await supabaseClient
@@ -1890,6 +1988,7 @@ loadSiteImages();
 loadMusic();
 loadArtists();
 loadVideos();
+loadEvents();
    
 </script>   
 <script>
