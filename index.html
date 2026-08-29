@@ -1282,6 +1282,80 @@ async function loadSiteImages() {
     }
 
 }
+   async function loadSectionBackgrounds() {
+
+    const { data, error } =
+        await supabaseClient
+            .from("site_sections")
+            .select("*")
+            .order("sort_order", {
+                ascending: true
+            });
+
+    if (error) {
+
+        console.error(
+            "Could not load sections:",
+            error
+        );
+
+        return;
+    }
+
+
+    for (const section of data || []) {
+
+        const backgroundKey =
+            section.section_key +
+            "_background";
+
+
+        const { data: image, error: imageError } =
+            await supabaseClient
+                .from("site_images")
+                .select("image_url")
+                .eq(
+                    "key",
+                    backgroundKey
+                )
+                .maybeSingle();
+
+
+        if (
+            imageError ||
+            !image ||
+            !image.image_url
+        ) {
+            continue;
+        }
+
+
+        const element =
+            document.getElementById(
+                section.section_key
+            );
+
+
+        if (!element) {
+            continue;
+        }
+
+
+        element.style.backgroundImage =
+            `url("${image.image_url}")`;
+
+        element.style.backgroundSize =
+            "cover";
+
+        element.style.backgroundPosition =
+            "center";
+
+        element.style.backgroundRepeat =
+            "no-repeat";
+
+    }
+
+}
    async function loadMusic() {
 
     const grid =
@@ -1985,6 +2059,7 @@ async function loadSiteContent() {
 
 loadSiteContent();
 loadSiteImages();
+loadSectionBackgrounds();
 loadMusic();
 loadArtists();
 loadVideos();
