@@ -1526,11 +1526,20 @@ async function loadArtists() {
 
         info.appendChild(name);
 
-        card.appendChild(image);
-        card.appendChild(info);
+       card.appendChild(image);
+card.appendChild(info);
 
-        grid.appendChild(card);
+card.style.cursor = "pointer";
 
+card.onclick = function() {
+
+    window.location.href =
+        "artist.html?id=" +
+        encodeURIComponent(artist.id);
+
+};
+
+grid.appendChild(card);
     });
 
 }
