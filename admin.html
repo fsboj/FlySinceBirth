@@ -4718,9 +4718,7 @@ async function uploadArtistSong() {
 
     if (!selectedArtistPageId) {
 
-        alert(
-            "Select an artist first."
-        );
+        alert("Select an artist first.");
 
         return;
     }
@@ -4732,172 +4730,248 @@ async function uploadArtistSong() {
         ).value.trim();
 
 
-    const image =
-        document.getElementById(
-            "artistSongImage"
-        ).value.trim();
-
-
-    const fileInput =
+    const audioInput =
         document.getElementById(
             "artistSongFile"
         );
 
 
-    const file =
-        fileInput.files[0];
+    const artworkInput =
+        document.getElementById(
+            "artistSongImageFile"
+        );
+
+
+    const audioFile =
+        audioInput.files[0];
+
+
+    const artworkFile =
+        artworkInput.files[0];
 
 
     if (!title) {
 
-        alert(
-            "Enter a song title."
-        );
+        alert("Enter a song title.");
 
         return;
     }
 
 
-    if (!file) {
+    if (!audioFile) {
 
-        alert(
-            "Choose an audio file."
-        );
+        alert("Choose an audio file.");
 
         return;
     }
 
 
-    const extension =
-        file.name
-            .split(".")
-            .pop();
+    try {
+
+        /* ============================================
+           UPLOAD AUDIO
+        ============================================ */
+
+        const audioExtension =
+            audioFile.name
+                .split(".")
+                .pop()
+                .toLowerCase();
 
 
-    const fileName =
-        Date.now() +
-        "-" +
-        Math.random()
-            .toString(36)
-            .substring(2) +
-        "." +
-        extension;
+        const audioPath =
+            selectedArtistPageId +
+            "/" +
+            Date.now() +
+            "-" +
+            Math.random()
+                .toString(36)
+                .substring(2) +
+            "." +
+            audioExtension;
 
 
-    const filePath =
-        selectedArtistPageId +
-        "/" +
-        fileName;
+        const {
+            error: audioUploadError
+        } =
+            await supabaseClient
+                .storage
+                .from("artist-music")
+                .upload(
+                    audioPath,
+                    audioFile
+                );
 
 
-    const { error: uploadError } =
-        await supabaseClient
-            .storage
-            .from("artist-music")
-            .upload(
-                filePath,
-                file
-            );
+        if (audioUploadError) {
+
+            throw audioUploadError;
+
+        }
 
 
-    if (uploadError) {
+        const {
+            data: audioPublicData
+        } =
+            supabaseClient
+                .storage
+                .from("artist-music")
+                .getPublicUrl(
+                    audioPath
+                );
+
+
+        const audioUrl =
+            audioPublicData.publicUrl;
+
+
+        /* ============================================
+           UPLOAD SONG ARTWORK
+        ============================================ */
+
+        let artworkUrl = null;
+
+
+        if (artworkFile) {
+
+            const artworkExtension =
+                artworkFile.name
+                    .split(".")
+                    .pop()
+                    .toLowerCase();
+
+
+            const artworkPath =
+                selectedArtistPageId +
+                "/" +
+                Date.now() +
+                "-" +
+                Math.random()
+                    .toString(36)
+                    .substring(2) +
+                "." +
+                artworkExtension;
+
+
+            const {
+                error: artworkUploadError
+            } =
+                await supabaseClient
+                    .storage
+                    .from("artist-artwork")
+                    .upload(
+                        artworkPath,
+                        artworkFile
+                    );
+
+
+            if (artworkUploadError) {
+
+                throw artworkUploadError;
+
+            }
+
+
+            const {
+                data: artworkPublicData
+            } =
+                supabaseClient
+                    .storage
+                    .from("artist-artwork")
+                    .getPublicUrl(
+                        artworkPath
+                    );
+
+
+            artworkUrl =
+                artworkPublicData.publicUrl;
+
+        }
+
+
+        /* ============================================
+           SAVE SONG TO DATABASE
+        ============================================ */
+
+        const {
+            error: insertError
+        } =
+            await supabaseClient
+                .from("artist_songs")
+                .insert({
+
+                    artist_id:
+                        selectedArtistPageId,
+
+                    title:
+                        title,
+
+                    audio_url:
+                        audioUrl,
+
+                    image_url:
+                        artworkUrl,
+
+                    sort_order:
+                        0,
+
+                    plays:
+                        0,
+
+                    is_top_song:
+                        false
+
+                });
+
+
+        if (insertError) {
+
+            throw insertError;
+
+        }
+
+
+        /* ============================================
+           CLEAR FORM
+        ============================================ */
+
+        document.getElementById(
+            "artistSongTitle"
+        ).value = "";
+
+
+        audioInput.value = "";
+
+        artworkInput.value = "";
+
+
+        document.getElementById(
+            "artistSongImagePreview"
+        ).innerHTML = "";
+
+
+        alert(
+            "Song uploaded successfully."
+        );
+
+
+        loadArtistSongsAdmin();
+
+
+    } catch (error) {
 
         console.error(
-            "Music upload error:",
-            uploadError
+            "ARTIST SONG UPLOAD ERROR:",
+            error
         );
+
 
         alert(
-            "Could not upload the music file."
+            "Song upload failed:\n\n" +
+            error.message
         );
 
-        return;
     }
-
-
-    const { data: publicData } =
-        supabaseClient
-            .storage
-            .from("artist-music")
-            .getPublicUrl(
-                filePath
-            );
-
-
-    const { data: artist } =
-        await supabaseClient
-            .from("artists")
-            .select("name")
-            .eq(
-                "id",
-                selectedArtistPageId
-            )
-            .single();
-
-
-    const { error: insertError } =
-        await supabaseClient
-            .from("artist_songs")
-            .insert({
-
-                artist_id:
-                    selectedArtistPageId,
-
-                title:
-                    title,
-
-                audio_url:
-                    publicData.publicUrl,
-
-                image_url:
-                    image || null,
-
-                sort_order:
-                    0,
-
-                plays:
-                    0,
-
-                is_top_song:
-                    false
-
-            });
-
-
-    if (insertError) {
-
-        console.error(
-            "Song database error:",
-            insertError
-        );
-
-        alert(
-            "The file uploaded, but the song could not be saved."
-        );
-
-        return;
-    }
-
-
-    document.getElementById(
-        "artistSongTitle"
-    ).value = "";
-
-
-    document.getElementById(
-        "artistSongImage"
-    ).value = "";
-
-
-    fileInput.value = "";
-
-
-    alert(
-        "Song uploaded successfully."
-    );
-
-
-    loadArtistSongsAdmin();
 
 }
 
