@@ -4427,15 +4427,9 @@ async function saveArtistPage() {
     }
 
 
-    const image =
+    const name =
         document.getElementById(
-            "artistPageImage"
-        ).value.trim();
-
-
-    const background =
-        document.getElementById(
-            "artistPageBackground"
+            "artistPageName"
         ).value.trim();
 
 
@@ -4445,21 +4439,199 @@ async function saveArtistPage() {
         ).value.trim();
 
 
+    if (!name) {
+
+        alert("Enter an artist name.");
+
+        return;
+    }
+
+
+    let imageUrl = null;
+    let backgroundUrl = null;
+
+
+    /* ================================================
+       ARTIST IMAGE
+    ================================================ */
+
+    const imageInput =
+        document.getElementById(
+            "artistPageImageFile"
+        );
+
+
+    if (imageInput.files.length > 0) {
+
+        const file =
+            imageInput.files[0];
+
+
+        const extension =
+            file.name
+                .split(".")
+                .pop();
+
+
+        const filePath =
+            selectedArtistPageId +
+            "/" +
+            Date.now() +
+            "-artist." +
+            extension;
+
+
+        const { error: uploadError } =
+            await supabaseClient
+                .storage
+                .from("artist-images")
+                .upload(
+                    filePath,
+                    file,
+                    {
+                        upsert: true
+                    }
+                );
+
+
+        if (uploadError) {
+
+            console.error(
+                "Artist image upload error:",
+                uploadError
+            );
+
+            alert(
+                "Could not upload artist image."
+            );
+
+            return;
+        }
+
+
+        const { data } =
+            supabaseClient
+                .storage
+                .from("artist-images")
+                .getPublicUrl(
+                    filePath
+                );
+
+
+        imageUrl =
+            data.publicUrl;
+
+    }
+
+
+    /* ================================================
+       BACKGROUND IMAGE
+    ================================================ */
+
+    const backgroundInput =
+        document.getElementById(
+            "artistPageBackgroundFile"
+        );
+
+
+    if (
+        backgroundInput.files.length > 0
+    ) {
+
+        const file =
+            backgroundInput.files[0];
+
+
+        const extension =
+            file.name
+                .split(".")
+                .pop();
+
+
+        const filePath =
+            selectedArtistPageId +
+            "/" +
+            Date.now() +
+            "-background." +
+            extension;
+
+
+        const { error: uploadError } =
+            await supabaseClient
+                .storage
+                .from("artist-backgrounds")
+                .upload(
+                    filePath,
+                    file,
+                    {
+                        upsert: true
+                    }
+                );
+
+
+        if (uploadError) {
+
+            console.error(
+                "Background upload error:",
+                uploadError
+            );
+
+            alert(
+                "Could not upload background image."
+            );
+
+            return;
+        }
+
+
+        const { data } =
+            supabaseClient
+                .storage
+                .from("artist-backgrounds")
+                .getPublicUrl(
+                    filePath
+                );
+
+
+        backgroundUrl =
+            data.publicUrl;
+
+    }
+
+
+    /* ================================================
+       UPDATE ARTIST
+    ================================================ */
+
+    const updateData = {
+
+        name: name,
+
+        bio: bio || null
+
+    };
+
+
+    if (imageUrl) {
+
+        updateData.image =
+            imageUrl;
+
+    }
+
+
+    if (backgroundUrl) {
+
+        updateData.background_image_url =
+            backgroundUrl;
+
+    }
+
+
     const { error } =
         await supabaseClient
             .from("artists")
-            .update({
-
-                image:
-                    image || null,
-
-                background_image_url:
-                    background || null,
-
-                bio:
-                    bio || null
-
-            })
+            .update(updateData)
             .eq(
                 "id",
                 selectedArtistPageId
@@ -4474,11 +4646,61 @@ async function saveArtistPage() {
         );
 
         alert(
-            "Could not save artist page."
+            "Could not save artist page:\n\n" +
+            error.message
         );
 
         return;
     }
+
+
+    document.getElementById(
+        "selectedArtistName"
+    ).textContent =
+        name;
+
+
+    if (imageUrl) {
+
+        document.getElementById(
+            "artistPageImagePreview"
+        ).innerHTML = `
+            <img
+                src="${imageUrl}"
+                style="
+                    width:120px;
+                    height:120px;
+                    object-fit:cover;
+                    border:1px solid #333;
+                "
+            >
+        `;
+
+    }
+
+
+    if (backgroundUrl) {
+
+        document.getElementById(
+            "artistPageBackgroundPreview"
+        ).innerHTML = `
+            <img
+                src="${backgroundUrl}"
+                style="
+                    width:250px;
+                    max-height:140px;
+                    object-fit:cover;
+                    border:1px solid #333;
+                "
+            >
+        `;
+
+    }
+
+
+    imageInput.value = "";
+
+    backgroundInput.value = "";
 
 
     alert(
