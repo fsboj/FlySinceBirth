@@ -3051,6 +3051,18 @@ async function addArtist() {
     const imageUrl =
         prompt("Artist image URL:") || "";
 
+    const backgroundImageUrl =
+        prompt("Artist background image URL (optional):") || "";
+
+    const bio =
+        prompt("Artist bio (optional):") || "";
+
+    const genre =
+        prompt("Artist genre (optional):") || "";
+
+    const location =
+        prompt("Artist location (optional):") || "";
+
 
     const { data } =
         await supabaseClient
@@ -3077,7 +3089,11 @@ async function addArtist() {
             .insert({
                 name: name,
                 slug: slug,
-                image_url: imageUrl,
+                image: imageUrl,
+                background_image_url: backgroundImageUrl,
+                bio: bio,
+                genre: genre,
+                location: location,
                 sort_order: nextOrder
             });
 
