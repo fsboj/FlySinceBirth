@@ -526,7 +526,12 @@ body {
         onclick="showPanel('menu', this)">
         MENU
     </button>
-
+    
+<button
+    onclick="showPanel('artistPages', this)">
+    ARTIST PAGES
+</button>
+    
     <button
         onclick="showPanel('music', this)">
         MUSIC
@@ -1410,7 +1415,236 @@ body {
     </div>
 
 </section>
+<!-- =====================================================
+     ARTIST PAGES
+===================================================== -->
 
+<section
+    id="artistPages"
+    class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Artist Pages
+        </div>
+
+        <div class="panel-description">
+            Manage each artist's page, music, releases, videos and links.
+        </div>
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label>
+            SELECT ARTIST
+        </label>
+
+        <select id="artistPageSelect">
+
+            <option value="">
+                SELECT AN ARTIST
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div
+        id="artistPageManager"
+        style="
+            margin-top:30px;
+            display:none;
+        "
+    >
+
+        <div
+            class="admin-item"
+            style="display:block;"
+        >
+
+            <div
+                class="item-name"
+                id="selectedArtistName"
+            >
+                ARTIST
+            </div>
+
+            <div
+                class="item-meta"
+                style="margin-top:8px;"
+            >
+                Manage this artist's page
+            </div>
+
+        </div>
+
+
+        <div
+            class="form-grid"
+            style="margin-top:25px;"
+        >
+
+            <div class="form-group">
+
+                <label>
+                    ARTIST IMAGE
+                </label>
+
+                <input
+                    type="url"
+                    id="artistPageImage"
+                    placeholder="Image URL"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    BACKGROUND IMAGE
+                </label>
+
+                <input
+                    type="url"
+                    id="artistPageBackground"
+                    placeholder="Optional background image URL"
+                >
+
+            </div>
+
+
+            <div class="form-group full">
+
+                <label>
+                    BIO
+                </label>
+
+                <textarea
+                    id="artistPageBio"
+                    rows="6"
+                    placeholder="Artist bio..."
+                ></textarea>
+
+            </div>
+
+        </div>
+
+
+        <div
+            class="actions"
+            style="margin-top:25px;"
+        >
+
+            <button
+                class="button primary"
+                onclick="saveArtistPage()"
+            >
+                SAVE ARTIST PAGE
+            </button>
+
+        </div>
+
+
+        <div
+            style="
+                margin-top:45px;
+                padding-top:30px;
+                border-top:1px solid #242424;
+            "
+        >
+
+            <div class="panel-title">
+                MUSIC
+            </div>
+
+            <div class="panel-description">
+                Upload songs that belong only to this artist.
+            </div>
+
+
+            <div
+                class="form-grid"
+                style="margin-top:25px;"
+            >
+
+                <div class="form-group">
+
+                    <label>
+                        SONG TITLE
+                    </label>
+
+                    <input
+                        type="text"
+                        id="artistSongTitle"
+                        placeholder="Song title"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        SONG ARTWORK
+                    </label>
+
+                    <input
+                        type="url"
+                        id="artistSongImage"
+                        placeholder="Optional artwork URL"
+                    >
+
+                </div>
+
+
+                <div class="form-group full">
+
+                    <label>
+                        AUDIO FILE
+                    </label>
+
+                    <input
+                        type="file"
+                        id="artistSongFile"
+                        accept="audio/*"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="actions"
+                style="margin-top:20px;"
+            >
+
+                <button
+                    class="button primary"
+                    onclick="uploadArtistSong()"
+                >
+                    UPLOAD SONG
+                </button>
+
+            </div>
+
+
+            <div
+                id="artistSongsAdminList"
+                class="item-list"
+                style="margin-top:25px;"
+            ></div>
+
+        </div>
+
+    </div>
+
+</section>
 
 <!-- =====================================================
      MERCH
