@@ -3155,23 +3155,60 @@ async function editArtist(id) {
 
 
     const imageUrl =
-        prompt(
-            "Artist image URL:",
-            data.image_url || ""
-        );
+    prompt(
+        "Artist image URL:",
+        data.image || ""
+    );
 
-    if (imageUrl === null) return;
+if (imageUrl === null) return;
+
+const backgroundImageUrl =
+    prompt(
+        "Artist background image URL (optional):",
+        data.background_image_url || ""
+    );
+
+if (backgroundImageUrl === null) return;
+
+const bio =
+    prompt(
+        "Artist bio (optional):",
+        data.bio || ""
+    );
+
+if (bio === null) return;
+
+const genre =
+    prompt(
+        "Artist genre (optional):",
+        data.genre || ""
+    );
+
+if (genre === null) return;
+
+const location =
+    prompt(
+        "Artist location (optional):",
+        data.location || ""
+    );
+
+if (location === null) return;
 
 
-    const { error: updateError } =
-        await supabaseClient
-            .from("artists")
-            .update({
-                name: name,
-                slug: slug,
-                image_url: imageUrl
-            })
-            .eq("id", id);
+const { error: updateError } =
+    await supabaseClient
+        .from("artists")
+        .update({
+            name: name,
+            slug: slug,
+            image: imageUrl,
+            background_image_url: backgroundImageUrl,
+            bio: bio,
+            genre: genre,
+            location: location
+        })
+        .eq("id", id);
+           
 
 
     if (updateError) {
