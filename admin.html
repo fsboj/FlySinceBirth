@@ -1487,35 +1487,57 @@ body {
             class="form-grid"
             style="margin-top:25px;"
         >
+<div class="form-group">
 
-            <div class="form-group">
+    <label>
+        ARTIST NAME
+    </label>
 
-                <label>
-                    ARTIST IMAGE
-                </label>
+    <input
+        type="text"
+        id="artistPageName"
+        placeholder="Artist name"
+    >
 
-                <input
-                    type="url"
-                    id="artistPageImage"
-                    placeholder="Image URL"
-                >
+</div>
+         <div class="form-group">
 
-            </div>
+    <label>
+        ARTIST IMAGE
+    </label>
+
+    <input
+        type="file"
+        id="artistPageImageFile"
+        accept="image/*"
+    >
+
+    <div
+        id="artistPageImagePreview"
+        style="margin-top:12px;"
+    ></div>
+
+</div>
 
 
-            <div class="form-group">
+<div class="form-group">
 
-                <label>
-                    BACKGROUND IMAGE
-                </label>
+    <label>
+        BACKGROUND IMAGE
+    </label>
 
-                <input
-                    type="url"
-                    id="artistPageBackground"
-                    placeholder="Optional background image URL"
-                >
+    <input
+        type="file"
+        id="artistPageBackgroundFile"
+        accept="image/*"
+    >
 
-            </div>
+    <div
+        id="artistPageBackgroundPreview"
+        style="margin-top:12px;"
+    ></div>
+
+</div>
 
 
             <div class="form-group full">
@@ -1589,17 +1611,22 @@ body {
 
                 <div class="form-group">
 
-                    <label>
-                        SONG ARTWORK
-                    </label>
+    <label>
+        SONG ARTWORK
+    </label>
 
-                    <input
-                        type="url"
-                        id="artistSongImage"
-                        placeholder="Optional artwork URL"
-                    >
+    <input
+        type="file"
+        id="artistSongImageFile"
+        accept="image/*"
+    >
 
-                </div>
+    <div
+        id="artistSongImagePreview"
+        style="margin-top:12px;"
+    ></div>
+
+</div>
 
 
                 <div class="form-group full">
@@ -4281,9 +4308,7 @@ document.addEventListener(
 
 async function loadSelectedArtistPage(artistId) {
 
-    selectedArtistPageId =
-        artistId;
-
+    selectedArtistPageId = artistId;
 
     const { data, error } =
         await supabaseClient
@@ -4291,7 +4316,6 @@ async function loadSelectedArtistPage(artistId) {
             .select("*")
             .eq("id", artistId)
             .single();
-
 
     if (error || !data) {
 
@@ -4303,10 +4327,17 @@ async function loadSelectedArtistPage(artistId) {
         return;
     }
 
-
     document.getElementById(
         "artistPageManager"
     ).style.display = "block";
+
+
+    /* ARTIST NAME */
+
+    document.getElementById(
+        "artistPageName"
+    ).value =
+        data.name || "";
 
 
     document.getElementById(
@@ -4315,23 +4346,67 @@ async function loadSelectedArtistPage(artistId) {
         data.name || "ARTIST";
 
 
-    document.getElementById(
-        "artistPageImage"
-    ).value =
-        data.image || "";
-
-
-    document.getElementById(
-        "artistPageBackground"
-    ).value =
-        data.background_image_url || "";
-
+    /* BIO */
 
     document.getElementById(
         "artistPageBio"
     ).value =
         data.bio || "";
 
+
+    /* EXISTING IMAGE PREVIEWS */
+
+    if (data.image) {
+
+        document.getElementById(
+            "artistPageImagePreview"
+        ).innerHTML = `
+            <img
+                src="${data.image}"
+                style="
+                    width:120px;
+                    height:120px;
+                    object-fit:cover;
+                    border:1px solid #333;
+                "
+            >
+        `;
+
+    } else {
+
+        document.getElementById(
+            "artistPageImagePreview"
+        ).innerHTML = "";
+
+    }
+
+
+    if (data.background_image_url) {
+
+        document.getElementById(
+            "artistPageBackgroundPreview"
+        ).innerHTML = `
+            <img
+                src="${data.background_image_url}"
+                style="
+                    width:250px;
+                    max-height:140px;
+                    object-fit:cover;
+                    border:1px solid #333;
+                "
+            >
+        `;
+
+    } else {
+
+        document.getElementById(
+            "artistPageBackgroundPreview"
+        ).innerHTML = "";
+
+    }
+
+
+    /* LOAD THIS ARTIST'S SONGS */
 
     loadArtistSongsAdmin();
 
