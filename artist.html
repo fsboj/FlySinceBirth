@@ -328,6 +328,7 @@ body {
 ===================================================== */
 
 .player {
+      display: none;
     position: sticky;
 
     bottom: 0;
@@ -794,15 +795,236 @@ footer {
 
 
     <a
-        href="index.html#artists"
+       href="artists.html"
         class="back-button"
     >
         BACK TO ARTISTS
     </a>
 
+      <button
+    class="menu-button"
+    onclick="openMenu()"
+    aria-label="Open menu"
+>
+    <span class="menu-lines">
+        <span></span>
+        <span></span>
+        <span></span>
+    </span>
+</button>
 </nav>
+<!-- =====================================================
+     FSB SIDE MENU
+===================================================== -->
+
+<div
+    id="menu"
+    class="menu"
+>
+
+    <div class="menu-header">
+
+        <div class="menu-small">
+
+            <img
+                src="FlySinceBirthgd.PNG"
+                alt="Fly Since Birth"
+            >
+
+        </div>
 
 
+        <button
+            class="close-menu"
+            onclick="closeMenu()"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <ul>
+
+        <li>
+            <a
+                id="menuMusic"
+                href="index.html#music"
+                onclick="closeMenu()"
+            >
+                Music
+            </a>
+        </li>
+
+
+        <li>
+            <a
+                id="menuArtists"
+                href="index.html#artists"
+                onclick="closeMenu()"
+            >
+                Artists
+            </a>
+        </li>
+
+
+        <li>
+            <a
+                id="menuClothing"
+                href="index.html#clothing"
+                onclick="closeMenu()"
+            >
+                Clothing
+            </a>
+        </li>
+
+
+        <li>
+            <a
+                id="menuVideos"
+                href="index.html#videos"
+                onclick="closeMenu()"
+            >
+                Videos
+            </a>
+        </li>
+
+
+        <li>
+            <a
+                id="menuEvents"
+                href="index.html#events"
+                onclick="closeMenu()"
+            >
+                Events
+            </a>
+        </li>
+
+    </ul>
+
+</div>
+/* =====================================================
+   FSB MENU
+===================================================== */
+
+.menu-button {
+    background: none;
+    border: none;
+
+    color: white;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+
+    padding: 5px;
+}
+
+.menu-lines {
+    width: 23px;
+}
+
+.menu-lines span {
+    display: block;
+
+    height: 1px;
+
+    background: white;
+
+    margin: 5px 0;
+}
+
+
+/* SIDE MENU */
+
+.menu {
+    position: fixed;
+
+    top: 0;
+    right: -100%;
+
+    width: 440px;
+    max-width: 100%;
+
+    height: 100vh;
+
+    background: #090909;
+
+    border-left: 1px solid #242424;
+
+    z-index: 3000;
+
+    padding: 35px;
+
+    transition: right 0.45s ease;
+}
+
+.menu.open {
+    right: 0;
+}
+
+.menu-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 90px;
+}
+
+.menu-small img {
+    width: 360px;
+
+    max-width: 100%;
+
+    height: auto;
+
+    display: block;
+
+    object-fit: contain;
+
+    transform: translateX(-30px);
+}
+
+.close-menu {
+    background: none;
+
+    border: none;
+
+    color: white;
+
+    font-size: 32px;
+
+    cursor: pointer;
+}
+
+.menu ul {
+    list-style: none;
+}
+
+.menu li {
+    margin-bottom: 28px;
+}
+
+.menu a {
+    color: white;
+
+    text-decoration: none;
+
+    font-size: 48px;
+
+    font-weight: 700;
+
+    letter-spacing: -2px;
+
+    transition: opacity 0.25s;
+}
+
+.menu a:hover {
+    opacity: 0.4;
+}
 <!-- =====================================================
      ARTIST HERO
 ===================================================== -->
@@ -1242,7 +1464,8 @@ function playSong(index) {
 
     currentSongIndex =
         index;
-
+document.querySelector(".player").style.display =
+    "block";
 
     const song =
         songs[index];
@@ -1644,7 +1867,110 @@ async function loadArtistLinks() {
 /* =====================================================
    START
 ===================================================== */
+function openMenu() {
 
+    document
+        .getElementById("menu")
+        .classList
+        .add("open");
+
+}
+
+
+function closeMenu() {
+
+    document
+        .getElementById("menu")
+        .classList
+        .remove("open");
+
+}
+
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Escape") {
+
+            closeMenu();
+
+        }
+
+    }
+);
+      async function loadSharedMenu() {
+
+    const { data, error } =
+        await supabaseClient
+            .from("site_content")
+            .select("*")
+            .limit(1)
+            .single();
+
+
+    if (error || !data) {
+
+        console.error(
+            "Could not load shared menu:",
+            error
+        );
+
+        return;
+    }
+
+
+    if (data.menu_music) {
+
+        document.getElementById(
+            "menuMusic"
+        ).textContent =
+            data.menu_music;
+
+    }
+
+
+    if (data.menu_artists) {
+
+        document.getElementById(
+            "menuArtists"
+        ).textContent =
+            data.menu_artists;
+
+    }
+
+
+    if (data.menu_clothing) {
+
+        document.getElementById(
+            "menuClothing"
+        ).textContent =
+            data.menu_clothing;
+
+    }
+
+
+    if (data.menu_videos) {
+
+        document.getElementById(
+            "menuVideos"
+        ).textContent =
+            data.menu_videos;
+
+    }
+
+
+    if (data.menu_events) {
+
+        document.getElementById(
+            "menuEvents"
+        ).textContent =
+            data.menu_events;
+
+    }
+
+}
+loadSharedMenu();
 loadArtist();
 
 </script>
