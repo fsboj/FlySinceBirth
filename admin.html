@@ -4628,15 +4628,43 @@ async function saveArtistPage() {
     }
 
 
-    const { error } =
-        await supabaseClient
-            .from("artists")
-            .update(updateData)
-            .eq(
-                "id",
-                selectedArtistPageId
-            );
+   const { data: savedArtist, error } =
+    await supabaseClient
+        .from("artists")
+        .update(updateData)
+        .eq(
+            "id",
+            selectedArtistPageId
+        )
+        .select()
+        .single();
 
+
+if (error) {
+
+    console.error(
+        "Artist page save error:",
+        error
+    );
+
+    alert(
+        "SAVE FAILED:\n\n" +
+        error.message
+    );
+
+    return;
+}
+
+
+if (!savedArtist) {
+
+    alert(
+        "SAVE FAILED:\n\n" +
+        "Supabase did not return the artist after the update."
+    );
+
+    return;
+}
 
     if (error) {
 
