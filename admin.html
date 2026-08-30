@@ -4176,7 +4176,683 @@ await loadVideos();
 
 
 loadAdminData();
-    
+    /* =====================================================
+   ARTIST PAGE MANAGER
+===================================================== */
+
+let selectedArtistPageId = null;
+
+
+/* =====================================================
+   LOAD ARTISTS INTO ARTIST PAGE SELECTOR
+===================================================== */
+
+async function loadArtistPageSelector() {
+
+    const select =
+        document.getElementById("artistPageSelect");
+
+    if (!select) {
+        return;
+    }
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("artists")
+            .select("*")
+            .order("name", { ascending: true });
+
+
+    if (error) {
+
+        console.error(
+            "Could not load artists:",
+            error
+        );
+
+        return;
+    }
+
+
+    select.innerHTML =
+        '<option value="">SELECT AN ARTIST</option>';
+
+
+    data.forEach(function(artist) {
+
+        const option =
+            document.createElement("option");
+
+        option.value =
+            artist.id;
+
+        option.textContent =
+            artist.name;
+
+        select.appendChild(option);
+
+    });
+
+}
+
+
+/* =====================================================
+   SELECT ARTIST
+===================================================== */
+
+document.addEventListener(
+    "change",
+    function(event) {
+
+        if (
+            event.target.id !==
+            "artistPageSelect"
+        ) {
+            return;
+        }
+
+
+        const artistId =
+            event.target.value;
+
+
+        if (!artistId) {
+
+            document.getElementById(
+                "artistPageManager"
+            ).style.display = "none";
+
+            selectedArtistPageId = null;
+
+            return;
+        }
+
+
+        loadSelectedArtistPage(artistId);
+
+    }
+);
+
+
+/* =====================================================
+   LOAD SELECTED ARTIST
+===================================================== */
+
+async function loadSelectedArtistPage(artistId) {
+
+    selectedArtistPageId =
+        artistId;
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("artists")
+            .select("*")
+            .eq("id", artistId)
+            .single();
+
+
+    if (error || !data) {
+
+        console.error(
+            "Could not load selected artist:",
+            error
+        );
+
+        return;
+    }
+
+
+    document.getElementById(
+        "artistPageManager"
+    ).style.display = "block";
+
+
+    document.getElementById(
+        "selectedArtistName"
+    ).textContent =
+        data.name || "ARTIST";
+
+
+    document.getElementById(
+        "artistPageImage"
+    ).value =
+        data.image || "";
+
+
+    document.getElementById(
+        "artistPageBackground"
+    ).value =
+        data.background_image_url || "";
+
+
+    document.getElementById(
+        "artistPageBio"
+    ).value =
+        data.bio || "";
+
+
+    loadArtistSongsAdmin();
+
+}
+
+
+/* =====================================================
+   SAVE ARTIST PAGE
+===================================================== */
+
+async function saveArtistPage() {
+
+    if (!selectedArtistPageId) {
+
+        alert("Select an artist first.");
+
+        return;
+    }
+
+
+    const image =
+        document.getElementById(
+            "artistPageImage"
+        ).value.trim();
+
+
+    const background =
+        document.getElementById(
+            "artistPageBackground"
+        ).value.trim();
+
+
+    const bio =
+        document.getElementById(
+            "artistPageBio"
+        ).value.trim();
+
+
+    const { error } =
+        await supabaseClient
+            .from("artists")
+            .update({
+
+                image:
+                    image || null,
+
+                background_image_url:
+                    background || null,
+
+                bio:
+                    bio || null
+
+            })
+            .eq(
+                "id",
+                selectedArtistPageId
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Artist page save error:",
+            error
+        );
+
+        alert(
+            "Could not save artist page."
+        );
+
+        return;
+    }
+
+
+    alert(
+        "Artist page saved."
+    );
+
+}
+
+
+/* =====================================================
+   UPLOAD ARTIST SONG
+===================================================== */
+
+async function uploadArtistSong() {
+
+    if (!selectedArtistPageId) {
+
+        alert(
+            "Select an artist first."
+        );
+
+        return;
+    }
+
+
+    const title =
+        document.getElementById(
+            "artistSongTitle"
+        ).value.trim();
+
+
+    const image =
+        document.getElementById(
+            "artistSongImage"
+        ).value.trim();
+
+
+    const fileInput =
+        document.getElementById(
+            "artistSongFile"
+        );
+
+
+    const file =
+        fileInput.files[0];
+
+
+    if (!title) {
+
+        alert(
+            "Enter a song title."
+        );
+
+        return;
+    }
+
+
+    if (!file) {
+
+        alert(
+            "Choose an audio file."
+        );
+
+        return;
+    }
+
+
+    const extension =
+        file.name
+            .split(".")
+            .pop();
+
+
+    const fileName =
+        Date.now() +
+        "-" +
+        Math.random()
+            .toString(36)
+            .substring(2) +
+        "." +
+        extension;
+
+
+    const filePath =
+        selectedArtistPageId +
+        "/" +
+        fileName;
+
+
+    const { error: uploadError } =
+        await supabaseClient
+            .storage
+            .from("artist-music")
+            .upload(
+                filePath,
+                file
+            );
+
+
+    if (uploadError) {
+
+        console.error(
+            "Music upload error:",
+            uploadError
+        );
+
+        alert(
+            "Could not upload the music file."
+        );
+
+        return;
+    }
+
+
+    const { data: publicData } =
+        supabaseClient
+            .storage
+            .from("artist-music")
+            .getPublicUrl(
+                filePath
+            );
+
+
+    const { data: artist } =
+        await supabaseClient
+            .from("artists")
+            .select("name")
+            .eq(
+                "id",
+                selectedArtistPageId
+            )
+            .single();
+
+
+    const { error: insertError } =
+        await supabaseClient
+            .from("artist_songs")
+            .insert({
+
+                artist_id:
+                    selectedArtistPageId,
+
+                title:
+                    title,
+
+                audio_url:
+                    publicData.publicUrl,
+
+                image_url:
+                    image || null,
+
+                sort_order:
+                    0,
+
+                plays:
+                    0,
+
+                is_top_song:
+                    false
+
+            });
+
+
+    if (insertError) {
+
+        console.error(
+            "Song database error:",
+            insertError
+        );
+
+        alert(
+            "The file uploaded, but the song could not be saved."
+        );
+
+        return;
+    }
+
+
+    document.getElementById(
+        "artistSongTitle"
+    ).value = "";
+
+
+    document.getElementById(
+        "artistSongImage"
+    ).value = "";
+
+
+    fileInput.value = "";
+
+
+    alert(
+        "Song uploaded successfully."
+    );
+
+
+    loadArtistSongsAdmin();
+
+}
+
+
+/* =====================================================
+   LOAD ARTIST SONGS IN ADMIN
+===================================================== */
+
+async function loadArtistSongsAdmin() {
+
+    const list =
+        document.getElementById(
+            "artistSongsAdminList"
+        );
+
+
+    if (!list ||
+        !selectedArtistPageId) {
+
+        return;
+    }
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("artist_songs")
+            .select("*")
+            .eq(
+                "artist_id",
+                selectedArtistPageId
+            )
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Could not load artist songs:",
+            error
+        );
+
+        return;
+    }
+
+
+    list.innerHTML = "";
+
+
+    if (!data.length) {
+
+        list.innerHTML =
+            '<div class="empty-state">NO SONGS YET</div>';
+
+        return;
+    }
+
+
+    data.forEach(function(song) {
+
+        const row =
+            document.createElement("div");
+
+
+        row.className =
+            "admin-item";
+
+
+        row.innerHTML = `
+
+            <div>
+
+                <div class="item-name">
+                    ${escapeHtml(song.title)}
+                </div>
+
+                <div class="item-meta">
+                    ${song.is_top_song ? "TOP SONG" : "SONG"}
+                </div>
+
+            </div>
+
+            <button
+                class="button danger"
+                type="button"
+                onclick="deleteArtistSong('${song.id}')"
+            >
+                DELETE
+            </button>
+
+        `;
+
+
+        list.appendChild(row);
+
+    });
+
+}
+
+
+/* =====================================================
+   DELETE ARTIST SONG
+===================================================== */
+
+async function deleteArtistSong(songId) {
+
+    if (
+        !confirm(
+            "Delete this song?"
+        )
+    ) {
+        return;
+    }
+
+
+    const { data: song } =
+        await supabaseClient
+            .from("artist_songs")
+            .select("audio_url")
+            .eq(
+                "id",
+                songId
+            )
+            .single();
+
+
+    if (song &&
+        song.audio_url) {
+
+        const marker =
+            "/artist-music/";
+
+
+        const position =
+            song.audio_url.indexOf(
+                marker
+            );
+
+
+        if (position !== -1) {
+
+            const filePath =
+                song.audio_url.substring(
+                    position +
+                    marker.length
+                );
+
+
+            await supabaseClient
+                .storage
+                .from("artist-music")
+                .remove([
+                    filePath
+                ]);
+
+        }
+
+    }
+
+
+    const { error } =
+        await supabaseClient
+            .from("artist_songs")
+            .delete()
+            .eq(
+                "id",
+                songId
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Delete song error:",
+            error
+        );
+
+        alert(
+            "Could not delete song."
+        );
+
+        return;
+    }
+
+
+    loadArtistSongsAdmin();
+
+}
+
+
+/* =====================================================
+   HTML ESCAPE
+===================================================== */
+
+function escapeHtml(value) {
+
+    return String(value || "")
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* =====================================================
+   LOAD ARTIST PAGES WHEN TAB IS OPENED
+===================================================== */
+
+const originalShowPanel =
+    window.showPanel;
+
+
+window.showPanel =
+    function(panelId, button) {
+
+        originalShowPanel(
+            panelId,
+            button
+        );
+
+
+        if (
+            panelId ===
+            "artistPages"
+        ) {
+
+            loadArtistPageSelector();
+
+        }
+
+    };
 </script>
 
 
