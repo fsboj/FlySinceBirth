@@ -2102,104 +2102,6 @@ function escapeHtml(value) {
 }
 function showPanel(panelId, button) {
 
-    const panels =
-        document.querySelectorAll(".panel");
-
-    const buttons =
-        document.querySelectorAll(".admin-nav button");
-
-
-    panels.forEach(function(panel) {
-
-        panel.classList.remove("active");
-
-    });
-
-
-    buttons.forEach(function(btn) {
-
-        btn.classList.remove("active");
-
-    });
-
-
-    const selectedPanel =
-        document.getElementById(panelId);
-
-
-    if (!selectedPanel) {
-
-        console.error(
-            "Panel not found:",
-            panelId
-        );
-
-        return;
-
-    }
-
-
-    selectedPanel.classList.add("active");
-
-
-    if (button) {
-
-        button.classList.add("active");
-
-    }
-
-
-    /* Remember the currently selected tab */
-
-    try {
-
-        localStorage.setItem(
-            "fsbAdminPanel",
-            panelId
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Could not save admin panel:",
-            error
-        );
-
-    }
-document.addEventListener(
-    "DOMContentLoaded",
-    function() {
-
-        const savedPanel =
-            localStorage.getItem(
-                "fsbAdminPanel"
-            );
-
-
-        if (!savedPanel) {
-            return;
-        }
-
-
-        const button =
-            document.querySelector(
-                `.admin-nav button[onclick*="'${savedPanel}'"]`
-            );
-
-
-        if (button) {
-
-            showPanel(
-                savedPanel,
-                button
-            );
-
-        }
-
-    }
-);
-}
-
 
 /* =====================================================
    PREVIEW
@@ -5168,8 +5070,6 @@ async function loadArtistSongsAdmin() {
 ===================================================== */
 
 async function deleteArtistSong(songId) {
-
-   async function deleteArtistSong(songId) {
 
     if (!songId) {
         alert("No song selected.");
