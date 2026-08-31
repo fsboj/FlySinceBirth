@@ -2102,6 +2102,52 @@ function escapeHtml(value) {
 }
 function showPanel(panelId, button) {
 
+    const panels =
+        document.querySelectorAll(".panel");
+
+    const buttons =
+        document.querySelectorAll(".admin-nav button");
+
+    panels.forEach(function(panel) {
+        panel.classList.remove("active");
+    });
+
+    buttons.forEach(function(btn) {
+        btn.classList.remove("active");
+    });
+
+    const selectedPanel =
+        document.getElementById(panelId);
+
+    if (!selectedPanel) {
+        console.error("Panel not found:", panelId);
+        return;
+    }
+
+    selectedPanel.classList.add("active");
+
+    if (button) {
+        button.classList.add("active");
+    }
+
+    try {
+        localStorage.setItem(
+            "fsbAdminPanel",
+            panelId
+        );
+    } catch (error) {
+        console.warn(
+            "Could not save admin panel:",
+            error
+        );
+    }
+}
+
+
+/* =====================================================
+   PREVIEW
+===================================================== */
+
 
 /* =====================================================
    PREVIEW
