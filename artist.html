@@ -1793,19 +1793,156 @@ async function loadArtist() {
 ===================================================== */
 
 async function loadArtistMusic() {
+async function loadArtistMusic() {
+
+    const musicSection =
+        document.getElementById("musicSection");
+
+    if (!musicSection || !artistId) {
+        return;
+    }
+
+
+    const { data: songs, error } =
+        await supabaseClient
+            .from("artist_songs")
+            .select("*")
+            .eq("artist_id", artistId)
+            .order("sort_order", {
+                ascending: true
+            });
+
+
+    if (error) {
+
+        console.error(
+            "Could not load artist music:",
+            error
+        );
+
+        return;
+    }
+
+
+    musicSection.innerHTML = "";
+      if (!songs || songs.length === 0) {
+    const musicSection =
+        document.getElementById("musicSection");
+
+    if (!musicSection || !artistId) {
+        return;
+    }
+
+
+    const { data: songs, error } =
+        await supabaseClient
+            .from("artist_songs")
+            .select("*")
+            .eq("artist_id", artistId)
+            .order("sort_order", {
+                ascending: true
+            });
+
+
+    if (error) {
+
+        console.error(
+            "Could not load artist music:",
+            error
+        );
+
+        return;
+    }
+
+
+    musicSection.innerHTML = "";
+
+
+    if (!songs || songs.length === 0) {
+
+        return;
+
+    }
+
+
+    songs.forEach(function(song) {
+
+        const songRow =
+            document.createElement("div");
+
+
+        songRow.className =
+            "artist-song";
+
+
+        songRow.innerHTML = `
+
+            <div class="artist-song-artwork">
+
+                ${
+                    song.image_url
+                    ?
+                    `<img
+                        src="${song.image_url}"
+                        alt=""
+                    >`
+                    :
+                    ""
+                }
+
+            </div>
+
+
+            <div class="artist-song-info">
+
+                <div class="artist-song-title">
+                    ${escapeHtml(song.title)}
+                </div>
+
+            </div>
+
+
+            <button
+                class="artist-song-play"
+                type="button"
+                aria-label="Play ${escapeHtml(song.title)}"
+            >
+                ▶
+            </button>
+
+        `;
+
+
+        const playButton =
+            songRow.querySelector(
+                ".artist-song-play"
+            );
+
+
+        playButton.addEventListener(
+            "click",
+            function() {
+
+                playArtistSong(song);
+
+            }
+        );
+
+
+        musicSection.appendChild(
+            songRow
+        );
+
+    });
+
+}
 
     /*
        This will connect to the
        artist_songs table once created.
     */
 
-    console.log(
-        "Loading music for artist:",
-        artistId
-    );
-
-}
-
+   
 
 /* =====================================================
    LOAD RELEASES
