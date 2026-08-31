@@ -5110,28 +5110,86 @@ async function loadArtistSongsAdmin() {
 
 async function deleteArtistSong(songId) {
 
-    if (
-        !confirm(
-            "Delete this song?"
-        )
-    ) {
+   async function deleteArtistSong(songId) {
+
+    if (!songId) {
+        alert("No song selected.");
         return;
     }
 
 
-    const { data: song } =
+    if (!confirm("Delete this song?")) {
+        return;
+    }
+
+
+    /* ================================================
+       GET SONG
+    ================================================ */
+
+    const {
+        data: song,
+        error: fetchError
+    } =
         await supabaseClient
             .from("artist_songs")
             .select("audio_url")
-            .eq(
-                "id",
-                songId
-            )
+            .eq("id", songId)
             .single();
 
 
-    if (song &&
-        song.audio_url) {
+    if (fetchError) {
+
+        console.error(
+            "Could not find song:",
+            fetchError
+        );
+
+        alert(
+            "Could not find the song."
+        );
+
+        return;
+    }
+
+
+    /* ================================================
+       DELETE DATABASE RECORD FIRST
+    ================================================ */
+
+    const {
+        error: deleteError
+    } =
+        await supabaseClient
+            .from("artist_songs")
+            .delete()
+            .eq("id", songId);
+
+
+    if (deleteError) {
+
+        console.error(
+            "Delete song error:",
+            deleteError
+        );
+
+        alert(
+            "Could not delete the song:\n\n" +
+            deleteError.message
+        );
+
+        return;
+    }
+
+
+    /* ================================================
+       DELETE AUDIO FILE
+    ================================================ */
+
+    if (
+        song &&
+        song.audio_url
+    ) {
 
         const marker =
             "/artist-music/";
@@ -5146,53 +5204,51 @@ async function deleteArtistSong(songId) {
         if (position !== -1) {
 
             const filePath =
-                song.audio_url.substring(
-                    position +
-                    marker.length
+                decodeURIComponent(
+                    song.audio_url.substring(
+                        position +
+                        marker.length
+                    )
                 );
 
 
-            await supabaseClient
-                .storage
-                .from("artist-music")
-                .remove([
-                    filePath
-                ]);
+            const {
+                error: storageError
+            } =
+                await supabaseClient
+                    .storage
+                    .from("artist-music")
+                    .remove([
+                        filePath
+                    ]);
+
+
+            if (storageError) {
+
+                console.warn(
+                    "Database deleted, but audio file could not be removed:",
+                    storageError
+                );
+
+            }
 
         }
 
     }
 
 
-    const { error } =
-        await supabaseClient
-            .from("artist_songs")
-            .delete()
-            .eq(
-                "id",
-                songId
-            );
+    /* ================================================
+       REFRESH SONG LIST
+    ================================================ */
+
+    await loadArtistSongsAdmin();
 
 
-    if (error) {
-
-        console.error(
-            "Delete song error:",
-            error
-        );
-
-        alert(
-            "Could not delete song."
-        );
-
-        return;
-    }
-
-
-    loadArtistSongsAdmin();
+    alert(
+        "Song deleted."
+    );
 
 }
-
 
 /* =====================================================
    HTML ESCAPE
