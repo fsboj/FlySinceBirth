@@ -2126,11 +2126,20 @@ function showPanel(panelId, button) {
     const selectedPanel =
         document.getElementById(panelId);
 
-    if (selectedPanel) {
 
-        selectedPanel.classList.add("active");
+    if (!selectedPanel) {
+
+        console.error(
+            "Panel not found:",
+            panelId
+        );
+
+        return;
 
     }
+
+
+    selectedPanel.classList.add("active");
 
 
     if (button) {
@@ -2139,6 +2148,56 @@ function showPanel(panelId, button) {
 
     }
 
+
+    /* Remember the currently selected tab */
+
+    try {
+
+        localStorage.setItem(
+            "fsbAdminPanel",
+            panelId
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Could not save admin panel:",
+            error
+        );
+
+    }
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        const savedPanel =
+            localStorage.getItem(
+                "fsbAdminPanel"
+            );
+
+
+        if (!savedPanel) {
+            return;
+        }
+
+
+        const button =
+            document.querySelector(
+                `.admin-nav button[onclick*="'${savedPanel}'"]`
+            );
+
+
+        if (button) {
+
+            showPanel(
+                savedPanel,
+                button
+            );
+
+        }
+
+    }
+);
 }
 
 
