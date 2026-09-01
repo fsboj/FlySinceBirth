@@ -1798,6 +1798,7 @@ async function loadArtistMusic() {
         document.getElementById("newestMusic");
 
     if (!musicSection || !artistId) {
+        console.error("Music section or artist ID missing");
         return;
     }
 
@@ -1816,6 +1817,12 @@ async function loadArtistMusic() {
             "Could not load artist music:",
             error
         );
+
+        musicSection.innerHTML = `
+            <div class="empty-state">
+                MUSIC COULD NOT BE LOADED
+            </div>
+        `;
 
         return;
     }
@@ -1869,9 +1876,7 @@ async function loadArtistMusic() {
         songRow.addEventListener(
             "click",
             function() {
-
                 playSong(index);
-
             }
         );
 
