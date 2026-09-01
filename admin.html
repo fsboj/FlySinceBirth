@@ -2168,7 +2168,7 @@ function previewSite() {
 ===================================================== */
 async function loadSiteImages() {
 
-    const { data, error } = await supabaseClient
+    const { data, error } = await 
         .from("site_images")
         .select("*")
         .in("key", [
@@ -4808,144 +4808,7 @@ async function saveArtistPage() {
     }
 
 
-    /* ================================================
-       UPDATE ARTIST
-    ================================================ */
-
-    const updateData = {
-
-        name: name,
-
-        bio: bio || null
-
-    };
-
-
-    if (imageUrl) {
-
-        updateData.image =
-            imageUrl;
-
-    }
-
-
-    if (backgroundUrl) {
-
-        updateData.background_image_url =
-            backgroundUrl;
-
-    }
-
-
-   const { data: savedArtist, error } =
-    await supabaseClient
-        .from("artists")
-        .update(updateData)
-        .eq(
-            "id",
-            selectedArtistPageId
-        )
-        .select()
-        .single();
-
-
-if (error) {
-
-    console.error(
-        "Artist page save error:",
-        error
-    );
-
-    alert(
-        "SAVE FAILED:\n\n" +
-        error.message
-    );
-
-    return;
-}
-
-
-if (!savedArtist) {
-
-    alert(
-        "SAVE FAILED:\n\n" +
-        "Supabase did not return the artist after the update."
-    );
-
-    return;
-}
-
-    if (error) {
-
-        console.error(
-            "Artist page save error:",
-            error
-        );
-
-        alert(
-            "Could not save artist page:\n\n" +
-            error.message
-        );
-
-        return;
-    }
-
-
-    document.getElementById(
-        "selectedArtistName"
-    ).textContent =
-        name;
-
-
-    if (imageUrl) {
-
-        document.getElementById(
-            "artistPageImagePreview"
-        ).innerHTML = `
-            <img
-                src="${imageUrl}"
-                style="
-                    width:120px;
-                    height:120px;
-                    object-fit:cover;
-                    border:1px solid #333;
-                "
-            >
-        `;
-
-    }
-
-
-    if (backgroundUrl) {
-
-        document.getElementById(
-            "artistPageBackgroundPreview"
-        ).innerHTML = `
-            <img
-                src="${backgroundUrl}"
-                style="
-                    width:250px;
-                    max-height:140px;
-                    object-fit:cover;
-                    border:1px solid #333;
-                "
-            >
-        `;
-
-    }
-
-
-    imageInput.value = "";
-
-    backgroundInput.value = "";
-
-
-    alert(
-        "Artist page saved."
-    );
-
-}
-
+   
 
 /* =====================================================
    UPLOAD ARTIST SONG
