@@ -1793,25 +1793,22 @@ async function loadArtist() {
 ===================================================== */
 
 async function loadArtistMusic() {
-async function loadArtistMusic() {
 
     const musicSection =
-        document.getElementById("musicSection");
+        document.getElementById("newestMusic");
 
     if (!musicSection || !artistId) {
         return;
     }
 
-
-    const { data: songs, error } =
+    const { data: artistSongs, error } =
         await supabaseClient
             .from("artist_songs")
             .select("*")
             .eq("artist_id", artistId)
-            .order("sort_order", {
-                ascending: true
+            .order("created_at", {
+                ascending: false
             });
-
 
     if (error) {
 
@@ -1823,126 +1820,66 @@ async function loadArtistMusic() {
         return;
     }
 
-
-    musicSection.innerHTML = "";
-      if (!songs || songs.length === 0) {
-    const musicSection =
-        document.getElementById("musicSection");
-
-    if (!musicSection || !artistId) {
-        return;
-    }
-
-
-    const { data: songs, error } =
-        await supabaseClient
-            .from("artist_songs")
-            .select("*")
-            .eq("artist_id", artistId)
-            .order("sort_order", {
-                ascending: true
-            });
-
-
-    if (error) {
-
-        console.error(
-            "Could not load artist music:",
-            error
-        );
-
-        return;
-    }
-
-
     musicSection.innerHTML = "";
 
+    if (!artistSongs || artistSongs.length === 0) {
 
-    if (!songs || songs.length === 0) {
+        musicSection.innerHTML = `
+            <div class="empty-state">
+                NO MUSIC AVAILABLE
+            </div>
+        `;
 
         return;
-
     }
 
+    songs = artistSongs;
 
-    songs.forEach(function(song) {
+    artistSongs.forEach(function(song, index) {
 
         const songRow =
             document.createElement("div");
 
-
-        songRow.className =
-            "artist-song";
-
+        songRow.className = "song-row";
 
         songRow.innerHTML = `
 
-            <div class="artist-song-artwork">
-
-                ${
-                    song.image_url
-                    ?
-                    `<img
-                        src="${song.image_url}"
-                        alt=""
-                    >`
-                    :
-                    ""
-                }
-
+            <div class="song-number">
+                ${String(index + 1).padStart(2, "0")}
             </div>
 
+            <div class="song-info">
 
-            <div class="artist-song-info">
+                <div class="song-title">
+                    ${escapeHtml(song.title || "Untitled")}
+                </div>
 
-                <div class="artist-song-title">
-                    ${escapeHtml(song.title)}
+                <div class="song-artist">
+                    FLY SINCE BIRTH
                 </div>
 
             </div>
 
-
-            <button
-                class="artist-song-play"
-                type="button"
-                aria-label="Play ${escapeHtml(song.title)}"
-            >
-                ▶
-            </button>
+            <div class="song-duration">
+                PLAY
+            </div>
 
         `;
 
-
-        const playButton =
-            songRow.querySelector(
-                ".artist-song-play"
-            );
-
-
-        playButton.addEventListener(
+        songRow.addEventListener(
             "click",
             function() {
 
-                playArtistSong(song);
+                playSong(index);
 
             }
         );
 
-
-        musicSection.appendChild(
-            songRow
-        );
+        musicSection.appendChild(songRow);
 
     });
 
 }
-
-    /*
-       This will connect to the
-       artist_songs table once created.
-    */
-
-   
 
 /* =====================================================
    LOAD RELEASES
