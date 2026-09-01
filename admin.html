@@ -2168,7 +2168,7 @@ function previewSite() {
 ===================================================== */
 async function loadSiteImages() {
 
-    const { data, error } = await 
+    const { data, error } = await supabaseClient 
         .from("site_images")
         .select("*")
         .in("key", [
