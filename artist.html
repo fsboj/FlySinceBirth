@@ -1791,7 +1791,15 @@ async function loadArtist() {
 /* =====================================================
    LOAD ARTIST MUSIC
 ===================================================== */
+function escapeHtml(text) {
 
+    const div = document.createElement("div");
+
+    div.textContent = text || "";
+
+    return div.innerHTML;
+
+}
 async function loadArtistMusic() {
 
     const musicSection =
