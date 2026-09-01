@@ -4427,58 +4427,49 @@ async function loadSelectedArtistPage(artistId) {
 async function saveArtistPage() {
 
     if (!selectedArtistPageId) {
-
         alert("Select an artist first.");
-
         return;
     }
-
 
     const name =
-        document.getElementById(
-            "artistPageName"
-        ).value.trim();
-
+        document.getElementById("artistPageName").value.trim();
 
     const bio =
-        document.getElementById(
-            "artistPageBio"
-        ).value.trim();
-
+        document.getElementById("artistPageBio").value.trim();
 
     if (!name) {
-
         alert("Enter an artist name.");
-
         return;
     }
 
+    const imageInput =
+        document.getElementById("artistPageImageFile");
+
+    const backgroundInput =
+        document.getElementById("artistPageBackgroundFile");
 
     let imageUrl = null;
     let backgroundUrl = null;
 
 
-    /* ================================================
+    /* ===============================
        ARTIST IMAGE
-    ================================================ */
+    =============================== */
 
-    const imageInput =
-        document.getElementById(
-            "artistPageImageFile"
-        );
-
-
-    if (imageInput.files.length > 0) {
+    if (
+        imageInput &&
+        imageInput.files &&
+        imageInput.files.length > 0
+    ) {
 
         const file =
             imageInput.files[0];
 
-
         const extension =
             file.name
                 .split(".")
-                .pop();
-
+                .pop()
+                .toLowerCase();
 
         const filePath =
             selectedArtistPageId +
@@ -4509,11 +4500,222 @@ async function saveArtistPage() {
             );
 
             alert(
-                "Could not upload artist image."
+                "Artist image upload failed:\n\n" +
+                uploadError.message
             );
 
             return;
         }
+
+
+        const { data } =
+            supabaseClient
+                .storage
+                .from("artist-images")
+                .getPublicUrl(filePath);
+
+
+        imageUrl =
+            data.publicUrl;
+    }
+
+
+
+    /* ===============================
+       BACKGROUND IMAGE
+    =============================== */
+
+    if (
+        backgroundInput &&
+        backgroundInput.files &&
+        backgroundInput.files.length > 0
+    ) {
+
+        const file =
+            backgroundInput.files[0];
+
+        const extension =
+            file.name
+                .split(".")
+                .pop()
+                .toLowerCase();
+
+        const filePath =
+            selectedArtistPageId +
+            "/" +
+            Date.now() +
+            "-background." +
+            extension;
+
+
+        const { error: uploadError } =
+            await supabaseClient
+                .storage
+                .from("artist-backgrounds")
+                .upload(
+                    filePath,
+                    file,
+                    {
+                        upsert: true
+                    }
+                );
+
+
+        if (uploadError) {
+
+            console.error(
+                "Background upload error:",
+                uploadError
+            );
+
+            alert(
+                "Background image upload failed:\n\n" +
+                uploadError.message
+            );
+
+            return;
+        }
+
+
+        const { data } =
+            supabaseClient
+                .storage
+                .from("artist-backgrounds")
+                .getPublicUrl(filePath);
+
+
+        backgroundUrl =
+            data.publicUrl;
+    }
+
+
+
+    /* ===============================
+       UPDATE ARTIST DATABASE RECORD
+    =============================== */
+
+    const updateData = {
+
+        name: name,
+
+        bio:
+            bio || null
+
+    };
+
+
+    if (imageUrl) {
+
+        updateData.image =
+            imageUrl;
+
+    }
+
+
+    if (backgroundUrl) {
+
+        updateData.background_image_url =
+            backgroundUrl;
+
+    }
+
+
+    const {
+        error: saveError
+    } =
+        await supabaseClient
+            .from("artists")
+            .update(updateData)
+            .eq(
+                "id",
+                selectedArtistPageId
+            );
+
+
+    if (saveError) {
+
+        console.error(
+            "Artist page save error:",
+            saveError
+        );
+
+        alert(
+            "SAVE FAILED:\n\n" +
+            saveError.message
+        );
+
+        return;
+    }
+
+
+
+    /* ===============================
+       UPDATE SCREEN
+    =============================== */
+
+    document.getElementById(
+        "selectedArtistName"
+    ).textContent =
+        name;
+
+
+    if (imageUrl) {
+
+        document.getElementById(
+            "artistPageImagePreview"
+        ).innerHTML = `
+
+            <img
+                src="${imageUrl}"
+                style="
+                    width:120px;
+                    height:120px;
+                    object-fit:cover;
+                    border:1px solid #333;
+                "
+            >
+
+        `;
+
+    }
+
+
+    if (backgroundUrl) {
+
+        document.getElementById(
+            "artistPageBackgroundPreview"
+        ).innerHTML = `
+
+            <img
+                src="${backgroundUrl}"
+                style="
+                    width:250px;
+                    max-height:140px;
+                    object-fit:cover;
+                    border:1px solid #333;
+                "
+            >
+
+        `;
+
+    }
+
+
+    if (imageInput) {
+        imageInput.value = "";
+    }
+
+
+    if (backgroundInput) {
+        backgroundInput.value = "";
+    }
+
+
+    alert(
+        "Artist page saved."
+    );
+
+}
 
 
         const { data } =
