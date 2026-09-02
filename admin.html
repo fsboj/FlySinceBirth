@@ -4781,130 +4781,6 @@ let editingArtistSongId = null;
     
 async function uploadArtistSong() {
 
-    if (!selectedArtistPageId) {
-
-        alert("Select an artist first.");
-
-        return;
-    }
-
-
-    const title =
-        document.getElementById(
-            "artistSongTitle"
-        ).value.trim();
-
-
-    const audioInput =
-        document.getElementById(
-            "artistSongFile"
-        );
-
-
-    const artworkInput =
-        document.getElementById(
-            "artistSongImageFile"
-        );
-
-
-    const audioFile =
-        audioInput.files[0];
-
-
-    const artworkFile =
-        artworkInput.files[0];
-const sectionCheckboxes =
-    document.querySelectorAll(
-        ".artist-song-section:checked"
-    );
-
-const sections =
-    Array.from(sectionCheckboxes).map(
-        function(checkbox) {
-            return checkbox.value;
-        }
-    );
-
-if (sections.length === 0) {
-    alert("Choose at least one music section.");
-    return;
-}
-
-    if (!title) {
-
-        alert("Enter a song title.");
-
-        return;
-    }
-
-
-    if (!audioFile) {
-
-        alert("Choose an audio file.");
-
-        return;
-    }
-
-
-    try {
-
-        /* ============================================
-           UPLOAD AUDIO
-        ============================================ */
-
-        const audioExtension =
-            audioFile.name
-                .split(".")
-                .pop()
-                .toLowerCase();
-
-
-        const audioPath =
-            selectedArtistPageId +
-            "/" +
-            Date.now() +
-            "-" +
-            Math.random()
-                .toString(36)
-                .substring(2) +
-            "." +
-            audioExtension;
-
-
-        const {
-            error: audioUploadError
-        } =
-            await supabaseClient
-                .storage
-                .from("artist-music")
-                .upload(
-                    audioPath,
-                    audioFile
-                );
-
-
-        if (audioUploadError) {
-
-            throw audioUploadError;
-
-        }
-
-
-        const {
-            data: audioPublicData
-        } =
-            supabaseClient
-                .storage
-                .from("artist-music")
-                .getPublicUrl(
-                    audioPath
-                );
-
-
-        const audioUrl =
-            audioPublicData.publicUrl;
-
-
         /* ============================================
            UPLOAD SONG ARTWORK
         ============================================ */
@@ -5136,7 +5012,6 @@ async function loadArtistSongsAdmin() {
 
         row.innerHTML = `
 
-          row.innerHTML = `
     <div>
         <div class="item-name">
             ${escapeHtml(song.title)}
