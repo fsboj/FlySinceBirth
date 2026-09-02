@@ -1645,24 +1645,53 @@ body {
 <div class="form-group">
 
     <label>
-        MUSIC SECTION
+        MUSIC SECTIONS
     </label>
 
-    <select id="artistSongSection">
+    <div style="
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+        margin-top:10px;
+    ">
 
-        <option value="singles">
+        <label style="display:flex;align-items:center;gap:10px;">
+            <input
+                type="checkbox"
+                class="artist-song-section"
+                value="singles"
+            >
             SINGLES
-        </option>
+        </label>
 
-        <option value="eps">
+        <label style="display:flex;align-items:center;gap:10px;">
+            <input
+                type="checkbox"
+                class="artist-song-section"
+                value="albums"
+            >
+            ALBUMS
+        </label>
+
+        <label style="display:flex;align-items:center;gap:10px;">
+            <input
+                type="checkbox"
+                class="artist-song-section"
+                value="eps"
+            >
             EPS
-        </option>
+        </label>
 
-        <option value="top">
+        <label style="display:flex;align-items:center;gap:10px;">
+            <input
+                type="checkbox"
+                class="artist-song-section"
+                value="top"
+            >
             TOP SONGS
-        </option>
+        </label>
 
-    </select>
+    </div>
 
 </div>
             </div>
