@@ -310,10 +310,12 @@ body {
     object-fit: cover;
     display: block;
     background: #111;
+    border: 1px solid #242424;
 }
 
 .song-details {
     min-width: 0;
+    flex: 1;
 }
 .song-title {
     font-size: 15px;
@@ -751,7 +753,14 @@ footer {
             1fr
             70px;
     }
+.song-artwork {
+    width: 45px;
+    height: 45px;
+}
 
+.song-info {
+    gap: 10px;
+}
     .release-grid {
         grid-template-columns:
             repeat(2, 1fr);
