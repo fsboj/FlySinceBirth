@@ -4811,7 +4811,22 @@ async function uploadArtistSong() {
 
     const artworkFile =
         artworkInput.files[0];
+const sectionCheckboxes =
+    document.querySelectorAll(
+        ".artist-song-section:checked"
+    );
 
+const sections =
+    Array.from(sectionCheckboxes).map(
+        function(checkbox) {
+            return checkbox.value;
+        }
+    );
+
+if (sections.length === 0) {
+    alert("Choose at least one music section.");
+    return;
+}
 
     if (!title) {
 
@@ -4981,8 +4996,11 @@ async function uploadArtistSong() {
                     plays:
                         0,
 
-                    is_top_song:
-                        false
+                   is_top_song:
+    sections.includes("top"),
+
+sections:
+    sections
 
                 });
 
@@ -5006,7 +5024,14 @@ async function uploadArtistSong() {
         audioInput.value = "";
 
         artworkInput.value = "";
-
+        
+document.querySelectorAll(
+    ".artist-song-section"
+).forEach(
+    function(checkbox) {
+        checkbox.checked = false;
+    }
+);
 
         document.getElementById(
             "artistSongImagePreview"
