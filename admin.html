@@ -1702,12 +1702,13 @@ body {
                 style="margin-top:20px;"
             >
 
-                <button
-                    class="button primary"
-                    onclick="uploadArtistSong()"
-                >
-                    UPLOAD SONG
-                </button>
+              <button
+    id="artistSongSubmitButton"
+    class="button primary"
+    onclick="uploadArtistSong()"
+>
+    UPLOAD SONG
+</button>
 
             </div>
 
@@ -4776,7 +4777,8 @@ async function saveArtistPage() {
 /* =====================================================
    UPLOAD ARTIST SONG
 ===================================================== */
-
+let editingArtistSongId = null;
+    
 async function uploadArtistSong() {
 
     if (!selectedArtistPageId) {
@@ -5134,27 +5136,50 @@ async function loadArtistSongsAdmin() {
 
         row.innerHTML = `
 
-            <div>
+          row.innerHTML = `
+    <div>
+        <div class="item-name">
+            ${escapeHtml(song.title)}
+        </div>
 
-                <div class="item-name">
-                    ${escapeHtml(song.title)}
-                </div>
+        <div class="item-meta">
+            ${
+                song.sections &&
+                song.sections.length
+                    ? song.sections
+                        .map(function(section) {
+                            return section.toUpperCase();
+                        })
+                        .join(" • ")
+                    : "NO SECTION"
+            }
+        </div>
+    </div>
 
-                <div class="item-meta">
-                    ${song.is_top_song ? "TOP SONG" : "SONG"}
-                </div>
+    <div style="
+        display:flex;
+        gap:8px;
+        align-items:center;
+    ">
 
-            </div>
+        <button
+            class="button"
+            type="button"
+            onclick="editArtistSong('${song.id}')"
+        >
+            EDIT
+        </button>
 
-            <button
-                class="button danger"
-                type="button"
-                onclick="deleteArtistSong('${song.id}')"
-            >
-                DELETE
-            </button>
+        <button
+            class="button danger"
+            type="button"
+            onclick="deleteArtistSong('${song.id}')"
+        >
+            DELETE
+        </button>
 
-        `;
+    </div>
+`;
 
 
         list.appendChild(row);
@@ -5163,7 +5188,79 @@ async function loadArtistSongsAdmin() {
 
 }
 
+/* =====================================================
+   EDIT ARTIST SONG
+===================================================== */
 
+async function editArtistSong(songId) {
+
+    if (!songId) {
+        alert("No song selected.");
+        return;
+    }
+
+    const {
+        data: song,
+        error
+    } =
+        await supabaseClient
+            .from("artist_songs")
+            .select("*")
+            .eq("id", songId)
+            .single();
+
+    if (error) {
+
+        console.error(
+            "Could not load song:",
+            error
+        );
+
+        alert(
+            "Could not load the song."
+        );
+
+        return;
+    }
+
+    editingArtistSongId = song.id;
+
+    document.getElementById(
+        "artistSongTitle"
+    ).value = song.title || "";
+
+    document.querySelectorAll(
+        ".artist-song-section"
+    ).forEach(
+        function(checkbox) {
+
+            checkbox.checked =
+                Array.isArray(song.sections) &&
+                song.sections.includes(
+                    checkbox.value
+                );
+
+        }
+    );
+
+    const submitButton =
+        document.getElementById(
+            "artistSongSubmitButton"
+        );
+
+    if (submitButton) {
+
+        submitButton.textContent =
+            "SAVE CHANGES";
+
+    }
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
+}
 /* =====================================================
    DELETE ARTIST SONG
 ===================================================== */
