@@ -1855,7 +1855,7 @@ function escapeHtml(text) {
 }
 async function loadArtistMusic() {
 
-    const newestMusic =
+    const musicSection =
         document.getElementById("newestMusic");
 
     const topSongs =
@@ -1870,8 +1870,7 @@ async function loadArtistMusic() {
     const eps =
         document.getElementById("eps");
 
-    if (!artistId) {
-        console.error("Artist ID missing.");
+    if (!musicSection || !artistId) {
         return;
     }
 
@@ -1894,6 +1893,174 @@ async function loadArtistMusic() {
         return;
     }
 
+    songs = artistSongs || [];
+
+    /* =================================================
+       NEWEST MUSIC
+    ================================================= */
+
+    if (musicSection) {
+
+        musicSection.innerHTML = "";
+
+        const newestList =
+            songs.slice(0, 5);
+
+        newestList.forEach(
+            function(song, index) {
+
+                musicSection.appendChild(
+                    createSongRow(
+                        song,
+                        index
+                    )
+                );
+
+            }
+        );
+    }
+
+
+    /* =================================================
+       TOP SONGS
+    ================================================= */
+
+    if (topSongs) {
+
+        topSongs.innerHTML = "";
+
+        const topSongList =
+            songs.filter(
+                function(song) {
+
+                    return (
+                        Array.isArray(song.sections) &&
+                        song.sections.includes("top")
+                    );
+
+                }
+            );
+
+        topSongList.forEach(
+            function(song, index) {
+
+                topSongs.appendChild(
+                    createSongRow(
+                        song,
+                        index
+                    )
+                );
+
+            }
+        );
+    }
+
+
+    /* =================================================
+       SINGLES
+    ================================================= */
+
+    if (singles) {
+
+        singles.innerHTML = "";
+
+        const singleList =
+            songs.filter(
+                function(song) {
+
+                    return (
+                        Array.isArray(song.sections) &&
+                        song.sections.includes("singles")
+                    );
+
+                }
+            );
+
+        singleList.forEach(
+            function(song, index) {
+
+                singles.appendChild(
+                    createSongRow(
+                        song,
+                        index
+                    )
+                );
+
+            }
+        );
+    }
+
+
+    /* =================================================
+       ALBUMS
+    ================================================= */
+
+    if (albums) {
+
+        albums.innerHTML = "";
+
+        const albumList =
+            songs.filter(
+                function(song) {
+
+                    return (
+                        Array.isArray(song.sections) &&
+                        song.sections.includes("albums")
+                    );
+
+                }
+            );
+
+        albumList.forEach(
+            function(song, index) {
+
+                albums.appendChild(
+                    createSongRow(
+                        song,
+                        index
+                    )
+                );
+
+            }
+        );
+    }
+
+
+    /* =================================================
+       EPS
+    ================================================= */
+
+    if (eps) {
+
+        eps.innerHTML = "";
+
+        const epList =
+            songs.filter(
+                function(song) {
+
+                    return (
+                        Array.isArray(song.sections) &&
+                        song.sections.includes("eps")
+                    );
+
+                }
+            );
+
+        epList.forEach(
+            function(song, index) {
+
+                eps.appendChild(
+                    createSongRow(
+                        song,
+                        index
+                    )
+                );
+
+            }
+        );
+    }
+
+}
 
     /* =================================================
        KEEP ALL SONGS FOR THE MUSIC PLAYER
