@@ -1802,11 +1802,23 @@ function escapeHtml(text) {
 }
 async function loadArtistMusic() {
 
-    const musicSection =
+    const newestMusic =
         document.getElementById("newestMusic");
 
-    if (!musicSection || !artistId) {
-        console.error("Music section or artist ID missing");
+    const topSongs =
+        document.getElementById("topSongs");
+
+    const singles =
+        document.getElementById("singles");
+
+    const albums =
+        document.getElementById("albums");
+
+    const eps =
+        document.getElementById("eps");
+
+    if (!artistId) {
+        console.error("Artist ID missing.");
         return;
     }
 
@@ -1826,36 +1838,53 @@ async function loadArtistMusic() {
             error
         );
 
-        musicSection.innerHTML = `
-            <div class="empty-state">
-                MUSIC COULD NOT BE LOADED
-            </div>
-        `;
-
         return;
     }
 
-    musicSection.innerHTML = "";
 
-    if (!artistSongs || artistSongs.length === 0) {
+    /* =================================================
+       KEEP ALL SONGS FOR THE MUSIC PLAYER
+    ================================================= */
 
-        musicSection.innerHTML = `
-            <div class="empty-state">
-                NO MUSIC AVAILABLE
-            </div>
-        `;
+    songs = artistSongs || [];
 
-        return;
+
+    /* =================================================
+       CLEAR SECTIONS
+    ================================================= */
+
+    if (newestMusic) {
+        newestMusic.innerHTML = "";
     }
 
-    songs = artistSongs;
+    if (topSongs) {
+        topSongs.innerHTML = "";
+    }
 
-    artistSongs.forEach(function(song, index) {
+    if (singles) {
+        singles.innerHTML = "";
+    }
+
+    if (albums) {
+        albums.innerHTML = "";
+    }
+
+    if (eps) {
+        eps.innerHTML = "";
+    }
+
+
+    /* =================================================
+       CREATE SONG ROW
+    ================================================= */
+
+    function createSongRow(song, index) {
 
         const songRow =
             document.createElement("div");
 
-        songRow.className = "song-row";
+        songRow.className =
+            "song-row";
 
         songRow.innerHTML = `
 
@@ -1866,7 +1895,9 @@ async function loadArtistMusic() {
             <div class="song-info">
 
                 <div class="song-title">
-                    ${escapeHtml(song.title || "Untitled")}
+                    ${escapeHtml(
+                        song.title || "Untitled"
+                    )}
                 </div>
 
                 <div class="song-artist">
@@ -1884,16 +1915,239 @@ async function loadArtistMusic() {
         songRow.addEventListener(
             "click",
             function() {
-                playSong(index);
+
+                const playerIndex =
+                    songs.findIndex(
+                        function(item) {
+                            return item.id === song.id;
+                        }
+                    );
+
+                playSong(playerIndex);
+
             }
         );
 
-        musicSection.appendChild(songRow);
+        return songRow;
+    }
 
-    });
+
+    /* =================================================
+       NEWEST MUSIC
+    ================================================= */
+
+    if (newestMusic) {
+
+        const newestSongs =
+            artistSongs.slice(0, 5);
+
+        if (newestSongs.length === 0) {
+
+            newestMusic.innerHTML =
+                `<div class="empty-state">
+                    NO MUSIC AVAILABLE
+                </div>`;
+
+        } else {
+
+            newestSongs.forEach(
+                function(song, index) {
+
+                    newestMusic.appendChild(
+                        createSongRow(
+                            song,
+                            index
+                        )
+                    );
+
+                }
+            );
+
+        }
+
+    }
+
+
+    /* =================================================
+       TOP SONGS
+    ================================================= */
+
+    if (topSongs) {
+
+        const topSongList =
+            artistSongs.filter(
+                function(song) {
+
+                    return (
+                        Array.isArray(song.sections) &&
+                        song.sections.includes("top")
+                    );
+
+                }
+            );
+
+        if (topSongList.length === 0) {
+
+            topSongs.innerHTML =
+                `<div class="empty-state">
+                    NO TOP SONGS AVAILABLE
+                </div>`;
+
+        } else {
+
+            topSongList.forEach(
+                function(song, index) {
+
+                    topSongs.appendChild(
+                        createSongRow(
+                            song,
+                            index
+                        )
+                    );
+
+                }
+            );
+
+        }
+
+    }
+
+
+    /* =================================================
+       SINGLES
+    ================================================= */
+
+    if (singles) {
+
+        const singleList =
+            artistSongs.filter(
+                function(song) {
+
+                    return (
+                        Array.isArray(song.sections) &&
+                        song.sections.includes("singles")
+                    );
+
+                }
+            );
+
+        if (singleList.length === 0) {
+
+            singles.innerHTML =
+                `<div class="empty-state">
+                    NO SINGLES AVAILABLE
+                </div>`;
+
+        } else {
+
+            singleList.forEach(
+                function(song, index) {
+
+                    singles.appendChild(
+                        createSongRow(
+                            song,
+                            index
+                        )
+                    );
+
+                }
+            );
+
+        }
+
+    }
+
+
+    /* =================================================
+       ALBUMS
+    ================================================= */
+
+    if (albums) {
+
+        const albumList =
+            artistSongs.filter(
+                function(song) {
+
+                    return (
+                        Array.isArray(song.sections) &&
+                        song.sections.includes("albums")
+                    );
+
+                }
+            );
+
+        if (albumList.length === 0) {
+
+            albums.innerHTML =
+                `<div class="empty-state">
+                    NO ALBUMS AVAILABLE
+                </div>`;
+
+        } else {
+
+            albumList.forEach(
+                function(song, index) {
+
+                    albums.appendChild(
+                        createSongRow(
+                            song,
+                            index
+                        )
+                    );
+
+                }
+            );
+
+        }
+
+    }
+
+
+    /* =================================================
+       EPS
+    ================================================= */
+
+    if (eps) {
+
+        const epList =
+            artistSongs.filter(
+                function(song) {
+
+                    return (
+                        Array.isArray(song.sections) &&
+                        song.sections.includes("eps")
+                    );
+
+                }
+            );
+
+        if (epList.length === 0) {
+
+            eps.innerHTML =
+                `<div class="empty-state">
+                    NO EPS AVAILABLE
+                </div>`;
+
+        } else {
+
+            epList.forEach(
+                function(song, index) {
+
+                    eps.appendChild(
+                        createSongRow(
+                            song,
+                            index
+                        )
+                    );
+
+                }
+            );
+
+        }
+
+    }
 
 }
-
 /* =====================================================
    LOAD RELEASES
 ===================================================== */
