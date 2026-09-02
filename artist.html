@@ -294,8 +294,27 @@ body {
 
 .song-info {
     min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.song-artwork {
+    width: 55px;
+    height: 55px;
+    flex-shrink: 0;
 }
 
+.song-artwork img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #111;
+}
+
+.song-details {
+    min-width: 0;
+}
 .song-title {
     font-size: 15px;
 
@@ -1917,19 +1936,36 @@ async function loadArtistMusic() {
                 ${String(index + 1).padStart(2, "0")}
             </div>
 
-            <div class="song-info">
+           <div class="song-info">
 
-                <div class="song-title">
-                    ${escapeHtml(
-                        song.title || "Untitled"
-                    )}
-                </div>
+    <div class="song-artwork">
 
-                <div class="song-artist">
-                    FLY SINCE BIRTH
-                </div>
+        <img
+            src="${escapeHtml(
+                song.image_url ||
+                song.image ||
+                "fsblogo.PNG"
+            )}"
+            alt=""
+        >
 
-            </div>
+    </div>
+
+    <div class="song-details">
+
+        <div class="song-title">
+            ${escapeHtml(
+                song.title || "Untitled"
+            )}
+        </div>
+
+        <div class="song-artist">
+            FLY SINCE BIRTH
+        </div>
+
+    </div>
+
+</div>
 
             <div class="song-duration">
                 PLAY
