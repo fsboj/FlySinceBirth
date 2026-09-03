@@ -1853,6 +1853,130 @@ function escapeHtml(text) {
     return div.innerHTML;
 
 }
+      function createSongRow(song) {
+
+    const row =
+        document.createElement("div");
+
+    row.className =
+        "song-row";
+
+    row.onclick = function() {
+
+        const index =
+            songs.indexOf(song);
+
+        playSong(index);
+
+    };
+
+
+    /* NUMBER */
+
+    const number =
+        document.createElement("div");
+
+    number.className =
+        "song-number";
+
+    number.textContent =
+        String(
+            songs.indexOf(song) + 1
+        ).padStart(2, "0");
+
+
+    /* SONG INFO */
+
+    const info =
+        document.createElement("div");
+
+    info.className =
+        "song-info";
+
+
+    /* ARTWORK */
+
+    const artwork =
+        document.createElement("div");
+
+    artwork.className =
+        "song-artwork";
+
+
+    const image =
+        document.createElement("img");
+
+    image.src =
+        song.image_url ||
+        "fsblogo.PNG";
+
+    image.alt =
+        song.title ||
+        "Song";
+
+
+    artwork.appendChild(image);
+
+
+    /* DETAILS */
+
+    const details =
+        document.createElement("div");
+
+    details.className =
+        "song-details";
+
+
+    const title =
+        document.createElement("div");
+
+    title.className =
+        "song-title";
+
+    title.textContent =
+        song.title ||
+        "Untitled";
+
+
+    const artist =
+        document.createElement("div");
+
+    artist.className =
+        "song-artist";
+
+    artist.textContent =
+        document.getElementById(
+            "artistName"
+        ).textContent ||
+        "FLY SINCE BIRTH";
+
+
+    details.appendChild(title);
+    details.appendChild(artist);
+
+    info.appendChild(artwork);
+    info.appendChild(details);
+
+
+    /* DURATION */
+
+    const duration =
+        document.createElement("div");
+
+    duration.className =
+        "song-duration";
+
+    duration.textContent =
+        "▶";
+
+
+    row.appendChild(number);
+    row.appendChild(info);
+    row.appendChild(duration);
+
+
+    return row;
+}
 async function loadArtistMusic() {
 
     const musicSection =
@@ -1870,7 +1994,7 @@ async function loadArtistMusic() {
     const eps =
         document.getElementById("eps");
 
-    if (!musicSection || !artistId) {
+    if (!artistId) {
         return;
     }
 
@@ -1895,6 +2019,12 @@ async function loadArtistMusic() {
 
     songs = artistSongs || [];
 
+    console.log(
+        "ARTIST SONGS LOADED:",
+        songs
+    );
+
+
     /* =================================================
        NEWEST MUSIC
     ================================================= */
@@ -1906,18 +2036,23 @@ async function loadArtistMusic() {
         const newestList =
             songs.slice(0, 5);
 
-        newestList.forEach(
-            function(song, index) {
+        if (!newestList.length) {
 
-                musicSection.appendChild(
-                    createSongRow(
-                        song,
-                        index
-                    )
-                );
+            musicSection.innerHTML =
+                '<div class="empty-state">NO MUSIC AVAILABLE</div>';
 
-            }
-        );
+        } else {
+
+            newestList.forEach(
+                function(song) {
+
+                    musicSection.appendChild(
+                        createSongRow(song)
+                    );
+
+                }
+            );
+        }
     }
 
 
@@ -1934,25 +2069,33 @@ async function loadArtistMusic() {
                 function(song) {
 
                     return (
-                        Array.isArray(song.sections) &&
-                        song.sections.includes("top")
+                        song.is_top_song === true ||
+                        (
+                            Array.isArray(song.sections) &&
+                            song.sections.includes("top")
+                        )
                     );
 
                 }
             );
 
-        topSongList.forEach(
-            function(song, index) {
+        if (!topSongList.length) {
 
-                topSongs.appendChild(
-                    createSongRow(
-                        song,
-                        index
-                    )
-                );
+            topSongs.innerHTML =
+                '<div class="empty-state">NO TOP SONGS AVAILABLE</div>';
 
-            }
-        );
+        } else {
+
+            topSongList.forEach(
+                function(song) {
+
+                    topSongs.appendChild(
+                        createSongRow(song)
+                    );
+
+                }
+            );
+        }
     }
 
 
@@ -1976,18 +2119,23 @@ async function loadArtistMusic() {
                 }
             );
 
-        singleList.forEach(
-            function(song, index) {
+        if (!singleList.length) {
 
-                singles.appendChild(
-                    createSongRow(
-                        song,
-                        index
-                    )
-                );
+            singles.innerHTML =
+                '<div class="empty-state">NO SINGLES AVAILABLE</div>';
 
-            }
-        );
+        } else {
+
+            singleList.forEach(
+                function(song) {
+
+                    singles.appendChild(
+                        createSongRow(song)
+                    );
+
+                }
+            );
+        }
     }
 
 
@@ -2011,18 +2159,23 @@ async function loadArtistMusic() {
                 }
             );
 
-        albumList.forEach(
-            function(song, index) {
+        if (!albumList.length) {
 
-                albums.appendChild(
-                    createSongRow(
-                        song,
-                        index
-                    )
-                );
+            albums.innerHTML =
+                '<div class="empty-state">NO ALBUMS AVAILABLE</div>';
 
-            }
-        );
+        } else {
+
+            albumList.forEach(
+                function(song) {
+
+                    albums.appendChild(
+                        createSongRow(song)
+                    );
+
+                }
+            );
+        }
     }
 
 
@@ -2046,22 +2199,26 @@ async function loadArtistMusic() {
                 }
             );
 
-        epList.forEach(
-            function(song, index) {
+        if (!epList.length) {
 
-                eps.appendChild(
-                    createSongRow(
-                        song,
-                        index
-                    )
-                );
+            eps.innerHTML =
+                '<div class="empty-state">NO EPS AVAILABLE</div>';
 
-            }
-        );
+        } else {
+
+            epList.forEach(
+                function(song) {
+
+                    eps.appendChild(
+                        createSongRow(song)
+                    );
+
+                }
+            );
+        }
     }
 
 }
-
 
 /* =====================================================
    LOAD RELEASES
