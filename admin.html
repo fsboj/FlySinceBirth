@@ -4267,7 +4267,7 @@ loadAdminData();
 ===================================================== */
 
 let selectedArtistPageId = null;
-
+let editingArtistSongId = null;
 
 /* =====================================================
    LOAD ARTISTS INTO ARTIST PAGE SELECTOR
@@ -4783,7 +4783,8 @@ async function uploadArtistSong() {
 
         const titleInput = document.getElementById("artistSongTitle");
         const audioInput = document.getElementById("artistSongFile");
-        const artworkInput = document.getElementById("artistSongArtwork");
+        const artworkInput =
+    document.getElementById("artistSongImageFile");
 
         const title = titleInput ? titleInput.value.trim() : "";
         const audioFile = audioInput ? audioInput.files[0] : null;
