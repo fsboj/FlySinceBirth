@@ -258,7 +258,131 @@ body {
 
     border-top: 1px solid #242424;
 }
+.compact-song-grid {
+    margin-top: 50px;
 
+    display: grid;
+
+    grid-template-rows: repeat(2, 70px);
+
+    grid-auto-flow: column;
+
+    grid-auto-columns: 250px;
+
+    gap: 12px 20px;
+
+    align-items: center;
+
+    overflow-x: auto;
+
+    padding-bottom: 10px;
+}
+
+.compact-song-button {
+    width: 250px;
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 12px;
+
+    border: 1px solid #242424;
+    border-radius: 40px;
+
+    background: #090909;
+
+    overflow: hidden;
+
+    cursor: pointer;
+
+    transition: 0.25s;
+}
+
+.compact-song-button:hover {
+    background: #111;
+    transform: translateY(-2px);
+}
+
+.compact-song-artwork {
+    width: 48px;
+    height: 48px;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+    background: #111;
+
+    flex-shrink: 0;
+}
+
+.compact-song-number {
+    width: 28px;
+
+    margin-left: 9px;
+
+    color: #555;
+
+    font-size: 9px;
+}
+
+.compact-song-info {
+    flex: 1;
+
+    min-width: 0;
+
+    margin-left: 4px;
+}
+
+.compact-song-title {
+    color: #fff;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+.compact-song-artist {
+    margin-top: 4px;
+
+    color: #666;
+
+    font-size: 7px;
+
+    letter-spacing: 1.5px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+.compact-song-play {
+    width: 34px;
+    height: 34px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #333;
+
+    color: #fff;
+
+    font-size: 10px;
+
+    flex-shrink: 0;
+}
 .song-row {
     min-height: 85px;
 
@@ -1229,7 +1353,7 @@ footer {
 
     <div
         id="newestMusic"
-        class="music-list"
+        class="compact-song-grid"
     >
 
         <div class="empty-state">
@@ -1285,10 +1409,10 @@ footer {
     </h2>
 
 
-    <div
-        id="singles"
-        class="music-list"
-    >
+   <div
+    id="singles"
+    class="compact-song-grid"
+>
 
         <div class="empty-state">
             NO SINGLES AVAILABLE
@@ -1953,7 +2077,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 
 }
-      function createSongRow(song) {
+      function createCompactSongButton(song) {
 
     const row =
         document.createElement("div");
@@ -2228,7 +2352,103 @@ function createTopSongButton(song) {
 
     return button;
 }
+function createCompactSongButton(song) {
 
+    const button =
+        document.createElement("div");
+
+    button.className =
+        "compact-song-button";
+
+    button.onclick = function() {
+
+        const index =
+            songs.indexOf(song);
+
+        playSong(index);
+    };
+
+
+    const image =
+        document.createElement("img");
+
+    image.className =
+        "compact-song-artwork";
+
+    image.src =
+        song.image_url ||
+        "fsblogo.PNG";
+
+    image.alt =
+        song.title ||
+        "Song";
+
+
+    const number =
+        document.createElement("div");
+
+    number.className =
+        "compact-song-number";
+
+    number.textContent =
+        String(
+            songs.indexOf(song) + 1
+        ).padStart(2, "0");
+
+
+    const info =
+        document.createElement("div");
+
+    info.className =
+        "compact-song-info";
+
+
+    const title =
+        document.createElement("div");
+
+    title.className =
+        "compact-song-title";
+
+    title.textContent =
+        song.title ||
+        "Untitled";
+
+
+    const artist =
+        document.createElement("div");
+
+    artist.className =
+        "compact-song-artist";
+
+    artist.textContent =
+        document.getElementById(
+            "artistName"
+        ).textContent ||
+        "FLY SINCE BIRTH";
+
+
+    info.appendChild(title);
+    info.appendChild(artist);
+
+
+    const play =
+        document.createElement("div");
+
+    play.className =
+        "compact-song-play";
+
+    play.textContent =
+        "▶";
+
+
+    button.appendChild(image);
+    button.appendChild(number);
+    button.appendChild(info);
+    button.appendChild(play);
+
+
+    return button;
+}
     /* =================================================
        NEWEST MUSIC
     ================================================= */
@@ -2334,7 +2554,7 @@ function createTopSongButton(song) {
                 function(song) {
 
                     singles.appendChild(
-                        createSongRow(song)
+                        createCompactSongButton(song)
                     );
 
                 }
