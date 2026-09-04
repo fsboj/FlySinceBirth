@@ -686,7 +686,99 @@ body {
 
     font-size: 9px;
 }
+.artist-release-card {
+    width: 250px;
+    border: 1px solid #242424;
+    background: #090909;
+    overflow: hidden;
+    cursor: pointer;
+    transition: 0.3s;
+}
 
+.artist-release-card:hover {
+    transform: translateY(-5px);
+    background: #111;
+}
+
+.artist-release-cover {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    display: block;
+    background: #111;
+}
+
+.artist-release-info {
+    padding: 15px;
+}
+
+.artist-release-title {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.artist-release-type {
+    margin-top: 5px;
+    color: #666;
+    font-size: 8px;
+    letter-spacing: 2px;
+}
+
+.artist-release-tracklist {
+    border-top: 1px solid #242424;
+}
+
+.artist-release-track {
+    min-height: 45px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #1c1c1c;
+    cursor: pointer;
+}
+
+.artist-release-track:hover {
+    background: #151515;
+}
+
+.artist-release-track-number {
+    width: 25px;
+    color: #555;
+    font-size: 9px;
+    flex-shrink: 0;
+}
+
+.artist-release-track-title {
+    flex: 1;
+    min-width: 0;
+    color: #fff;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.artist-release-track-play {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #333;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 8px;
+    flex-shrink: 0;
+}
+
+.release-loading {
+    padding: 15px;
+    color: #666;
+    font-size: 8px;
+    letter-spacing: 2px;
+}
 
 /* =====================================================
    TOP SONGS
@@ -1004,7 +1096,11 @@ footer {
         grid-template-columns:
             repeat(2, 1fr);
     }
-
+#eps,
+#albums {
+    grid-template-columns: repeat(2, 250px);
+    overflow-x: auto;
+}
     .video-grid {
         grid-template-columns: 1fr;
     }
@@ -2589,17 +2685,18 @@ function createCompactSongButton(song) {
 
         singles.innerHTML = "";
 
-        const singleList =
-            songs.filter(
-                function(song) {
+       const singleList =
+    songs.filter(
+        function(song) {
 
-                    return (
-                        Array.isArray(song.sections) &&
-                        song.sections.includes("singles")
-                    );
-
-                }
+            return (
+                !song.release_id &&
+                Array.isArray(song.sections) &&
+                song.sections.includes("singles")
             );
+
+        }
+    );
 
         if (!singleList.length) {
 
@@ -2708,19 +2805,256 @@ function createCompactSongButton(song) {
 
 async function loadArtistReleases() {
 
-    /*
-       Singles / EPs will be
-       connected here.
-    */
+    const albums = document.getElementById("albums");
+    const eps = document.getElementById("eps");
 
-    console.log(
-        "Loading releases for artist:",
-        artistId
-    );
+    if (!artistId) {
+        return;
+    }
+
+    const { data: releases, error } =
+        await supabaseClient
+            .from("artist_releases")
+            .select("*")
+            .eq("artist_id", artistId)
+            .order("sort_order", {
+                ascending: true
+            })
+            .order("release_date", {
+                ascending: false
+            });
+
+    if (error) {
+
+        console.error(
+            "Could not load artist releases:",
+            error
+        );
+
+        return;
+    }
+
+    const albumList =
+        (releases || []).filter(
+            function(release) {
+                return release.type === "album";
+            }
+        );
+
+    const epList =
+        (releases || []).filter(
+            function(release) {
+                return release.type === "ep";
+            }
+        );
+
+    if (albums) {
+
+        albums.innerHTML = "";
+
+        if (!albumList.length) {
+
+            albums.innerHTML =
+                '<div class="empty-state">NO ALBUMS AVAILABLE</div>';
+
+        } else {
+
+            albumList.forEach(
+                function(release) {
+
+                    albums.appendChild(
+                        createArtistReleaseCard(release)
+                    );
+
+                }
+            );
+
+        }
+
+    }
+
+    if (eps) {
+
+        eps.innerHTML = "";
+
+        if (!epList.length) {
+
+            eps.innerHTML =
+                '<div class="empty-state">NO EPS AVAILABLE</div>';
+
+        } else {
+
+            epList.forEach(
+                function(release) {
+
+                    eps.appendChild(
+                        createArtistReleaseCard(release)
+                    );
+
+                }
+            );
+
+        }
+
+    }
+
+}
+
+function createArtistReleaseCard(release) {
+
+    const card =
+        document.createElement("div");
+
+    card.className =
+        "artist-release-card";
+
+    card.innerHTML = `
+        <img
+            class="artist-release-cover"
+            src="${release.artwork_url || "fsblogo.PNG"}"
+            alt="${escapeHtml(release.title || "Release")}"
+        >
+
+        <div class="artist-release-info">
+
+            <div class="artist-release-title">
+                ${escapeHtml(release.title || "Untitled")}
+            </div>
+
+            <div class="artist-release-type">
+                ${(release.type || "").toUpperCase()}
+            </div>
+
+        </div>
+
+        <div class="artist-release-tracklist"></div>
+    `;
+
+    const trackList =
+        card.querySelector(
+            ".artist-release-tracklist"
+        );
+
+    trackList.style.display = "none";
+
+    card.onclick = async function() {
+
+        const isOpen =
+            trackList.style.display !== "none";
+
+        if (isOpen) {
+
+            trackList.style.display = "none";
+            return;
+
+        }
+
+        trackList.style.display = "block";
+
+        if (!trackList.dataset.loaded) {
+
+            await loadArtistReleaseTracks(
+                release.id,
+                trackList
+            );
+
+            trackList.dataset.loaded = "true";
+
+        }
+
+    };
+
+    return card;
 
 }
 
 
+async function loadArtistReleaseTracks(
+    releaseId,
+    container
+) {
+
+    container.innerHTML =
+        '<div class="release-loading">LOADING...</div>';
+
+    const { data: tracks, error } =
+        await supabaseClient
+            .from("artist_songs")
+            .select("*")
+            .eq("release_id", releaseId)
+            .order("track_number", {
+                ascending: true
+            });
+
+    if (error) {
+
+        console.error(
+            "Could not load release tracks:",
+            error
+        );
+
+        container.innerHTML =
+            '<div class="release-loading">COULD NOT LOAD TRACKS</div>';
+
+        return;
+    }
+
+    container.innerHTML = "";
+
+    if (!tracks || !tracks.length) {
+
+        container.innerHTML =
+            '<div class="release-loading">NO TRACKS AVAILABLE</div>';
+
+        return;
+    }
+
+    tracks.forEach(
+        function(song) {
+
+            const track =
+                document.createElement("div");
+
+            track.className =
+                "artist-release-track";
+
+            track.innerHTML = `
+                <div class="artist-release-track-number">
+                    ${String(song.track_number || 0).padStart(2, "0")}
+                </div>
+
+                <div class="artist-release-track-title">
+                    ${escapeHtml(song.title || "Untitled")}
+                </div>
+
+                <div class="artist-release-track-play">
+                    ▶
+                </div>
+            `;
+
+            track.onclick = function(event) {
+
+                event.stopPropagation();
+
+                const index =
+                    songs.findIndex(
+                        function(item) {
+                            return item.id === song.id;
+                        }
+                    );
+
+                if (index !== -1) {
+                    playSong(index);
+                }
+
+            };
+
+            container.appendChild(track);
+
+        }
+    );
+
+}
 /* =====================================================
    LOAD VIDEOS
 ===================================================== */
