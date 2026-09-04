@@ -1724,7 +1724,175 @@ body {
     </div>
 
 </section>
+<!-- =====================================================
+     ARTIST RELEASES
+===================================================== -->
 
+<div
+    style="
+        margin-top:45px;
+        padding-top:30px;
+        border-top:1px solid #242424;
+    "
+>
+
+    <div class="panel-title">
+        ARTIST RELEASES
+    </div>
+
+    <div class="panel-description">
+        Upload full albums and EPs with multiple tracks.
+    </div>
+
+
+    <!-- RELEASE FORM -->
+
+    <div
+        class="form-grid"
+        style="margin-top:25px;"
+    >
+
+        <div class="form-group">
+
+            <label>
+                RELEASE TYPE
+            </label>
+
+            <select id="artistReleaseType">
+
+                <option value="album">
+                    ALBUM
+                </option>
+
+                <option value="ep">
+                    EP
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                PROJECT TITLE
+            </label>
+
+            <input
+                type="text"
+                id="artistReleaseTitle"
+                placeholder="Project title"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                PROJECT ARTWORK
+            </label>
+
+            <input
+                type="file"
+                id="artistReleaseArtwork"
+                accept="image/*"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                RELEASE DATE
+            </label>
+
+            <input
+                type="date"
+                id="artistReleaseDate"
+            >
+
+        </div>
+
+    </div>
+
+
+    <!-- TRACKS -->
+
+    <div
+        style="
+            margin-top:30px;
+        "
+    >
+
+        <div class="panel-title">
+            TRACKLIST
+        </div>
+
+        <div class="panel-description">
+            Add the songs in the order they should appear.
+        </div>
+
+
+        <div
+            id="artistReleaseTracks"
+            style="
+                margin-top:20px;
+                display:flex;
+                flex-direction:column;
+                gap:12px;
+            "
+        ></div>
+
+
+        <div
+            class="actions"
+            style="margin-top:15px;"
+        >
+
+            <button
+                class="button"
+                type="button"
+                onclick="addArtistReleaseTrack()"
+            >
+                + ADD TRACK
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- SAVE RELEASE -->
+
+    <div
+        class="actions"
+        style="margin-top:25px;"
+    >
+
+        <button
+            id="artistReleaseSubmitButton"
+            class="button primary"
+            type="button"
+            onclick="saveArtistRelease()"
+        >
+            SAVE RELEASE
+        </button>
+
+    </div>
+
+
+    <!-- EXISTING RELEASES -->
+
+    <div
+        id="artistReleasesAdminList"
+        class="item-list"
+        style="margin-top:30px;"
+    ></div>
+
+</div>
 <!-- =====================================================
      MERCH
 ===================================================== -->
@@ -4465,9 +4633,13 @@ async function loadSelectedArtistPage(artistId) {
     }
 
 
-    /* LOAD THIS ARTIST'S SONGS */
+       /* LOAD THIS ARTIST'S SONGS */
 
     loadArtistSongsAdmin();
+
+    /* LOAD THIS ARTIST'S RELEASES */
+
+    loadArtistReleasesAdmin();
 
 }
 
@@ -5555,6 +5727,900 @@ window.showPanel =
         }
 
     };
+    /* =====================================================
+   ARTIST RELEASE TRACKS
+===================================================== */
+
+let artistReleaseTrackCount = 0;
+
+
+function addArtistReleaseTrack() {
+
+    artistReleaseTrackCount++;
+
+    const container =
+        document.getElementById(
+            "artistReleaseTracks"
+        );
+
+    if (!container) {
+        return;
+    }
+
+
+    const trackNumber =
+        artistReleaseTrackCount;
+
+
+    const row =
+        document.createElement("div");
+
+
+    row.className =
+        "admin-item";
+
+
+    row.style.display =
+        "grid";
+
+
+    row.style.gridTemplateColumns =
+        "55px 1fr 1fr 90px";
+
+
+    row.style.gap =
+        "12px";
+
+
+    row.style.alignItems =
+        "center";
+
+
+    row.innerHTML = `
+
+        <div
+            style="
+                text-align:center;
+                font-size:12px;
+                letter-spacing:1px;
+            "
+        >
+            ${trackNumber}
+        </div>
+
+
+        <input
+            type="text"
+            class="artist-release-track-title"
+            placeholder="Track title"
+        >
+
+
+        <input
+            type="file"
+            class="artist-release-track-file"
+            accept="audio/*"
+        >
+
+
+        <button
+            class="button danger"
+            type="button"
+            onclick="removeArtistReleaseTrack(this)"
+        >
+            REMOVE
+        </button>
+
+    `;
+
+
+    container.appendChild(row);
+}
+
+
+
+function removeArtistReleaseTrack(button) {
+
+    const row =
+        button.closest(".admin-item");
+
+
+    if (row) {
+        row.remove();
+    }
+
+
+    renumberArtistReleaseTracks();
+}
+
+
+
+function renumberArtistReleaseTracks() {
+
+    const container =
+        document.getElementById(
+            "artistReleaseTracks"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    const rows =
+        container.querySelectorAll(
+            ".admin-item"
+        );
+
+
+    rows.forEach(
+        function(row, index) {
+
+            const number =
+                row.querySelector(
+                    "div"
+                );
+
+
+            if (number) {
+
+                number.textContent =
+                    index + 1;
+
+            }
+
+        }
+    );
+
+
+    artistReleaseTrackCount =
+        rows.length;
+}
+
+
+
+/* =====================================================
+   SAVE ARTIST RELEASE
+===================================================== */
+
+async function saveArtistRelease() {
+
+    try {
+
+        if (!selectedArtistPageId) {
+
+            alert(
+                "Please select an artist page first."
+            );
+
+            return;
+        }
+
+
+        const titleInput =
+            document.getElementById(
+                "artistReleaseTitle"
+            );
+
+
+        const typeInput =
+            document.getElementById(
+                "artistReleaseType"
+            );
+
+
+        const artworkInput =
+            document.getElementById(
+                "artistReleaseArtwork"
+            );
+
+
+        const dateInput =
+            document.getElementById(
+                "artistReleaseDate"
+            );
+
+
+        const title =
+            titleInput
+                ? titleInput.value.trim()
+                : "";
+
+
+        const type =
+            typeInput
+                ? typeInput.value
+                : "album";
+
+
+        const artworkFile =
+            artworkInput &&
+            artworkInput.files
+                ? artworkInput.files[0]
+                : null;
+
+
+        const releaseDate =
+            dateInput
+                ? dateInput.value
+                : null;
+
+
+        if (!title) {
+
+            alert(
+                "Please enter a project title."
+            );
+
+            return;
+        }
+
+
+        if (!artworkFile) {
+
+            alert(
+                "Please select project artwork."
+            );
+
+            return;
+        }
+
+
+        const container =
+            document.getElementById(
+                "artistReleaseTracks"
+            );
+
+
+        const rows =
+            container
+                ? Array.from(
+                    container.querySelectorAll(
+                        ".admin-item"
+                    )
+                )
+                : [];
+
+
+        if (rows.length === 0) {
+
+            alert(
+                "Please add at least one track."
+            );
+
+            return;
+        }
+
+
+        const tracks = [];
+
+
+        for (
+            let i = 0;
+            i < rows.length;
+            i++
+        ) {
+
+            const row =
+                rows[i];
+
+
+            const titleField =
+                row.querySelector(
+                    ".artist-release-track-title"
+                );
+
+
+            const fileField =
+                row.querySelector(
+                    ".artist-release-track-file"
+                );
+
+
+            const trackTitle =
+                titleField
+                    ? titleField.value.trim()
+                    : "";
+
+
+            const audioFile =
+                fileField &&
+                fileField.files
+                    ? fileField.files[0]
+                    : null;
+
+
+            if (!trackTitle) {
+
+                alert(
+                    "Please enter a title for track " +
+                    (i + 1) +
+                    "."
+                );
+
+                return;
+            }
+
+
+            if (!audioFile) {
+
+                alert(
+                    "Please select an audio file for track " +
+                    (i + 1) +
+                    "."
+                );
+
+                return;
+            }
+
+
+            tracks.push({
+
+                title:
+                    trackTitle,
+
+                audioFile:
+                    audioFile,
+
+                trackNumber:
+                    i + 1
+
+            });
+
+        }
+
+
+        const submitButton =
+            document.getElementById(
+                "artistReleaseSubmitButton"
+            );
+
+
+        if (submitButton) {
+
+            submitButton.disabled =
+                true;
+
+            submitButton.textContent =
+                "UPLOADING...";
+
+        }
+
+
+        /* ============================================
+           UPLOAD PROJECT ARTWORK
+        ============================================ */
+
+        const artworkExtension =
+            artworkFile.name
+                .split(".")
+                .pop()
+                .toLowerCase();
+
+
+        const artworkPath =
+            selectedArtistPageId +
+            "/releases/" +
+            Date.now() +
+            "_cover." +
+            artworkExtension;
+
+
+        const {
+            error: artworkUploadError
+        } =
+            await supabaseClient
+                .storage
+                .from("artist-artwork")
+                .upload(
+                    artworkPath,
+                    artworkFile
+                );
+
+
+        if (artworkUploadError) {
+
+            throw artworkUploadError;
+
+        }
+
+
+        const {
+            data: artworkPublicData
+        } =
+            supabaseClient
+                .storage
+                .from("artist-artwork")
+                .getPublicUrl(
+                    artworkPath
+                );
+
+
+        const artworkUrl =
+            artworkPublicData.publicUrl;
+
+
+        /* ============================================
+           CREATE RELEASE
+        ============================================ */
+
+        const {
+            data: release,
+            error: releaseError
+        } =
+            await supabaseClient
+                .from("artist_releases")
+                .insert([{
+
+                    artist_id:
+                        selectedArtistPageId,
+
+                    title:
+                        title,
+
+                    type:
+                        type,
+
+                    artwork_url:
+                        artworkUrl,
+
+                    release_date:
+                        releaseDate || null,
+
+                    sort_order:
+                        0
+
+                }])
+                .select()
+                .single();
+
+
+        if (releaseError) {
+
+            throw releaseError;
+
+        }
+
+
+        /* ============================================
+           UPLOAD TRACKS
+        ============================================ */
+
+        for (
+            let i = 0;
+            i < tracks.length;
+            i++
+        ) {
+
+            const track =
+                tracks[i];
+
+
+            const extension =
+                track.audioFile.name
+                    .split(".")
+                    .pop()
+                    .toLowerCase();
+
+
+            const audioPath =
+                selectedArtistPageId +
+                "/releases/" +
+                release.id +
+                "/track-" +
+                track.trackNumber +
+                "-" +
+                Date.now() +
+                "." +
+                extension;
+
+
+            const {
+                error: audioUploadError
+            } =
+                await supabaseClient
+                    .storage
+                    .from("artist-music")
+                    .upload(
+                        audioPath,
+                        track.audioFile
+                    );
+
+
+            if (audioUploadError) {
+
+                throw audioUploadError;
+
+            }
+
+
+            const {
+                data: audioPublicData
+            } =
+                supabaseClient
+                    .storage
+                    .from("artist-music")
+                    .getPublicUrl(
+                        audioPath
+                    );
+
+
+            const audioUrl =
+                audioPublicData.publicUrl;
+
+
+            const {
+                error: songInsertError
+            } =
+                await supabaseClient
+                    .from("artist_songs")
+                    .insert([{
+
+                        artist_id:
+                            selectedArtistPageId,
+
+                        title:
+                            track.title,
+
+                        audio_url:
+                            audioUrl,
+
+                        image_url:
+                            artworkUrl,
+
+                        sort_order:
+                            track.trackNumber,
+
+                        plays:
+                            0,
+
+                        is_top_song:
+                            false,
+
+                        sections:
+                            type === "album"
+                                ? ["albums"]
+                                : ["eps"],
+
+                        release_id:
+                            release.id,
+
+                        track_number:
+                            track.trackNumber
+
+                    }]);
+
+
+            if (songInsertError) {
+
+                throw songInsertError;
+
+            }
+
+        }
+
+
+        /* ============================================
+           RESET FORM
+        ============================================ */
+
+        if (titleInput) {
+            titleInput.value = "";
+        }
+
+
+        if (artworkInput) {
+            artworkInput.value = "";
+        }
+
+
+        if (dateInput) {
+            dateInput.value = "";
+        }
+
+
+        if (container) {
+            container.innerHTML = "";
+        }
+
+
+        artistReleaseTrackCount =
+            0;
+
+
+        addArtistReleaseTrack();
+
+
+        await loadArtistReleasesAdmin();
+
+
+        alert(
+            "Release uploaded successfully."
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "ARTIST RELEASE UPLOAD ERROR:",
+            error
+        );
+
+
+        alert(
+            "Release upload failed:\n\n" +
+            error.message
+        );
+
+
+    } finally {
+
+        const submitButton =
+            document.getElementById(
+                "artistReleaseSubmitButton"
+            );
+
+
+        if (submitButton) {
+
+            submitButton.disabled =
+                false;
+
+            submitButton.textContent =
+                "SAVE RELEASE";
+
+        }
+
+    }
+
+}
+
+
+
+/* =====================================================
+   LOAD ARTIST RELEASES IN ADMIN
+===================================================== */
+
+async function loadArtistReleasesAdmin() {
+
+    const list =
+        document.getElementById(
+            "artistReleasesAdminList"
+        );
+
+
+    if (!list ||
+        !selectedArtistPageId) {
+
+        return;
+
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("artist_releases")
+            .select("*")
+            .eq(
+                "artist_id",
+                selectedArtistPageId
+            )
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Could not load artist releases:",
+            error
+        );
+
+        return;
+
+    }
+
+
+    list.innerHTML = "";
+
+
+    if (!data ||
+        data.length === 0) {
+
+        list.innerHTML =
+            '<div class="empty-state">NO RELEASES YET</div>';
+
+        return;
+
+    }
+
+
+    for (
+        const release of data
+    ) {
+
+        const {
+            count
+        } =
+            await supabaseClient
+                .from("artist_songs")
+                .select(
+                    "id",
+                    {
+                        count: "exact",
+                        head: true
+                    }
+                )
+                .eq(
+                    "release_id",
+                    release.id
+                );
+
+
+        const row =
+            document.createElement(
+                "div"
+            );
+
+
+        row.className =
+            "admin-item";
+
+
+        row.innerHTML = `
+
+            <div>
+
+                <div class="item-name">
+
+                    ${escapeHtml(
+                        release.title
+                    )}
+
+                </div>
+
+                <div class="item-meta">
+
+                    ${
+                        release.type
+                            .toUpperCase()
+                    }
+
+                    •
+
+                    ${
+                        count || 0
+                    }
+
+                    TRACK${
+                        count === 1
+                            ? ""
+                            : "S"
+                    }
+
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <button
+                    class="button danger"
+                    type="button"
+                    onclick="deleteArtistRelease('${release.id}')"
+                >
+                    DELETE
+                </button>
+
+            </div>
+
+        `;
+
+
+        list.appendChild(
+            row
+        );
+
+    }
+
+}
+
+
+
+/* =====================================================
+   DELETE ARTIST RELEASE
+===================================================== */
+
+async function deleteArtistRelease(
+    releaseId
+) {
+
+    if (!releaseId) {
+        return;
+    }
+
+
+    const confirmed =
+        confirm(
+            "Delete this release and all of its tracks?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    const {
+        error
+    } =
+        await supabaseClient
+            .from("artist_releases")
+            .delete()
+            .eq(
+                "id",
+                releaseId
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Could not delete release:",
+            error
+        );
+
+
+        alert(
+            "Could not delete the release:\n\n" +
+            error.message
+        );
+
+
+        return;
+
+    }
+
+
+    await loadArtistReleasesAdmin();
+
+
+    await loadArtistSongsAdmin();
+
+
+    alert(
+        "Release deleted."
+    );
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        const releaseTracks =
+            document.getElementById(
+                "artistReleaseTracks"
+            );
+
+        if (
+            releaseTracks &&
+            releaseTracks.children.length === 0
+        ) {
+
+            addArtistReleaseTrack();
+
+        }
+
+    }
+);
+}
 </script>
 
 
