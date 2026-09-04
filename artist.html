@@ -2201,6 +2201,27 @@ function escapeHtml(text) {
 
     return row;
 }
+      function createSongRow(song) {
+    const row = document.createElement("div");
+    row.className = "music-row";
+
+    row.innerHTML = `
+        <div class="music-row-left">
+            <img src="${song.image_url || song.image || 'assets/images/fsb-logo.png'}" alt="">
+            <div>
+                <div class="music-row-title">${song.title || "Untitled"}</div>
+            </div>
+        </div>
+        <button class="music-play-button" type="button">▶</button>
+    `;
+
+    row.querySelector(".music-play-button").addEventListener("click", () => {
+        const index = songs.findIndex(s => s.id === song.id);
+        if (index !== -1) playSong(index);
+    });
+
+    return row;
+}
 async function loadArtistMusic() {
 
     const musicSection =
@@ -2471,7 +2492,7 @@ function createCompactSongButton(song) {
                 function(song) {
 
                     musicSection.appendChild(
-                        createSongRow(song)
+                        createCompactSongButton(song)
                     );
 
                 }
