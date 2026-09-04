@@ -466,7 +466,23 @@ body {
 
     padding-right: 10px;
 }
+.release-song-row {
+    width: 250px;
+    height: 250px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #242424;
+    background: #090909;
+    overflow: hidden;
+    cursor: pointer;
+}
 
+.release-song-row img {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    display: block;
+}
 
 /* =====================================================
    MUSIC PLAYER
@@ -2221,6 +2237,28 @@ function escapeHtml(text) {
 
     return row;
 }
+      function createReleaseSongRow(song) {
+    const row = document.createElement("div");
+
+    row.className = "release-song-row";
+
+    row.innerHTML = `
+        <img
+            src="${song.image_url || "fsblogo.PNG"}"
+            alt="${song.title || "Release"}"
+        >
+    `;
+
+    row.onclick = function() {
+        const index = songs.indexOf(song);
+
+        if (index !== -1) {
+            playSong(index);
+        }
+    };
+
+    return row;
+}
 async function loadArtistMusic() {
 
     const musicSection =
@@ -2654,7 +2692,7 @@ function createCompactSongButton(song) {
                 function(song) {
 
                     eps.appendChild(
-                        createSongRow(song)
+                        createReleaseSongRow(song)
                     );
 
                 }
