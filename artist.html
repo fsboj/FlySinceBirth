@@ -2746,12 +2746,24 @@ if (musicSection) {
 
     musicSection.innerHTML = "";
 
+
+    /* ===============================
+       STANDALONE SINGLES
+    =============================== */
+
     const newestSongs =
         songs.filter(
             function(song) {
+
                 return !song.release_id;
+
             }
         );
+
+
+    /* ===============================
+       ALBUMS + EPS
+    =============================== */
 
     const {
         data: newestReleases
@@ -2765,38 +2777,62 @@ if (musicSection) {
             })
             .limit(5);
 
+
+    /* ===============================
+       COMBINE EVERYTHING
+    =============================== */
+
     const newestItems = [];
+
 
     newestSongs.forEach(
         function(song) {
+
             newestItems.push({
                 item: song,
                 date: new Date(
                     song.created_at
                 )
             });
+
         }
     );
 
+
     (newestReleases || []).forEach(
         function(release) {
+
             newestItems.push({
                 item: release,
                 date: new Date(
                     release.created_at
                 )
             });
+
         }
     );
+
+
+    /* ===============================
+       NEWEST FIRST
+    =============================== */
 
     newestItems.sort(
         function(a, b) {
+
             return b.date - a.date;
+
         }
     );
 
+
     const newestList =
         newestItems.slice(0, 5);
+
+
+    /* ===============================
+       DISPLAY
+    =============================== */
 
     if (!newestList.length) {
 
@@ -2808,26 +2844,26 @@ if (musicSection) {
         newestList.forEach(
             function(entry) {
 
-                if (entry.item.release_id) {
-                    return;
-                }
+                const item =
+                    entry.item;
+
 
                 if (
-                    entry.item.type === "album" ||
-                    entry.item.type === "ep"
+                    item.type === "album" ||
+                    item.type === "ep"
                 ) {
 
                     musicSection.appendChild(
                         createNewestReleaseButton(
-                            entry.item
+                            item
                         )
                     );
 
                 } else {
 
                     musicSection.appendChild(
-                        createSongRow(
-                            entry.item
+                        createCompactSongButton(
+                            item
                         )
                     );
 
@@ -2839,7 +2875,6 @@ if (musicSection) {
     }
 
 }
-
 
     /* =================================================
        TOP SONGS
