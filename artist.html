@@ -2333,13 +2333,14 @@ function escapeHtml(text) {
 
     return row;
 }
-      function createNewestReleaseButton(release) {
+function createNewestReleaseButton(release) {
 
     const button =
         document.createElement("div");
 
     button.className =
         "compact-song-button";
+
 
     const image =
         document.createElement("img");
@@ -2355,6 +2356,7 @@ function escapeHtml(text) {
         release.title ||
         "Release";
 
+
     const number =
         document.createElement("div");
 
@@ -2364,11 +2366,13 @@ function escapeHtml(text) {
     number.textContent =
         "01";
 
+
     const info =
         document.createElement("div");
 
     info.className =
         "compact-song-info";
+
 
     const title =
         document.createElement("div");
@@ -2380,6 +2384,7 @@ function escapeHtml(text) {
         release.title ||
         "Untitled";
 
+
     const type =
         document.createElement("div");
 
@@ -2389,8 +2394,10 @@ function escapeHtml(text) {
     type.textContent =
         (release.type || "RELEASE").toUpperCase();
 
+
     info.appendChild(title);
     info.appendChild(type);
+
 
     const play =
         document.createElement("div");
@@ -2401,34 +2408,65 @@ function escapeHtml(text) {
     play.textContent =
         "▶";
 
+
     button.appendChild(image);
     button.appendChild(number);
     button.appendChild(info);
     button.appendChild(play);
 
+
+    const trackList =
+        document.createElement("div");
+
+    trackList.className =
+        "artist-release-tracklist";
+
+    trackList.style.display =
+        "none";
+
+
     button.onclick = async function() {
 
-        const trackList =
-            document.createElement("div");
+        const isOpen =
+            trackList.style.display !== "none";
 
-        trackList.className =
-            "artist-release-tracklist";
+
+        if (isOpen) {
+
+            trackList.style.display =
+                "none";
+
+            return;
+
+        }
+
 
         trackList.style.display =
             "block";
 
-        button.parentNode.insertBefore(
-            trackList,
-            button.nextSibling
-        );
 
-        await loadArtistReleaseTracks(
-            release.id,
-            trackList
-        );
+        if (!trackList.dataset.loaded) {
+
+            button.parentNode.insertBefore(
+                trackList,
+                button.nextSibling
+            );
+
+            await loadArtistReleaseTracks(
+                release.id,
+                trackList
+            );
+
+            trackList.dataset.loaded =
+                "true";
+
+        }
+
     };
 
+
     return button;
+
 }
       function createReleaseSongRow(song) {
     const row = document.createElement("div");
