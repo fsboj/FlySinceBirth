@@ -2333,6 +2333,103 @@ function escapeHtml(text) {
 
     return row;
 }
+      function createNewestReleaseButton(release) {
+
+    const button =
+        document.createElement("div");
+
+    button.className =
+        "compact-song-button";
+
+    const image =
+        document.createElement("img");
+
+    image.className =
+        "compact-song-artwork";
+
+    image.src =
+        release.artwork_url ||
+        "fsblogo.PNG";
+
+    image.alt =
+        release.title ||
+        "Release";
+
+    const number =
+        document.createElement("div");
+
+    number.className =
+        "compact-song-number";
+
+    number.textContent =
+        "01";
+
+    const info =
+        document.createElement("div");
+
+    info.className =
+        "compact-song-info";
+
+    const title =
+        document.createElement("div");
+
+    title.className =
+        "compact-song-title";
+
+    title.textContent =
+        release.title ||
+        "Untitled";
+
+    const type =
+        document.createElement("div");
+
+    type.className =
+        "compact-song-artist";
+
+    type.textContent =
+        (release.type || "RELEASE").toUpperCase();
+
+    info.appendChild(title);
+    info.appendChild(type);
+
+    const play =
+        document.createElement("div");
+
+    play.className =
+        "compact-song-play";
+
+    play.textContent =
+        "▶";
+
+    button.appendChild(image);
+    button.appendChild(number);
+    button.appendChild(info);
+    button.appendChild(play);
+
+    button.onclick = async function() {
+
+        const trackList =
+            document.createElement("div");
+
+        trackList.className =
+            "artist-release-tracklist";
+
+        trackList.style.display =
+            "block";
+
+        button.parentNode.insertBefore(
+            trackList,
+            button.nextSibling
+        );
+
+        await loadArtistReleaseTracks(
+            release.id,
+            trackList
+        );
+    };
+
+    return button;
+}
       function createReleaseSongRow(song) {
     const row = document.createElement("div");
 
@@ -2607,31 +2704,103 @@ function createCompactSongButton(song) {
        NEWEST MUSIC
     ================================================= */
 
-    if (musicSection) {
+if (musicSection) {
 
-        musicSection.innerHTML = "";
+    musicSection.innerHTML = "";
 
-        const newestList =
-            songs.slice(0, 5);
+    const newestSongs =
+        songs.filter(
+            function(song) {
+                return !song.release_id;
+            }
+        );
 
-        if (!newestList.length) {
+    const {
+        data: newestReleases
+    } =
+        await supabaseClient
+            .from("artist_releases")
+            .select("*")
+            .eq("artist_id", artistId)
+            .order("created_at", {
+                ascending: false
+            })
+            .limit(5);
 
-            musicSection.innerHTML =
-                '<div class="empty-state">NO MUSIC AVAILABLE</div>';
+    const newestItems = [];
 
-        } else {
+    newestSongs.forEach(
+        function(song) {
+            newestItems.push({
+                item: song,
+                date: new Date(
+                    song.created_at
+                )
+            });
+        }
+    );
 
-            newestList.forEach(
-                function(song) {
+    (newestReleases || []).forEach(
+        function(release) {
+            newestItems.push({
+                item: release,
+                date: new Date(
+                    release.created_at
+                )
+            });
+        }
+    );
+
+    newestItems.sort(
+        function(a, b) {
+            return b.date - a.date;
+        }
+    );
+
+    const newestList =
+        newestItems.slice(0, 5);
+
+    if (!newestList.length) {
+
+        musicSection.innerHTML =
+            '<div class="empty-state">NO MUSIC AVAILABLE</div>';
+
+    } else {
+
+        newestList.forEach(
+            function(entry) {
+
+                if (entry.item.release_id) {
+                    return;
+                }
+
+                if (
+                    entry.item.type === "album" ||
+                    entry.item.type === "ep"
+                ) {
 
                     musicSection.appendChild(
-                        createCompactSongButton(song)
+                        createNewestReleaseButton(
+                            entry.item
+                        )
+                    );
+
+                } else {
+
+                    musicSection.appendChild(
+                        createSongRow(
+                            entry.item
+                        )
                     );
 
                 }
-            );
-        }
+
+            }
+        );
+
     }
+
+}
 
 
     /* =================================================
