@@ -1,10 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
+    <style>
+    body {
+        margin: 0;
+        background: #000;
+        color: #fff;
+        font-family: Arial, sans-serif;
+    }
+
+    #releasePage {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 60px 25px;
+    }
+
+    #releaseArtwork img {
+        width: 300px;
+        height: 300px;
+        object-fit: cover;
+        display: block;
+    }
+
+    #releaseInfo {
+        margin-top: 25px;
+    }
+
+    #releaseTitle {
+        margin: 0;
+        font-size: 42px;
+    }
+
+    #releaseType,
+    #releaseArtist {
+        margin: 8px 0 0;
+        font-size: 16px;
+    }
+
+    #releaseTracks {
+        margin-top: 50px;
+    }
+
+    #releaseTracks h2 {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+
+    .release-track {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 16px 0;
+        border-bottom: 1px solid #242424;
+    }
+
+    .track-number {
+        width: 25px;
+        color: #888;
+    }
+
+    .track-title {
+        font-size: 16px;
+    }
+</style>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Release | Fly Since Birth</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -85,6 +148,50 @@ async function loadRelease() {
 }
 
 loadRelease();
+    async function loadReleaseTracks() {
+
+    const { data: tracks, error } = await supabase
+        .from("artist_songs")
+        .select("*")
+        .eq("release_id", releaseId)
+        .order("track_number", { ascending: true });
+
+    const trackList = document.getElementById("trackList");
+
+    if (error || !tracks || tracks.length === 0) {
+        trackList.innerHTML = "<p>No tracks found.</p>";
+        return;
+    }
+
+    trackList.innerHTML = "";
+
+    tracks.forEach((track, index) => {
+
+        const trackRow = document.createElement("div");
+
+        trackRow.className = "release-track";
+
+        trackRow.innerHTML = `
+    <span class="track-number">${index + 1}</span>
+    <span class="track-title">${track.title || ""}</span>
+    <button class="track-play" type="button">▶</button>
+`;
+trackRow.querySelector(".track-play").onclick = function() {
+
+    if (track.audio_url) {
+        const audio = new Audio(track.audio_url);
+        audio.play();
+    }
+
+};
+        trackList.appendChild(trackRow);
+
+    });
+
+}
+
+loadReleaseTracks();
+    
 </script>
     
 </body>
