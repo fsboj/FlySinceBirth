@@ -2425,44 +2425,13 @@ function createNewestReleaseButton(release) {
         "none";
 
 
-    button.onclick = async function() {
+button.onclick = function() {
 
-        const isOpen =
-            trackList.style.display !== "none";
+    window.location.href =
+        "release.html?id=" +
+        encodeURIComponent(release.id);
 
-
-        if (isOpen) {
-
-            trackList.style.display =
-                "none";
-
-            return;
-
-        }
-
-
-        trackList.style.display =
-            "block";
-
-
-        if (!trackList.dataset.loaded) {
-
-            button.parentNode.insertBefore(
-                trackList,
-                button.nextSibling
-            );
-
-            await loadArtistReleaseTracks(
-                release.id,
-                trackList
-            );
-
-            trackList.dataset.loaded =
-                "true";
-
-        }
-
-    };
+};
 
 
     return button;
