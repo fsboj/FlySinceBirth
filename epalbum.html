@@ -33,8 +33,10 @@
 #releaseArtwork img {
     width: 400px;
     height: 400px;
+    max-width: 100%;
     object-fit: cover;
     display: block;
+    background: #111;
 }
 @media (max-width: 600px) {
 
@@ -223,8 +225,8 @@ async function loadRelease() {
     return;
 }
 
-    document.getElementById("releaseTitle").textContent =
-        release.title || "";
+document.getElementById("releaseTitle").textContent =
+    release.title || release.name || release.release_title || "Untitled";
 document.title =
     (release.title || "Release") +
     " | Fly Since Birth";
@@ -238,9 +240,11 @@ document.title =
     .single();
 
 document.getElementById("releaseArtist").textContent =
-    artist?.name || "";
+    artist?.name || release.artist_name || "";
 if (release.release_date) {
-
+else {
+    document.getElementById("releaseDate").textContent = "";
+}
     const date = new Date(release.release_date);
 
     document.getElementById("releaseDate").textContent =
@@ -251,6 +255,8 @@ if (release.release_date) {
         });
 
 }
+    console.log("Release loaded:", release);
+console.log("Artwork URL:", release.artwork_url);
 if (release.artwork_url) {
 
     const image = document.getElementById("releaseImage");
@@ -308,7 +314,10 @@ trackRow.onclick = function() {
     }
 
     window.releaseAudio = new Audio(track.audio_url);
-    window.releaseAudio.play();
+
+    window.releaseAudio.play().catch(function(error) {
+        console.error("Audio playback failed:", error);
+    });
 
 };
         trackList.appendChild(trackRow);
