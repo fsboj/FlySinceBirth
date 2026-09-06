@@ -187,9 +187,14 @@ const releaseId = params.get("id");
 
 async function loadRelease() {
 
-   if (!releaseId) {
+if (error || !release) {
+
+    console.error("Release error:", error);
+
     document.getElementById("releaseTitle").textContent =
-        "Release not found";
+        error
+            ? "ERROR: " + error.message
+            : "Release not found";
 
     document.getElementById("releaseArtwork").style.display =
         "none";
@@ -206,7 +211,7 @@ async function loadRelease() {
     const { data: release, error } = await supabase
         .from("artist_releases")
         .select("*")
-        .eq("id", releaseId)
+        .eq("id", releaseId.trim())
         .single();
 
    if (error || !release) {
