@@ -247,8 +247,7 @@ if (artistError) {
 
 document.getElementById("releaseArtist").textContent =
     artist?.name || release.artist_name || "";
-if (release.release_date) {
-else {
+
 if (release.release_date) {
 
     const date = new Date(release.release_date);
