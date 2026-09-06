@@ -251,11 +251,11 @@ if (release.release_date) {
         });
 
 }
-  if (release.image_url) {
+if (release.artwork_url) {
 
     const image = document.getElementById("releaseImage");
 
-    image.src = release.image_url;
+    image.src = release.artwork_url;
     image.alt = release.title || "Release artwork";
 
 } else {
