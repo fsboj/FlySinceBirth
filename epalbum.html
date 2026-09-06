@@ -270,7 +270,8 @@ if (release.release_date) {
 
 console.log("Release loaded:", release);
 console.log("Artwork URL:", release.artwork_url);
-
+console.log("Full release object:", JSON.stringify(release, null, 2));
+console.log("Artwork URL value:", release.artwork_url);
 if (release.artwork_url) {
 
     const image = document.getElementById("releaseImage");
