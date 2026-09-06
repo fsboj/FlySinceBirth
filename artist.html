@@ -3148,32 +3148,13 @@ function createArtistReleaseCard(release) {
 
     trackList.style.display = "none";
 
-    card.onclick = async function() {
+card.onclick = function() {
 
-        const isOpen =
-            trackList.style.display !== "none";
+    window.location.href =
+        "epalbum.html?id=" +
+        encodeURIComponent(release.id);
 
-        if (isOpen) {
-
-            trackList.style.display = "none";
-            return;
-
-        }
-
-        trackList.style.display = "block";
-
-        if (!trackList.dataset.loaded) {
-
-            await loadArtistReleaseTracks(
-                release.id,
-                trackList
-            );
-
-            trackList.dataset.loaded = "true";
-
-        }
-
-    };
+};
 
     return card;
 
