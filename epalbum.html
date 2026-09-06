@@ -184,9 +184,10 @@ const supabase = window.supabase.createClient(
 
 const params = new URLSearchParams(window.location.search);
 const releaseId = params.get("id");
-
+console.log("Release ID from URL:", releaseId);
+    
 async function loadRelease() {
-
+console.log("loadRelease() started");
     if (!releaseId) {
         document.getElementById("releaseTitle").textContent =
             "Release not found";
