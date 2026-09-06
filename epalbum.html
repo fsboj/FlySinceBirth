@@ -187,26 +187,21 @@ const releaseId = params.get("id");
 
 async function loadRelease() {
 
-if (error || !release) {
+    if (!releaseId) {
+        document.getElementById("releaseTitle").textContent =
+            "Release not found";
 
-    console.error("Release error:", error);
+        document.getElementById("releaseArtwork").style.display =
+            "none";
 
-    document.getElementById("releaseTitle").textContent =
-        error
-            ? "ERROR: " + error.message
-            : "Release not found";
+        document.getElementById("releaseInfo").style.display =
+            "none";
 
-    document.getElementById("releaseArtwork").style.display =
-        "none";
+        document.getElementById("releaseTracks").style.display =
+            "none";
 
-    document.getElementById("releaseInfo").style.display =
-        "none";
-
-    document.getElementById("releaseTracks").style.display =
-        "none";
-
-    return;
-}
+        return;
+    }
 
     const { data: release, error } = await supabase
         .from("artist_releases")
@@ -214,21 +209,23 @@ if (error || !release) {
         .eq("id", releaseId.trim())
         .single();
 
-   if (error || !release) {
-    document.getElementById("releaseTitle").textContent =
-        "Release not found";
+    if (error || !release) {
 
-    document.getElementById("releaseArtwork").style.display =
-        "none";
+        console.error("Release error:", error);
 
-    document.getElementById("releaseInfo").style.display =
-        "none";
+        document.getElementById("releaseTitle").textContent =
+            error
+                ? "ERROR: " + error.message
+                : "Release not found";
 
-    document.getElementById("releaseTracks").style.display =
-        "none";
+        document.getElementById("releaseType").textContent =
+            "Release ID: " + releaseId;
 
-    return;
-}
+        document.getElementById("releaseArtist").textContent =
+            error?.details || error?.hint || "";
+
+        return;
+    }
 
 document.getElementById("releaseTitle").textContent =
     release.title || release.name || release.release_title || "Untitled";
@@ -264,8 +261,10 @@ if (release.release_date) {
     document.getElementById("releaseDate").textContent = "";
 
 }
-    console.log("Release loaded:", release);
+
+console.log("Release loaded:", release);
 console.log("Artwork URL:", release.artwork_url);
+
 if (release.artwork_url) {
 
     const image = document.getElementById("releaseImage");
