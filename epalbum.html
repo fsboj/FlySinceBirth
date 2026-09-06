@@ -268,7 +268,9 @@ if (release.release_date) {
 
 loadRelease();
     async function loadReleaseTracks() {
-
+    if (!releaseId) {
+        return;
+    }
     const { data: tracks, error } = await supabase
         .from("artist_songs")
         .select("*")
