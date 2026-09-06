@@ -243,8 +243,8 @@ document.getElementById("releaseArtist").textContent =
     artist?.name || release.artist_name || "";
 if (release.release_date) {
 else {
-    document.getElementById("releaseDate").textContent = "";
-}
+if (release.release_date) {
+
     const date = new Date(release.release_date);
 
     document.getElementById("releaseDate").textContent =
@@ -253,6 +253,10 @@ else {
             day: "numeric",
             year: "numeric"
         });
+
+} else {
+
+    document.getElementById("releaseDate").textContent = "";
 
 }
     console.log("Release loaded:", release);
