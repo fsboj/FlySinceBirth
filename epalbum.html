@@ -232,14 +232,18 @@ document.getElementById("releaseTitle").textContent =
 document.title =
     (release.title || "Release") +
     " | Fly Since Birth";
- document.getElementById("releaseType").textContent =
-    release.type === "album" ? "ALBUM" : "EP";
+document.getElementById("releaseType").textContent =
+    (release.type || "RELEASE").toUpperCase();
 
-    const { data: artist } = await supabase
+   const { data: artist, error: artistError } = await supabase
     .from("artists")
     .select("name")
     .eq("id", release.artist_id)
     .single();
+
+if (artistError) {
+    console.error("Artist error:", artistError);
+}
 
 document.getElementById("releaseArtist").textContent =
     artist?.name || release.artist_name || "";
@@ -274,8 +278,10 @@ if (release.artwork_url) {
 
 } else {
 
-    document.getElementById("releaseArtwork").style.display =
-        "none";
+    const image = document.getElementById("releaseImage");
+
+    image.src = "fsblogo.PNG";
+    image.alt = "Fly Since Birth";
 
 }
 }
@@ -288,15 +294,28 @@ loadRelease();
     const { data: tracks, error } = await supabase
         .from("artist_songs")
         .select("*")
-        .eq("release_id", releaseId)
+        .eq("release_id", releaseId.trim())
         .order("track_number", { ascending: true });
 
     const trackList = document.getElementById("trackList");
 
-    if (error || !tracks || tracks.length === 0) {
-        trackList.innerHTML = "<p>No tracks found.</p>";
-        return;
-    }
+if (error) {
+
+    console.error("Tracks error:", error);
+
+    trackList.innerHTML =
+        "<p>ERROR: " + error.message + "</p>";
+
+    return;
+}
+
+if (!tracks || tracks.length === 0) {
+
+    trackList.innerHTML =
+        "<p>No tracks found for this release.</p>";
+
+    return;
+}
 
     trackList.innerHTML = "";
 
@@ -312,6 +331,27 @@ loadRelease();
     <button class="track-play" type="button">▶</button>
 `;
 trackRow.onclick = function() {
+
+    if (!track.audio_url) {
+        return;
+    }
+
+    if (window.releaseAudio) {
+        window.releaseAudio.pause();
+    }
+
+    window.releaseAudio = new Audio(track.audio_url);
+
+    window.releaseAudio.play().catch(function(error) {
+        console.error("Audio playback failed:", error);
+    });
+
+};
+        const playButton = trackRow.querySelector(".track-play");
+
+playButton.onclick = function(event) {
+
+    event.stopPropagation();
 
     if (!track.audio_url) {
         return;
