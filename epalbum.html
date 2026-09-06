@@ -293,12 +293,15 @@ loadRelease();
     if (!releaseId) {
         return;
     }
-    const { data: tracks, error } = await supabase
-        .from("artist_songs")
-        .select("*")
-        .eq("release_id", releaseId.trim())
-        .order("track_number", { ascending: true });
+   const { data: tracks, error } = await supabase
+    .from("artist_songs")
+    .select("*")
+    .eq("release_id", releaseId.trim())
+    .order("track_number", { ascending: true });
 
+console.log("Release ID used for tracks:", releaseId);
+console.log("Supabase tracks data:", tracks);
+console.log("Supabase tracks error:", error);
     const trackList = document.getElementById("trackList");
 
 if (error) {
