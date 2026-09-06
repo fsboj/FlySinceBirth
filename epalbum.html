@@ -25,49 +25,89 @@
 #releaseBackButton:hover {
     background: #242424;
 }
-    #releaseArtwork img {
-        width: 300px;
-        height: 300px;
-        object-fit: cover;
-        display: block;
+#releaseArtwork {
+    display: flex;
+    justify-content: center;
+}
+
+#releaseArtwork img {
+    width: 400px;
+    height: 400px;
+    object-fit: cover;
+    display: block;
+}
+@media (max-width: 600px) {
+
+    #releasePage {
+        padding: 30px 15px;
     }
 
-    #releaseInfo {
-        margin-top: 25px;
+    #releaseArtwork img {
+        width: 100%;
+        max-width: 350px;
+        height: auto;
+        aspect-ratio: 1 / 1;
     }
 
     #releaseTitle {
-        margin: 0;
-        font-size: 42px;
+        font-size: 30px;
     }
 
-    #releaseType,
-    #releaseArtist {
-        margin: 8px 0 0;
-        font-size: 16px;
-    }
+}
 
-    #releaseTracks {
-        margin-top: 50px;
-    }
+   #releaseInfo {
+    margin-top: 25px;
+    text-align: center;
+}
 
-    #releaseTracks h2 {
-        font-size: 18px;
-        margin-bottom: 20px;
-    }
+#releaseTitle {
+    margin: 0;
+    font-size: 42px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 
-    .release-track {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        padding: 16px 0;
-        border-bottom: 1px solid #242424;
-    }
+#releaseType,
+#releaseArtist {
+    margin: 8px 0 0;
+    font-size: 16px;
+}
 
-    .track-number {
-        width: 25px;
-        color: #888;
-    }
+#releaseType {
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+
+   #releaseTracks {
+    margin-top: 50px;
+    text-align: left;
+}
+
+#releaseTracks h2 {
+    font-size: 18px;
+    margin-bottom: 25px;
+    letter-spacing: 1px;
+}
+.release-track {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 12px;
+    border-bottom: 1px solid #242424;
+}
+.release-track {
+    cursor: pointer;
+}
+
+.release-track:hover {
+    background: #090909;
+}
+.track-number {
+    width: 25px;
+    color: #888;
+    flex-shrink: 0;
+}
 
     .track-title {
         font-size: 16px;
@@ -139,11 +179,21 @@ const releaseId = params.get("id");
 
 async function loadRelease() {
 
-    if (!releaseId) {
-        document.getElementById("releaseTitle").textContent =
-            "Release not found";
-        return;
-    }
+   if (!releaseId) {
+    document.getElementById("releaseTitle").textContent =
+        "Release not found";
+
+    document.getElementById("releaseArtwork").style.display =
+        "none";
+
+    document.getElementById("releaseInfo").style.display =
+        "none";
+
+    document.getElementById("releaseTracks").style.display =
+        "none";
+
+    return;
+}
 
     const { data: release, error } = await supabase
         .from("artist_releases")
@@ -151,28 +201,52 @@ async function loadRelease() {
         .eq("id", releaseId)
         .single();
 
-    if (error || !release) {
-        document.getElementById("releaseTitle").textContent =
-            "Release not found";
-        return;
-    }
+   if (error || !release) {
+    document.getElementById("releaseTitle").textContent =
+        "Release not found";
+
+    document.getElementById("releaseArtwork").style.display =
+        "none";
+
+    document.getElementById("releaseInfo").style.display =
+        "none";
+
+    document.getElementById("releaseTracks").style.display =
+        "none";
+
+    return;
+}
 
     document.getElementById("releaseTitle").textContent =
         release.title || "";
+document.title =
+    (release.title || "Release") +
+    " | Fly Since Birth";
+ document.getElementById("releaseType").textContent =
+    release.type === "album" ? "ALBUM" : "EP";
 
-    document.getElementById("releaseType").textContent =
-        (release.type || "").toUpperCase();
+    const { data: artist } = await supabase
+    .from("artists")
+    .select("name")
+    .eq("id", release.artist_id)
+    .single();
 
-    document.getElementById("releaseArtist").textContent =
-        release.artist_name || "";
+document.getElementById("releaseArtist").textContent =
+    artist?.name || "";
 
-    if (release.image_url) {
-        const image = document.getElementById("releaseImage");
+  if (release.image_url) {
 
-        image.src = release.image_url;
-        image.alt = release.title || "Release artwork";
-    }
+    const image = document.getElementById("releaseImage");
 
+    image.src = release.image_url;
+    image.alt = release.title || "Release artwork";
+
+} else {
+
+    document.getElementById("releaseArtwork").style.display =
+        "none";
+
+}
 }
 
 loadRelease();
@@ -200,11 +274,11 @@ loadRelease();
         trackRow.className = "release-track";
 
         trackRow.innerHTML = `
-    <span class="track-number">${index + 1}</span>
+   <span class="track-number">${track.track_number || index + 1}</span>
     <span class="track-title">${track.title || ""}</span>
     <button class="track-play" type="button">▶</button>
 `;
-trackRow.querySelector(".track-play").onclick = function() {
+trackRow.onclick = function() {
 
     if (track.audio_url) {
         const audio = new Audio(track.audio_url);
