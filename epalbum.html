@@ -278,6 +278,13 @@ if (release.artwork_url) {
 
     image.src = release.artwork_url;
     image.alt = release.title || "Release artwork";
+    image.onload = function() {
+    console.log("Artwork loaded successfully");
+};
+
+image.onerror = function() {
+    console.error("Artwork FAILED to load:", release.artwork_url);
+};
 
 } else {
 
