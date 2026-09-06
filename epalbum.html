@@ -204,12 +204,14 @@ console.log("loadRelease() started");
         return;
     }
 
-    const { data: release, error } = await supabase
-        .from("artist_releases")
-        .select("*")
-        .eq("id", releaseId.trim())
-        .single();
+const { data: release, error } = await supabase
+    .from("artist_releases")
+    .select("*")
+    .eq("id", releaseId.trim())
+    .maybeSingle();
 
+console.log("Supabase release data:", release);
+console.log("Supabase release error:", error);
     if (error || !release) {
 
         console.error("Release error:", error);
