@@ -1795,7 +1795,7 @@ const params =
 
 const artistId =
     params.get("id");
-
+console.log("ARTIST PAGE ID:", artistId);
 
 /* =====================================================
    AUDIO PLAYER
@@ -2082,7 +2082,8 @@ async function loadArtist() {
             .select("*")
             .eq("id", artistId)
             .single();
-
+console.log("ARTIST SUPABASE DATA:", data);
+console.log("ARTIST SUPABASE ERROR:", error);
 
     if (error || !data) {
 
