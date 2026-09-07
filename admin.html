@@ -4127,7 +4127,12 @@ async function loadVideos() {
     const { data, error } =
         await supabaseClient
             .from("videos")
-            .select("*")
+            .select(`
+    *,
+    artists (
+        name
+    )
+`)
             .order("sort_order", {
                 ascending: true
             });
