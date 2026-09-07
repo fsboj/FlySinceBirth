@@ -2138,15 +2138,57 @@ body {
     </div>
 
 
-    <div class="actions">
+<div style="margin-top:20px;">
 
-      <button
-    class="button primary"
-    onclick="addVideo()">
-    + ADD VIDEO
-</button>
+    <input
+        id="videoTitleInput"
+        type="text"
+        placeholder="VIDEO TITLE"
+        class="admin-input"
+    >
 
-    </div>
+    <input
+        id="videoUrlInput"
+        type="text"
+        placeholder="VIDEO URL"
+        class="admin-input"
+    >
+
+    <input
+        id="videoImageInput"
+        type="text"
+        placeholder="THUMBNAIL IMAGE URL"
+        class="admin-input"
+    >
+
+    <select
+        id="videoArtistSelect"
+        class="admin-input">
+        <option value="">
+            SELECT ARTIST
+        </option>
+    </select>
+
+    <select
+        id="videoReleaseSelect"
+        class="admin-input"
+        disabled>
+        <option value="">
+            SELECT ALBUM / EP (OPTIONAL)
+        </option>
+    </select>
+
+</div>
+
+<div class="actions">
+
+    <button
+        class="button primary"
+        onclick="addVideo()">
+        + ADD VIDEO
+    </button>
+
+</div>
 
 </section>
 
@@ -3599,6 +3641,8 @@ async function addArtist() {
 
     await loadArtists();
 
+
+    
     setStatus("ARTIST ADDED");
 }
 
@@ -4184,18 +4228,45 @@ async function loadVideos() {
 
 async function addVideo() {
 
-    const title =
-        prompt("Video title:");
+const title =
+    document.getElementById(
+        "videoTitleInput"
+    ).value.trim();
 
-    if (!title) return;
+if (!title) {
+    alert("Enter a video title.");
+    return;
+}
 
 
-    const videoUrl =
-        prompt("Video URL:") || "";
+const videoUrl =
+    document.getElementById(
+        "videoUrlInput"
+    ).value.trim();
 
 
-    const imageUrl =
-        prompt("Thumbnail image URL:") || "";
+const imageUrl =
+    document.getElementById(
+        "videoImageInput"
+    ).value.trim();
+
+
+const artistId =
+    document.getElementById(
+        "videoArtistSelect"
+    ).value;
+
+
+const releaseId =
+    document.getElementById(
+        "videoReleaseSelect"
+    ).value || null;
+
+
+if (!artistId) {
+    alert("Select an artist.");
+    return;
+}
 
 
     const { data } =
@@ -4220,12 +4291,14 @@ async function addVideo() {
     const { error } =
         await supabaseClient
             .from("videos")
-            .insert({
-                title: title,
-                link: videoUrl,
-                image: imageUrl,
-                sort_order: nextOrder
-            });
+           .insert({
+    title: title,
+    link: videoUrl,
+    image: imageUrl,
+    sort_order: nextOrder,
+    artist_id: artistId,
+    release_id: releaseId
+});
 
 
     if (error) {
@@ -4417,7 +4490,7 @@ async function loadAdminData() {
     await loadMusic();
 
     await loadArtists();
-
+await loadVideoArtistSelector();
    await loadEvents();
 await loadVideos();
     
@@ -4489,7 +4562,147 @@ async function loadArtistPageSelector() {
     });
 
 }
+/* =====================================================
+   VIDEO ARTIST / RELEASE SELECTORS
+===================================================== */
 
+async function loadVideoArtistSelector() {
+
+    const select =
+        document.getElementById("videoArtistSelect");
+
+    if (!select) {
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("artists")
+            .select("id, name")
+            .order("name", {
+                ascending: true
+            });
+
+    if (error) {
+
+        console.error(
+            "Could not load video artists:",
+            error
+        );
+
+        return;
+    }
+
+    select.innerHTML =
+        '<option value="">SELECT ARTIST</option>';
+
+    (data || []).forEach(function(artist) {
+
+        const option =
+            document.createElement("option");
+
+        option.value =
+            artist.id;
+
+        option.textContent =
+            artist.name;
+
+        select.appendChild(option);
+
+    });
+}
+
+
+/* =====================================================
+   LOAD VIDEO RELEASES
+===================================================== */
+
+async function loadVideoReleases(artistId) {
+
+    const select =
+        document.getElementById("videoReleaseSelect");
+
+    if (!select) {
+        return;
+    }
+
+    select.innerHTML =
+        '<option value="">SELECT ALBUM / EP (OPTIONAL)</option>';
+
+    select.disabled =
+        true;
+
+    if (!artistId) {
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("artist_releases")
+            .select("id, title, type")
+            .eq("artist_id", artistId)
+            .in("type", [
+                "album",
+                "ep"
+            ])
+            .order("title", {
+                ascending: true
+            });
+
+    if (error) {
+
+        console.error(
+            "Could not load video releases:",
+            error
+        );
+
+        return;
+    }
+
+    (data || []).forEach(function(release) {
+
+        const option =
+            document.createElement("option");
+
+        option.value =
+            release.id;
+
+        option.textContent =
+            release.title +
+            " (" +
+            release.type.toUpperCase() +
+            ")";
+
+        select.appendChild(option);
+
+    });
+
+    select.disabled =
+        false;
+}
+
+
+/* =====================================================
+   VIDEO ARTIST CHANGE
+===================================================== */
+
+document.addEventListener(
+    "change",
+    function(event) {
+
+        if (
+            event.target.id !==
+            "videoArtistSelect"
+        ) {
+            return;
+        }
+
+        loadVideoReleases(
+            event.target.value
+        );
+
+    }
+);
 
 /* =====================================================
    SELECT ARTIST
