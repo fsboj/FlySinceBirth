@@ -4124,23 +4124,18 @@ async function loadVideos() {
     if (!container) return;
 
 
-    const { data, error } =
-        await supabaseClient
-            .from("videos")
-          .select(`
+const { data, error } =
+    await supabaseClient
+        .from("videos")
+        .select(`
     *,
     artists (
         name
     )
 `)
-    artists (
-        name
-    )
-`)
-            .order("sort_order", {
-                ascending: true
-            });
-
+        .order("sort_order", {
+            ascending: true
+        });
 
     if (error) {
 
