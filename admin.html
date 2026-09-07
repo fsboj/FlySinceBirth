@@ -4236,7 +4236,15 @@ async function loadVideos() {
 ===================================================== */
 
 async function addVideo() {
+const title =
+    document.getElementById(
+        "videoTitleInput"
+    ).value.trim();
 
+if (!title) {
+    alert("Enter a video title.");
+    return;
+}
 const videoFile =
     document.getElementById(
         "videoUrlInput"
