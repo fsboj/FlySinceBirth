@@ -179,7 +179,7 @@
 const supabaseUrl = "https://ccvhvxugoebdqwxxankl.supabase.co";
 const supabaseKey = "sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z";
 
-const supabase = window.supabase.createClient(
+const supabaseClient = window.supabase.createClient(
     supabaseUrl,
     supabaseKey
 );
@@ -206,7 +206,7 @@ console.log("loadRelease() started");
         return;
     }
 
-const { data: release, error } = await supabase
+const { data: release, error } = await supabaseClient
     .from("artist_releases")
     .select("*")
     .eq("id", releaseId.trim())
@@ -240,7 +240,7 @@ document.title =
 document.getElementById("releaseType").textContent =
     (release.type || "RELEASE").toUpperCase();
 
-   const { data: artist, error: artistError } = await supabase
+  const { data: artist, error: artistError } = await supabaseClient
     .from("artists")
     .select("name")
     .eq("id", release.artist_id)
@@ -303,7 +303,7 @@ loadRelease();
     if (!releaseId) {
         return;
     }
-   const { data: tracks, error } = await supabase
+   const { data: tracks, error } = await supabaseClient
     .from("artist_songs")
     .select("*")
     .eq("release_id", releaseId.trim())
