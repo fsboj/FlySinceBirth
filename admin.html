@@ -2147,19 +2147,18 @@ body {
         class="admin-input"
     >
 
-    <input
-        id="videoUrlInput"
-        type="text"
-        placeholder="VIDEO URL"
-        class="admin-input"
-    >
-
-    <input
-        id="videoImageInput"
-        type="text"
-        placeholder="THUMBNAIL IMAGE URL"
-        class="admin-input"
-    >
+ <input
+    id="videoUrlInput"
+    type="file"
+    accept="video/*"
+    class="admin-input"
+>
+<input
+    id="videoImageInput"
+    type="file"
+    accept="image/*"
+    class="admin-input"
+>
 
     <select
         id="videoArtistSelect"
@@ -4228,28 +4227,25 @@ async function loadVideos() {
 
 async function addVideo() {
 
-const title =
+const videoFile =
     document.getElementById(
-        "videoTitleInput"
-    ).value.trim();
+        "videoUrlInput"
+    ).files[0];
 
-if (!title) {
-    alert("Enter a video title.");
+const imageFile =
+    document.getElementById(
+        "videoImageInput"
+    ).files[0];
+
+if (!videoFile) {
+    alert("Select a video file.");
     return;
 }
 
-
-const videoUrl =
-    document.getElementById(
-        "videoUrlInput"
-    ).value.trim();
-
-
-const imageUrl =
-    document.getElementById(
-        "videoImageInput"
-    ).value.trim();
-
+if (!imageFile) {
+    alert("Select a thumbnail image.");
+    return;
+}
 
 const artistId =
     document.getElementById(
@@ -4262,7 +4258,86 @@ const releaseId =
         "videoReleaseSelect"
     ).value || null;
 
+const videoPath =
+    "videos/" +
+    Date.now() +
+    "-" +
+    videoFile.name;
 
+const imagePath =
+    "videos/" +
+    Date.now() +
+    "-" +
+    imageFile.name;
+
+
+/* UPLOAD VIDEO */
+
+const { error: videoUploadError } =
+    await supabaseClient
+        .storage
+        .from("videos")
+        .upload(
+            videoPath,
+            videoFile
+        );
+
+if (videoUploadError) {
+
+    alert(
+        "Could not upload video:\n\n" +
+        videoUploadError.message
+    );
+
+    return;
+}
+
+
+/* UPLOAD THUMBNAIL */
+
+const { error: imageUploadError } =
+    await supabaseClient
+        .storage
+        .from("videos")
+        .upload(
+            imagePath,
+            imageFile
+        );
+
+if (imageUploadError) {
+
+    alert(
+        "Could not upload thumbnail:\n\n" +
+        imageUploadError.message
+    );
+
+    return;
+}
+
+
+/* GET VIDEO URL */
+
+const { data: videoPublicData } =
+    supabaseClient
+        .storage
+        .from("videos")
+        .getPublicUrl(videoPath);
+
+const videoUrl =
+    videoPublicData.publicUrl;
+
+
+/* GET THUMBNAIL URL */
+
+const { data: imagePublicData } =
+    supabaseClient
+        .storage
+        .from("videos")
+        .getPublicUrl(imagePath);
+
+const imageUrl =
+    imagePublicData.publicUrl;
+    
 if (!artistId) {
     alert("Select an artist.");
     return;
