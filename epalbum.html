@@ -351,13 +351,11 @@ trackRow.onclick = function() {
         return;
     }
 
-    if (window.releaseAudio) {
-        window.releaseAudio.pause();
-    }
+    const player =
+        document.getElementById("releaseAudioPlayer");
 
-    window.releaseAudio = new Audio(track.audio_url);
-
-    window.releaseAudio.play().catch(function(error) {
+    player.src = track.audio_url;
+    player.play().catch(function(error) {
         console.error("Audio playback failed:", error);
     });
 
@@ -372,13 +370,11 @@ playButton.onclick = function(event) {
         return;
     }
 
-    if (window.releaseAudio) {
-        window.releaseAudio.pause();
-    }
+    const player =
+        document.getElementById("releaseAudioPlayer");
 
-    window.releaseAudio = new Audio(track.audio_url);
-
-    window.releaseAudio.play().catch(function(error) {
+    player.src = track.audio_url;
+    player.play().catch(function(error) {
         console.error("Audio playback failed:", error);
     });
 
