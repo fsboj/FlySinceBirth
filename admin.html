@@ -4127,8 +4127,12 @@ async function loadVideos() {
     const { data, error } =
         await supabaseClient
             .from("videos")
-            .select(`
+          .select(`
     *,
+    artists (
+        name
+    )
+`)
     artists (
         name
     )
