@@ -3175,15 +3175,97 @@ async function loadArtistReleaseTracks(
 
 async function loadArtistVideos() {
 
-    /*
-       Artist videos will be
-       connected here.
-    */
+async function loadArtistVideos() {
 
-    console.log(
-        "Loading videos for artist:",
-        artistId
-    );
+    const videoSection =
+        document.getElementById("artistVideos");
+
+    if (!videoSection || !artistId) {
+        return;
+    }
+
+    const { data: videos, error } =
+        await supabaseClient
+            .from("videos")
+            .select("*")
+            .eq("artist_id", artistId)
+            .order("created_at", {
+                ascending: false
+            });
+
+    if (error) {
+
+        console.error(
+            "Could not load artist videos:",
+            error
+        );
+
+        return;
+    }
+
+    videoSection.innerHTML = "";
+
+    if (!videos || videos.length === 0) {
+
+        videoSection.innerHTML =
+            '<div class="empty-state">NO VIDEOS AVAILABLE</div>';
+
+        return;
+    }
+
+    videos.forEach(function(video) {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "video-card";
+
+        if (video.image) {
+
+            const image =
+                document.createElement("img");
+
+            image.src =
+                video.image;
+
+            image.alt =
+                video.title ||
+                "FSB Video";
+
+            card.appendChild(image);
+        }
+
+        if (video.title) {
+
+            const title =
+                document.createElement("div");
+
+            title.className =
+                "video-card-title";
+
+            title.textContent =
+                video.title;
+
+            card.appendChild(title);
+        }
+
+        if (video.link) {
+
+            card.onclick =
+                function() {
+
+                    window.open(
+                        video.link,
+                        "_blank"
+                    );
+
+                };
+        }
+
+        videoSection.appendChild(card);
+
+    });
 
 }
 
