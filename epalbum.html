@@ -374,7 +374,9 @@ playButton.onclick = function(event) {
     const player =
         document.getElementById("releaseAudioPlayer");
 
+    player.style.display = "block";
     player.src = track.audio_url;
+    
     player.play().catch(function(error) {
         console.error("Audio playback failed:", error);
     });
