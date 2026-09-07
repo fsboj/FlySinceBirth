@@ -2241,7 +2241,8 @@ function escapeHtml(text) {
 
     const image =
         document.createElement("img");
-
+            
+image.className = "video-thumbnail";
     image.src =
         song.image_url ||
         "fsblogo.PNG";
