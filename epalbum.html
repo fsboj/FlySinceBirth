@@ -169,7 +169,7 @@
             <h2>TRACKLIST</h2>
 
             <div id="trackList"></div>
-<audio id="releaseAudioPlayer" controls style="width: 100%; margin-top: 20px;"></audio>
+<audio id="releaseAudioPlayer" controls style="width: 100%; margin-top: 20px; display: none;"></audio>
         </div>
 
     </div>
@@ -354,8 +354,9 @@ trackRow.onclick = function() {
     const player =
         document.getElementById("releaseAudioPlayer");
 
-    player.src = track.audio_url;
-    player.play().catch(function(error) {
+player.src = track.audio_url;
+player.style.display = "block";
+player.play().catch(function(error) {
         console.error("Audio playback failed:", error);
     });
 
