@@ -1597,7 +1597,18 @@ grid.appendChild(card);
             card.appendChild(image);
 
         }
+if (video.title) {
+    const title =
+        document.createElement("div");
 
+    title.className =
+        "video-title";
+
+    title.textContent =
+        video.title;
+
+    card.appendChild(title);
+}
 
         if (video.link) {
 
