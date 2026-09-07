@@ -3223,15 +3223,18 @@ async function loadArtistVideos() {
 
         if (video.image) {
 
-            const image =
-                document.createElement("img");
+           const image =
+    document.createElement("img");
 
-            image.src =
-                video.image;
+image.className =
+    "video-thumbnail";
 
-            image.alt =
-                video.title ||
-                "FSB Video";
+image.src =
+    video.image;
+
+image.alt =
+    video.title ||
+    "FSB Video";
 
             card.appendChild(image);
         }
