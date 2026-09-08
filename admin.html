@@ -1579,7 +1579,71 @@ body {
                 border-top:1px solid #242424;
             "
         >
+<div
+    style="
+        margin-top:45px;
+        padding-top:30px;
+        border-top:1px solid #242424;
+    "
+>
 
+    <div class="panel-title">
+        LINKS
+    </div>
+
+    <div class="panel-description">
+        Add links that belong only to this artist.
+    </div>
+
+    <div
+        class="form-grid"
+        style="margin-top:25px;"
+    >
+
+        <div class="form-group">
+            <label>
+                LINK NAME
+            </label>
+
+            <input
+                type="text"
+                id="artistLinkTitle"
+                placeholder="Instagram, Spotify, Website..."
+            >
+        </div>
+
+        <div class="form-group">
+            <label>
+                LINK URL
+            </label>
+
+            <input
+                type="text"
+                id="artistLinkUrl"
+                placeholder="https://..."
+            >
+        </div>
+
+    </div>
+
+    <div
+        class="actions"
+        style="margin-top:20px;"
+    >
+        <button
+            class="button primary"
+            onclick="addArtistLink()"
+        >
+            ADD LINK
+        </button>
+    </div>
+
+    <div
+        id="artistLinksAdminList"
+        style="margin-top:25px;"
+    ></div>
+
+</div>
             <div class="panel-title">
                 MUSIC
             </div>
@@ -4948,8 +5012,12 @@ async function loadSelectedArtistPage(artistId) {
     /* LOAD THIS ARTIST'S RELEASES */
 
     loadArtistReleasesAdmin();
+/* LOAD THIS ARTIST'S LINKS */
+
+loadArtistLinksAdmin();
 
 }
+
 
 
 /* =====================================================
@@ -5638,6 +5706,204 @@ async function uploadArtistSong() {
             error.message
         );
     }
+}
+    /* =====================================================
+   ARTIST LINKS ADMIN
+===================================================== */
+
+async function loadArtistLinksAdmin() {
+
+    const list =
+        document.getElementById(
+            "artistLinksAdminList"
+        );
+
+    if (!list) {
+        return;
+    }
+
+    if (!selectedArtistPageId) {
+        list.innerHTML = "";
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient
+            .from("artist_links")
+            .select("*")
+            .eq(
+                "artist_id",
+                selectedArtistPageId
+            )
+            .order(
+                "created_at",
+                {
+                    ascending: true
+                }
+            );
+
+    if (error) {
+        console.error(
+            "Could not load artist links:",
+            error
+        );
+        return;
+    }
+
+    list.innerHTML = "";
+
+    if (!data || data.length === 0) {
+        list.innerHTML =
+            '<div class="empty-state">NO LINKS ADDED</div>';
+
+        return;
+    }
+
+    data.forEach(function(link) {
+
+        const row =
+            document.createElement("div");
+
+        row.className = "admin-item";
+
+        row.style.marginBottom = "10px";
+
+        row.innerHTML = `
+            <div>
+                <div class="item-name">
+                    ${link.title}
+                </div>
+
+                <div
+                    class="item-meta"
+                    style="margin-top:6px;"
+                >
+                    ${link.url}
+                </div>
+            </div>
+
+            <button
+                class="button danger"
+                onclick="deleteArtistLink(${link.id})"
+            >
+                DELETE
+            </button>
+        `;
+
+        list.appendChild(row);
+
+    });
+}
+
+
+async function addArtistLink() {
+
+    if (!selectedArtistPageId) {
+        alert("Select an artist first.");
+        return;
+    }
+
+    const title =
+        document
+            .getElementById("artistLinkTitle")
+            .value
+            .trim();
+
+    const url =
+        document
+            .getElementById("artistLinkUrl")
+            .value
+            .trim();
+
+    if (!title) {
+        alert("Enter a link name.");
+        return;
+    }
+
+    if (!url) {
+        alert("Enter a link URL.");
+        return;
+    }
+
+    const { error } =
+        await supabaseClient
+            .from("artist_links")
+            .insert({
+                artist_id:
+                    selectedArtistPageId,
+                title: title,
+                url: url
+            });
+
+    if (error) {
+
+        alert(
+            "Could not add link:\n\n" +
+            error.message
+        );
+
+        console.error(
+            "Could not add artist link:",
+            error
+        );
+
+        return;
+    }
+
+    document
+        .getElementById("artistLinkTitle")
+        .value = "";
+
+    document
+        .getElementById("artistLinkUrl")
+        .value = "";
+
+    await loadArtistLinksAdmin();
+
+}
+
+
+async function deleteArtistLink(linkId) {
+
+    if (!linkId) {
+        return;
+    }
+
+    const confirmed =
+        confirm(
+            "Delete this artist link?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const { error } =
+        await supabaseClient
+            .from("artist_links")
+            .delete()
+            .eq(
+                "id",
+                linkId
+            );
+
+    if (error) {
+
+        alert(
+            "Could not delete link:\n\n" +
+            error.message
+        );
+
+        console.error(
+            "Could not delete artist link:",
+            error
+        );
+
+        return;
+    }
+
+    await loadArtistLinksAdmin();
+
 }
 /* =====================================================
    LOAD ARTIST SONGS IN ADMIN
