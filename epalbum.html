@@ -1,5 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
+    #releaseVideoList {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.release-video {
+    border: 1px solid #242424;
+    background: #090909;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.release-video img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+}
+
+.release-video-title {
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.release-video-player {
+    width: 100%;
+    display: block;
+}
+
+@media (max-width: 600px) {
+
+    #releaseVideoList {
+        grid-template-columns: 1fr;
+    }
+
+    .release-video img {
+        height: 200px;
+    }
+
+}
     <style>
     body {
         margin: 0;
@@ -170,6 +212,13 @@
 
             <div id="trackList"></div>
 <audio id="releaseAudioPlayer" controls style="width: 100%; margin-top: 20px; display: none;"></audio>
+            <div id="releaseVideos" style="margin-top: 50px;">
+
+    <h2>VIDEOS</h2>
+
+    <div id="releaseVideoList"></div>
+
+</div>
         </div>
 
     </div>
@@ -389,6 +438,124 @@ playButton.onclick = function(event) {
 }
 
 loadReleaseTracks();
+loadReleaseVideos();
+    async function loadReleaseVideos() {
+
+    if (!releaseId) {
+        return;
+    }
+
+    const videoList =
+        document.getElementById("releaseVideoList");
+
+    const { data: videos, error } =
+        await supabaseClient
+            .from("videos")
+            .select("*")
+            .eq("release_id", releaseId.trim())
+            .order("created_at", {
+                ascending: false
+            });
+
+    console.log("Release videos:", videos);
+    console.log("Release videos error:", error);
+
+    if (error) {
+
+        console.error(
+            "Release videos error:",
+            error
+        );
+
+        return;
+    }
+
+    if (!videos || videos.length === 0) {
+
+        document.getElementById("releaseVideos").style.display =
+            "none";
+
+        return;
+    }
+
+    videoList.innerHTML = "";
+
+    videos.forEach(function(video) {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "release-video";
+
+        if (video.image) {
+
+            const image =
+                document.createElement("img");
+
+            image.src =
+                video.image;
+
+            image.alt =
+                video.title ||
+                "FSB Video";
+
+            card.appendChild(image);
+        }
+
+        if (video.title) {
+
+            const title =
+                document.createElement("div");
+
+            title.className =
+                "release-video-title";
+
+            title.textContent =
+                video.title;
+
+            card.appendChild(title);
+        }
+
+        card.onclick = function() {
+
+            if (!video.link) {
+                return;
+            }
+
+            const player =
+                document.createElement("video");
+
+            player.className =
+                "release-video-player";
+
+            player.controls = true;
+
+            player.autoplay = true;
+
+            player.src =
+                video.link;
+
+            card.innerHTML = "";
+
+            card.appendChild(player);
+
+            player.play().catch(function(error) {
+
+                console.error(
+                    "Video playback failed:",
+                    error
+                );
+
+            });
+
+        };
+
+        videoList.appendChild(card);
+
+    });
+
+}
   document.getElementById("releaseBackButton").onclick = function() {
     history.back();
 };
