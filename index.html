@@ -1585,8 +1585,7 @@ grid.appendChild(card);
     grid.innerHTML = "";
 
 
-    (data || []).forEach(function(video) {
-
+(data || []).forEach(async function(video) {
         const card =
             document.createElement("div");
 
