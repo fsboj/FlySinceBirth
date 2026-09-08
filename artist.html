@@ -3276,18 +3276,65 @@ image.alt =
 /* =====================================================
    LOAD LINKS
 ===================================================== */
-
 async function loadArtistLinks() {
 
-    /*
-       Custom artist links will
-       be connected here.
-    */
+    const linksContainer =
+        document.getElementById("artistLinks");
 
-    console.log(
-        "Loading links for artist:",
-        artistId
-    );
+    if (!linksContainer || !artistId) {
+        return;
+    }
+
+    const { data: links, error } =
+        await supabaseClient
+            .from("artist_links")
+            .select("*")
+            .eq("artist_id", artistId)
+            .order(
+                "created_at",
+                {
+                    ascending: true
+                }
+            );
+
+    if (error) {
+
+        console.error(
+            "Could not load artist links:",
+            error
+        );
+
+        return;
+    }
+
+    linksContainer.innerHTML = "";
+
+    if (!links || links.length === 0) {
+
+        linksContainer.innerHTML =
+            '<div class="empty-state">NO LINKS AVAILABLE</div>';
+
+        return;
+    }
+
+    links.forEach(function(link) {
+
+        const a =
+            document.createElement("a");
+
+        a.className = "artist-link";
+
+        a.href = link.url;
+
+        a.target = "_blank";
+
+        a.rel = "noopener noreferrer";
+
+        a.textContent = link.title;
+
+        linksContainer.appendChild(a);
+
+    });
 
 }
 
