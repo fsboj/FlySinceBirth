@@ -500,7 +500,13 @@ loadReleaseVideos();
             image.alt =
                 video.title ||
                 "FSB Video";
-
+ image.onerror = function() {
+        console.error(
+            "Thumbnail failed to load:",
+            video.image
+        );
+    };
+            
             card.appendChild(image);
         }
 
