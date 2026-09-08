@@ -589,7 +589,7 @@ body {
 }
 
 .video-card {
-    height: 250px;
+    height: 160px;
 
     border: 1px solid #242424;
 
@@ -627,7 +627,18 @@ body {
 
     border-color: #555;
 }
+.video-title {
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
 
+.video-artist {
+    margin-top: 5px;
+    color: #666;
+    font-size: 9px;
+    letter-spacing: 2px;
+}
 
 /* =====================================================
    EVENTS
@@ -1610,6 +1621,25 @@ if (video.title) {
     card.appendChild(title);
 }
 
+if (video.artist_id) {
+    const artist =
+        document.createElement("div");
+
+    artist.className =
+        "video-artist";
+
+    const { data: artistData } =
+        await supabaseClient
+            .from("artists")
+            .select("name")
+            .eq("id", video.artist_id)
+            .single();
+
+    artist.textContent =
+        artistData?.name || "";
+
+    card.appendChild(artist);
+}
         if (video.link) {
 
             card.onclick =
