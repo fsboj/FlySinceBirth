@@ -627,17 +627,17 @@ body {
 
     border-color: #555;
 }
-.video-title {
-    margin-top: 12px;
-    font-size: 14px;
-    font-weight: 600;
+.video-artist {
+    margin-top: 10px;
+    color: #666;
+    font-size: 11px;
+    letter-spacing: 2px;
 }
 
-.video-artist {
-    margin-top: 5px;
-    color: #666;
-    font-size: 9px;
-    letter-spacing: 2px;
+.video-title {
+    margin-top: 4px;
+    font-size: 16px;
+    font-weight: 600;
 }
 
 /* =====================================================
@@ -1607,19 +1607,6 @@ grid.appendChild(card);
             card.appendChild(image);
 
         }
-if (video.title) {
-    const title =
-        document.createElement("div");
-
-    title.className =
-        "video-title";
-
-    title.textContent =
-        video.title;
-
-    card.appendChild(title);
-}
-
 if (video.artist_id) {
     const artist =
         document.createElement("div");
@@ -1638,6 +1625,19 @@ if (video.artist_id) {
         artistData?.name || "";
 
     card.appendChild(artist);
+}
+
+if (video.title) {
+    const title =
+        document.createElement("div");
+
+    title.className =
+        "video-title";
+
+    title.textContent =
+        video.title;
+
+    card.appendChild(title);
 }
         if (video.link) {
 
