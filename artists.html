@@ -127,6 +127,11 @@ body {
     letter-spacing: 3px;
 }
 .menu-button {
+    position: fixed;
+    top: 25px;
+    right: 45px;
+    z-index: 2000;
+
     background: none;
     border: none;
     color: white;
@@ -135,7 +140,6 @@ body {
     align-items: center;
     padding: 5px;
 }
-
 .menu-lines {
     width: 23px;
 }
@@ -211,7 +215,10 @@ body {
     opacity: 0.4;
 }
 @media (max-width: 800px) {
-
+.menu-button {
+    top: 20px;
+    right: 20px;
+}
     .navbar {
         padding: 20px;
     }
