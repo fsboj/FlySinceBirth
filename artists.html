@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Artists | Fly Since Birth</title>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #050505;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    overflow-x: hidden;
+}
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+
+    padding: 25px 45px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    z-index: 1000;
+
+    background: rgba(5,5,5,0.45);
+    backdrop-filter: blur(10px);
+}
+
+.nav-logo img {
+    width: 55px;
+    height: 55px;
+    object-fit: contain;
+}
+
+.page {
+    padding: 150px 7% 80px;
+}
+
+.page-label {
+    color: #777;
+    font-size: 9px;
+    letter-spacing: 5px;
+    margin-bottom: 20px;
+}
+
+.page-heading {
+    font-size: clamp(55px, 9vw, 125px);
+    line-height: 0.82;
+    letter-spacing: -6px;
+    font-weight: 800;
+}
+
+.artist-grid {
+    margin-top: 70px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 20px;
+}
+
+.artist-card {
+    display: block;
+
+    color: white;
+    text-decoration: none;
+
+    border: 1px solid #242424;
+
+    background: #090909;
+
+    overflow: hidden;
+
+    transition: 0.3s;
+}
+
+.artist-card:hover {
+    transform: translateY(-5px);
+    background: #111;
+}
+
+.artist-image {
+    width: 100%;
+    height: 350px;
+
+    object-fit: cover;
+
+    display: block;
+
+    background: #111;
+}
+
+.artist-name {
+    padding: 20px;
+
+    font-size: 18px;
+    font-weight: 700;
+
+    letter-spacing: 1px;
+}
+
+.empty-state {
+    color: #555;
+
+    font-size: 9px;
+    letter-spacing: 3px;
+}
+
+@media (max-width: 800px) {
+
+    .navbar {
+        padding: 20px;
+    }
+
+    .page {
+        padding: 130px 25px 60px;
+    }
+
+    .artist-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .artist-image {
+        height: 350px;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<nav class="navbar">
+
+    <a
+        href="index.html"
+        class="nav-logo"
+    >
+
+        <img
+            src="fsblogo.PNG"
+            alt="FSB"
+        >
+
+    </a>
+
+</nav>
+
+
+<main class="page">
+
+    <div class="page-label">
+        FLY SINCE BIRTH
+    </div>
+
+    <h1 class="page-heading">
+        ARTISTS
+    </h1>
+
+
+    <div
+        id="artistGrid"
+        class="artist-grid"
+    >
+
+        <div class="empty-state">
+            LOADING ARTISTS
+        </div>
+
+    </div>
+
+</main>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<script>
+
+const SUPABASE_URL =
+    "https://ccvhvxugoebdqwxxankl.supabase.co";
+
+const SUPABASE_ANON_KEY =
+    "sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z";
+
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+
+async function loadArtists() {
+
+    const grid =
+        document.getElementById(
+            "artistGrid"
+        );
+
+    const { data, error } =
+        await supabaseClient
+            .from("artists")
+            .select("*")
+            .order(
+                "name",
+                {
+                    ascending: true
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Could not load artists:",
+            error
+        );
+
+        grid.innerHTML =
+            '<div class="empty-state">COULD NOT LOAD ARTISTS</div>';
+
+        return;
+    }
+
+
+    grid.innerHTML = "";
+
+
+    if (!data || data.length === 0) {
+
+        grid.innerHTML =
+            '<div class="empty-state">NO ARTISTS AVAILABLE</div>';
+
+        return;
+    }
+
+
+    data.forEach(function(artist) {
+
+        const card =
+            document.createElement("a");
+
+        card.className =
+            "artist-card";
+
+        card.href =
+            "artist.html?id=" +
+            encodeURIComponent(
+                artist.id
+            );
+
+
+        const image =
+            document.createElement("img");
+
+        image.className =
+            "artist-image";
+
+        image.src =
+            artist.image ||
+            "fsblogo.PNG";
+
+        image.alt =
+            artist.name ||
+            "Artist";
+
+
+        const name =
+            document.createElement("div");
+
+        name.className =
+            "artist-name";
+
+        name.textContent =
+            artist.name ||
+            "ARTIST";
+
+
+        card.appendChild(image);
+
+        card.appendChild(name);
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+
+loadArtists();
+
+</script>
+
+
+</body>
+
+</html>
