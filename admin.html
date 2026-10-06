@@ -7409,6 +7409,26 @@ function ensureEventDeviceUpload(){
  var input=document.createElement("input");input.type="file";input.accept="image/*";input.id="eventImageFile";input.style.marginTop="15px";var label=document.createElement("label");label.textContent="EVENT IMAGE FROM DEVICE";label.style.display="block";label.style.marginTop="20px";var header=panel.querySelector(".panel-header");if(header){header.parentNode.insertBefore(label,header.nextSibling);header.parentNode.insertBefore(input,label.nextSibling)}
 }
 document.addEventListener("DOMContentLoaded",ensureEventDeviceUpload);
+
+async function uploadEventDeviceImage(){
+ var input=document.getElementById("eventImageFile"),file=input&&input.files[0];if(!file)return null;
+ var path="events/"+Date.now()+"-"+file.name;var up=await supabaseClient.storage.from("site-images").upload(path,file);if(up.error)throw up.error;
+ return supabaseClient.storage.from("site-images").getPublicUrl(path).data.publicUrl;
+}
+window.addEvent=async function(){
+ try{
+  var title=prompt("Event name:");if(!title)return;var date=prompt("Event date:")||"";var location=prompt("Event location:")||"";var link=prompt("Event link:")||"";var image=await uploadEventDeviceImage();
+  var r=await supabaseClient.from("events").select("sort_order").order("sort_order",{ascending:false}).limit(1);var next=r.data&&r.data.length?(r.data[0].sort_order||0)+1:1;
+  var ins=await supabaseClient.from("events").insert({title:title,date:date,location:location,link:link,image:image||"",sort_order:next});if(ins.error)throw ins.error;
+  var input=document.getElementById("eventImageFile");if(input)input.value="";loadEvents();setStatus("EVENT ADDED");
+ }catch(e){alert("Could not add event: "+e.message)}
+};
+window.editEvent=async function(id){
+ var r=await supabaseClient.from("events").select("*").eq("id",id).single();if(r.error){alert(r.error.message);return}
+ var title=prompt("Event name:",r.data.title||"");if(title===null)return;var date=prompt("Event date:",r.data.date||"");if(date===null)return;var location=prompt("Event location:",r.data.location||"");if(location===null)return;var link=prompt("Event link:",r.data.link||"");if(link===null)return;
+ var image=await uploadEventDeviceImage();var data={title:title,date:date,location:location,link:link};if(image)data.image=image;
+ var u=await supabaseClient.from("events").update(data).eq("id",id);if(u.error){alert(u.error.message);return}var input=document.getElementById("eventImageFile");if(input)input.value="";loadEvents();setStatus("EVENT UPDATED");
+};
 </script>
 
 
