@@ -3589,12 +3589,11 @@ async function loadArtists() {
             "admin-item";
 
         item.innerHTML = `
-
             <div class="item-info">
 
                 <img
                     class="item-image"
-                    src="${artist.image_url || "fsblogo.PNG"}"
+                    src="${artist.image || "fsblogo.PNG"}"
                     alt="${escapeHtml(
                         artist.name || "Artist"
                     )}"
@@ -3622,6 +3621,25 @@ async function loadArtists() {
 
             <div class="actions">
 
+                <label
+                    style="
+                        display:flex;
+                        align-items:center;
+                        gap:8px;
+                        color:#999;
+                        font-size:9px;
+                        letter-spacing:2px;
+                        cursor:pointer;
+                    "
+                >
+                    <input
+                        type="checkbox"
+                        ${artist.homepage_featured ? "checked" : ""}
+                        onchange="toggleHomepageArtist('${artist.id}', this.checked, this)"
+                    >
+                    HOME TOP 10
+                </label>
+
                 <button
                     class="button"
                     onclick="editArtist('${artist.id}')">
@@ -3641,6 +3659,82 @@ async function loadArtists() {
 
     });
 }
+
+async function toggleHomepageArtist(id, enabled, checkbox) {
+
+    if (!id) return;
+
+    if (enabled) {
+
+        const { count, error: countError } =
+            await supabaseClient
+                .from("artists")
+                .select("id", {
+                    count: "exact",
+                    head: true
+                })
+                .eq("homepage_featured", true);
+
+        if (countError) {
+
+            console.error(
+                "Could not check homepage artist count:",
+                countError
+            );
+
+            checkbox.checked = false;
+
+            alert(
+                "Could not check the homepage artist limit."
+            );
+
+            return;
+        }
+
+        if ((count || 0) >= 10) {
+
+            checkbox.checked = false;
+
+            alert(
+                "You can only select 10 artists for the homepage."
+            );
+
+            return;
+        }
+    }
+
+    const { error } =
+        await supabaseClient
+            .from("artists")
+            .update({
+                homepage_featured: enabled
+            })
+            .eq("id", id);
+
+    if (error) {
+
+        console.error(
+            "Could not update homepage artist selection:",
+            error
+        );
+
+        checkbox.checked = !enabled;
+
+        alert(
+            "Could not update homepage artist selection:\\n\\n" +
+            error.message
+        );
+
+        return;
+    }
+
+    setStatus(
+        enabled
+            ? "ARTIST ADDED TO HOMEPAGE"
+            : "ARTIST REMOVED FROM HOMEPAGE"
+    );
+}
+
 async function addArtist() {
 
     const name =
@@ -3697,7 +3791,8 @@ async function addArtist() {
                 bio: bio,
                 genre: genre,
                 location: location,
-                sort_order: nextOrder
+                sort_order: nextOrder,
+                homepage_featured: false
             });
 
 
