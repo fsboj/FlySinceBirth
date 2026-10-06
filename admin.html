@@ -464,7 +464,7 @@ body {
 
 }
 
-</style>
+ .main-page-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:25px}.main-page-tabs .button{margin:0}.main-page-tabs .button.active{background:white;color:black;border-color:white}.main-page-subpanel{display:none}.main-page-subpanel.active{display:block}.release-toggle{width:100%;text-align:left;background:none;border:0;color:white;cursor:pointer}.release-tracks{display:none;margin-top:15px;padding-left:25px;border-left:1px solid #242424}.release-tracks.open{display:block}</style>
 
 </head>
 
@@ -504,70 +504,14 @@ body {
      ADMIN NAVIGATION
 ===================================================== -->
 
-<nav class="admin-nav">
-
-    <button
-        class="active"
-        onclick="showPanel('site', this)">
-        SITE
-    </button>
-
-    <button
-        onclick="showPanel('photos', this)">
-        PHOTOS
-    </button>
-
-    <button
-        onclick="showPanel('text', this)">
-        TEXT
-    </button>
-
-    <button
-        onclick="showPanel('menu', this)">
-        MENU
-    </button>
-    
-<button
-    onclick="showPanel('artistPages', this)">
-    ARTIST PAGES
-</button>
-    
-    <button
-        onclick="showPanel('music', this)">
-        MUSIC
-    </button>
-
-    <button
-        onclick="showPanel('artists', this)">
-        ARTISTS
-    </button>
-
-    <button
-        onclick="showPanel('merch', this)">
-        MERCH
-    </button>
-
-    <button
-        onclick="showPanel('videos', this)">
-        VIDEOS
-    </button>
-
-    <button
-        onclick="showPanel('events', this)">
-        EVENTS
-    </button>
-
-    <button
-        onclick="showPanel('sections', this)">
-        SECTIONS
-    </button>
-
-</nav>
+<nav class="admin-nav"><button class="active" onclick="showPanel('mainPage', this)">MAIN PAGE</button><button onclick="showPanel('sideMenu', this)">SIDE MENU</button><button onclick="showPanel('artistPages', this)">ARTIST PAGES</button><button onclick="showPanel('upcoming', this)">UPCOMING RELEASES</button></nav>
 
 
 <!-- =====================================================
      SITE
 ===================================================== -->
+
+<section id="mainPage" class="panel active"><div class="panel-header"><div class="panel-title">MAIN PAGE</div><div class="panel-description">Manage everything displayed on the main FSB homepage.</div></div><div class="main-page-tabs"><button class="button active" onclick="showMainSubPanel('site', this)">GENERAL</button><button class="button" onclick="showMainSubPanel('photos', this)">PHOTOS</button><button class="button" onclick="showMainSubPanel('text', this)">TEXT</button><button class="button" onclick="showMainSubPanel('music', this)">MUSIC</button><button class="button" onclick="showMainSubPanel('artists', this)">ARTISTS</button><button class="button" onclick="showMainSubPanel('videos', this)">VIDEO RELEASES</button><button class="button" onclick="showMainSubPanel('events', this)">EVENTS</button><button class="button" onclick="showMainSubPanel('merch', this)">MERCH</button><button class="button" onclick="showMainSubPanel('sections', this)">SECTIONS</button></div><div id="mainPageSubPanels"></div><div class="actions" style="margin-top:30px;"><button class="button primary" type="button" onclick="addCustomMainSection()">+ ADD SECTION</button></div></section>
 
 <section
     id="site"
@@ -924,14 +868,12 @@ body {
 ===================================================== -->
 
 <section
-    id="menu"
+    id="sideMenu"
     class="panel">
 
     <div class="panel-header">
 
-        <div class="panel-title">
-            Menu Items
-        </div>
+        <div class="panel-title">SIDE MENU</div>
 
         <div class="panel-description">
             Add, remove and rename menu navigation items.
@@ -1419,6 +1361,8 @@ body {
      ARTIST PAGES
 ===================================================== -->
 
+<section id="upcoming" class="panel"><div class="panel-header"><div class="panel-title">UPCOMING RELEASES</div><div class="panel-description">Schedule upcoming songs, EPs, albums, events, merch and videos and link each item to its proper page.</div></div><div class="form-grid"><div class="form-group"><label>TYPE</label><select id="upcomingType"><option value="song">SONG</option><option value="ep">EP</option><option value="album">ALBUM</option><option value="event">EVENT</option><option value="merch">MERCH</option><option value="video">VIDEO</option></select></div><div class="form-group"><label>TITLE</label><input id="upcomingTitle" type="text" placeholder="Upcoming title"></div><div class="form-group"><label>DATE</label><input id="upcomingDate" type="date"></div><div class="form-group"><label>ARTWORK / IMAGE</label><input id="upcomingImage" type="file" accept="image/*"></div><div class="form-group full"><label>DESCRIPTION</label><textarea id="upcomingDescription" placeholder="Optional description"></textarea></div><div class="form-group"><label>ARTIST</label><select id="upcomingArtist"><option value="">NONE</option></select></div><div class="form-group"><label>LINK TO</label><select id="upcomingTarget"><option value="">CHOOSE AUTOMATIC LINK</option></select></div></div><div class="actions"><button class="button primary" onclick="saveUpcomingRelease()">ADD UPCOMING RELEASE</button></div><div id="upcomingList" class="item-list"></div></section>
+
 <section
     id="artistPages"
     class="panel">
@@ -1704,6 +1648,8 @@ body {
                         id="artistSongFile"
                         accept="audio/*"
                     >
+                    <label style="display:block;margin-top:15px;">OPTIONAL VIDEO</label>
+                    <input type="file" id="artistSongVideoFile" accept="video/*">
 
                 </div>
 <div class="form-group">
@@ -1714,8 +1660,9 @@ body {
 
     <div style="
         display:flex;
-        flex-direction:column;
-        gap:10px;
+        flex-direction:row;
+        flex-wrap:wrap;
+        gap:18px;
         margin-top:10px;
     ">
 
@@ -1787,7 +1734,7 @@ body {
 
     </div>
 
-</section>
+
 <!-- =====================================================
      ARTIST RELEASES
 ===================================================== -->
@@ -1957,6 +1904,7 @@ body {
     ></div>
 
 </div>
+</section>
 <!-- =====================================================
      MERCH
 ===================================================== -->
@@ -2154,9 +2102,7 @@ body {
 
     <div class="panel-header">
 
-        <div class="panel-title">
-            Videos
-        </div>
+        <div class="panel-title">VIDEO RELEASES</div>
 
         <div class="panel-description">
             Manage video cards and cycling images.
@@ -7290,6 +7236,89 @@ document.addEventListener(
     }
 );
 }
+
+const mainPagePanelIds=["site","photos","text","music","artists","videos","events","merch","sections"];
+function showMainSubPanel(panelId,button){
+ document.querySelectorAll(".main-page-subpanel").forEach(function(p){p.classList.remove("active")});
+ var target=document.getElementById(panelId); if(target) target.classList.add("active");
+ document.querySelectorAll(".main-page-tabs .button").forEach(function(b){b.classList.remove("active")});
+ if(button) button.classList.add("active");
+ if(panelId==="music") loadVipMusicAdmin();
+ if(panelId==="artists") loadArtists();
+ if(panelId==="videos") loadVideos();
+ if(panelId==="events") loadEvents();
+ if(panelId==="sections") loadCustomMainSections();
+}
+function setupMainPagePanels(){
+ var host=document.getElementById("mainPageSubPanels"); if(!host) return;
+ mainPagePanelIds.forEach(function(id){var p=document.getElementById(id);if(!p)return;p.classList.remove("panel");p.classList.add("main-page-subpanel");host.appendChild(p)});
+ showMainSubPanel("site",document.querySelector(".main-page-tabs .button"));
+ loadArtistsForUpcoming(); loadUpcomingReleases(); loadCustomMainSections();
+}
+async function loadVipMusicAdmin(){
+ var panel=document.getElementById("music"); if(!panel)return;
+ panel.innerHTML='<div class="panel-header"><div class="panel-title">MUSIC</div><div class="panel-description">The homepage still shows the 10 newest releases automatically. Choose up to 3 VIP music slots below. Empty slots remain empty blocks on the homepage.</div></div><div id="vipMusicSlots" class="item-list"></div>';
+ var results=await Promise.all([
+  supabaseClient.from("artist_songs").select("id,title,artist_id,release_id").is("release_id",null).order("created_at",{ascending:false}),
+  supabaseClient.from("artist_releases").select("id,title,type,artist_id").order("created_at",{ascending:false}),
+  supabaseClient.from("homepage_vip_music").select("*").order("slot",{ascending:true}),
+  supabaseClient.from("artists").select("id,name").order("name",{ascending:true})
+ ]);
+ var songs=results[0].data||[],releases=results[1].data||[],existing=results[2].data||[],artists=results[3].data||[];
+ var list=document.getElementById("vipMusicSlots");
+ for(var slot=1;slot<=3;slot++){
+  var current=existing.find(function(x){return x.slot===slot}); var options=['<option value="">EMPTY SLOT</option>'];
+  songs.forEach(function(s){var a=artists.find(function(x){return x.id===s.artist_id});var val="song:"+s.id;options.push('<option value="'+val+'" '+(current&&current.content_type==="song"&&String(current.song_id)===String(s.id)?"selected":"")+'>SONG — '+escapeHtml(s.title)+(a?" — "+escapeHtml(a.name):"")+"</option>")});
+  releases.forEach(function(r){var a=artists.find(function(x){return x.id===r.artist_id});var val="release:"+r.id;options.push('<option value="'+val+'" '+(current&&current.content_type==="release"&&String(current.release_id)===String(r.id)?"selected":"")+'>'+r.type.toUpperCase()+" — "+escapeHtml(r.title)+(a?" — "+escapeHtml(a.name):"")+"</option>")});
+  var row=document.createElement("div");row.className="admin-item";row.innerHTML='<div><div class="item-name">VIP SLOT '+slot+'</div><div class="item-meta">SONG / EP / ALBUM</div></div><select id="vipSlot'+slot+'" style="max-width:520px">'+options.join("")+'</select><button class="button primary" onclick="saveVipMusic('+slot+')">SAVE</button>';list.appendChild(row);
+ }
+}
+async function saveVipMusic(slot){
+ var select=document.getElementById("vipSlot"+slot);if(!select)return;
+ await supabaseClient.from("homepage_vip_music").delete().eq("slot",slot);
+ if(select.value){var parts=select.value.split(":");var payload={slot:slot,content_type:parts[0]==="song"?"song":"release",song_id:parts[0]==="song"?Number(parts[1]):null,release_id:parts[0]==="release"?parts[1]:null,visible:true};var r=await supabaseClient.from("homepage_vip_music").insert(payload);if(r.error){alert(r.error.message);return}}
+ setStatus("VIP MUSIC UPDATED");
+}
+async function loadArtistsForUpcoming(){
+ var s=document.getElementById("upcomingArtist");if(!s)return;var r=await supabaseClient.from("artists").select("id,name").order("name",{ascending:true});s.innerHTML='<option value="">NONE</option>'+(r.data||[]).map(function(a){return '<option value="'+a.id+'">'+escapeHtml(a.name)+"</option>"}).join("");populateUpcomingTargetOptions();
+}
+async function populateUpcomingTargetOptions(){
+ var s=document.getElementById("upcomingTarget");if(!s)return;var type=document.getElementById("upcomingType").value;var html='<option value="">CHOOSE AUTOMATIC LINK</option>';var r;
+ if(type==="song"){r=await supabaseClient.from("artist_songs").select("id,title").is("release_id",null).order("created_at",{ascending:false});(r.data||[]).forEach(function(x){html+='<option value="song:'+x.id+'">SONG — '+escapeHtml(x.title)+"</option>"})}
+ if(type==="ep"||type==="album"){r=await supabaseClient.from("artist_releases").select("id,title,type").eq("type",type).order("created_at",{ascending:false});(r.data||[]).forEach(function(x){html+='<option value="release:'+x.id+'">'+x.type.toUpperCase()+" — "+escapeHtml(x.title)+"</option>"})}
+ if(type==="video"){r=await supabaseClient.from("videos").select("id,title").order("sort_order",{ascending:true});(r.data||[]).forEach(function(x){html+='<option value="video:'+x.id+'">VIDEO — '+escapeHtml(x.title)+"</option>"})}
+ if(type==="event"){r=await supabaseClient.from("events").select("id,title").order("sort_order",{ascending:true});(r.data||[]).forEach(function(x){html+='<option value="event:'+x.id+'">EVENT — '+escapeHtml(x.title)+"</option>"})}
+ s.innerHTML=html;
+}
+async function saveUpcomingRelease(){
+ var title=document.getElementById("upcomingTitle").value.trim();if(!title){alert("Enter a title.");return}
+ var file=document.getElementById("upcomingImage").files[0],imageUrl=null;
+ if(file){var path="upcoming/"+Date.now()+"-"+file.name;var up=await supabaseClient.storage.from("site-images").upload(path,file);if(up.error){alert(up.error.message);return}imageUrl=supabaseClient.storage.from("site-images").getPublicUrl(path).data.publicUrl}
+ var target=document.getElementById("upcomingTarget").value,parts=target?target.split(":"):["",""];
+ var payload={title:title,type:document.getElementById("upcomingType").value,description:document.getElementById("upcomingDescription").value.trim()||null,image_url:imageUrl,release_date:document.getElementById("upcomingDate").value||null,artist_id:document.getElementById("upcomingArtist").value||null,song_id:parts[0]==="song"?Number(parts[1]):null,release_id:parts[0]==="release"?parts[1]:null,video_id:parts[0]==="video"?Number(parts[1]):null,event_id:parts[0]==="event"?Number(parts[1]):null,target_url:null,visible:true};
+ var r=await supabaseClient.from("upcoming_releases").insert(payload);if(r.error){alert(r.error.message);return}
+ document.getElementById("upcomingTitle").value="";document.getElementById("upcomingDescription").value="";document.getElementById("upcomingDate").value="";document.getElementById("upcomingImage").value="";loadUpcomingReleases();setStatus("UPCOMING RELEASE ADDED");
+}
+async function loadUpcomingReleases(){
+ var list=document.getElementById("upcomingList");if(!list)return;var r=await supabaseClient.from("upcoming_releases").select("*").order("release_date",{ascending:true});if(r.error){return}list.innerHTML="";(r.data||[]).forEach(function(x){var row=document.createElement("div");row.className="admin-item";row.innerHTML='<div class="item-info">'+(x.image_url?'<img class="item-image" src="'+x.image_url+'">':'<div class="item-image"></div>')+'<div><div class="item-name">'+escapeHtml(x.title)+'</div><div class="item-meta">'+x.type.toUpperCase()+(x.release_date?" • "+escapeHtml(x.release_date):"")+"</div></div></div><div class=\"actions\"><label><input type=\"checkbox\" "+(x.visible?"checked":"")+" onchange=\"toggleUpcoming("+x.id+",this.checked)\"> SHOW</label><button class=\"button danger\" onclick=\"deleteUpcoming("+x.id+")\">REMOVE</button></div>';list.appendChild(row)})}
+async function toggleUpcoming(id,visible){await supabaseClient.from("upcoming_releases").update({visible:visible}).eq("id",id)}
+async function deleteUpcoming(id){if(!confirm("Remove this upcoming release?"))return;await supabaseClient.from("upcoming_releases").delete().eq("id",id);loadUpcomingReleases()}
+async function addCustomMainSection(){var title=prompt("Section name:");if(!title)return;var type=prompt("Content type: text, image, video, link, or mixed","text")||"text";var body=prompt("Section content (optional):","")||"";var link=prompt("Link URL (optional):","")||"";var r=await supabaseClient.from("custom_home_sections").select("sort_order").order("sort_order",{ascending:false}).limit(1);var next=r.data&&r.data.length?(r.data[0].sort_order||0)+1:1;var ins=await supabaseClient.from("custom_home_sections").insert({title:title,body:body,link_url:link,content_type:type,sort_order:next,visible:true});if(ins.error){alert(ins.error.message);return}loadCustomMainSections();setStatus("SECTION ADDED")}
+async function loadCustomMainSections(){var panel=document.getElementById("sections");if(!panel)return;var r=await supabaseClient.from("custom_home_sections").select("*").order("sort_order",{ascending:true});if(r.error)return;panel.innerHTML='<div class="panel-header"><div class="panel-title">CUSTOM SECTIONS</div><div class="panel-description">Sections created with + ADD SECTION.</div></div><div id="customSectionList" class="item-list"></div>';var list=document.getElementById("customSectionList");(r.data||[]).forEach(function(x){var row=document.createElement("div");row.className="admin-item";row.innerHTML='<div><div class="item-name">'+escapeHtml(x.title)+'</div><div class="item-meta">'+escapeHtml(x.content_type)+" • "+(x.visible?"VISIBLE":"HIDDEN")+'</div></div><div class="actions"><button class="button" onclick="editCustomSection('+x.id+')">EDIT</button><button class="button danger" onclick="deleteCustomSection('+x.id+')">REMOVE</button></div>';list.appendChild(row)})}
+async function editCustomSection(id){var r=await supabaseClient.from("custom_home_sections").select("*").eq("id",id).single();if(r.error)return;var title=prompt("Section name:",r.data.title||"");if(title===null)return;var body=prompt("Section content:",r.data.body||"");if(body===null)return;var link=prompt("Link URL:",r.data.link_url||"");if(link===null)return;await supabaseClient.from("custom_home_sections").update({title:title,body:body,link_url:link}).eq("id",id);loadCustomMainSections()}
+async function deleteCustomSection(id){if(!confirm("Remove this custom section?"))return;await supabaseClient.from("custom_home_sections").delete().eq("id",id);loadCustomMainSections()}
+async function loadArtistReleasesAdmin(){
+ var list=document.getElementById("artistReleasesAdminList");if(!list||!selectedArtistPageId)return;
+ var r=await supabaseClient.from("artist_releases").select("*").eq("artist_id",selectedArtistPageId).order("created_at",{ascending:false});if(r.error)return;list.innerHTML="";
+ for(const release of (r.data||[])){var tr=await supabaseClient.from("artist_songs").select("*").eq("release_id",release.id).order("track_number",{ascending:true});var row=document.createElement("div");row.className="admin-item";row.style.display="block";var tracks=tr.data||[];var html='<div style="display:flex;justify-content:space-between;align-items:center;gap:15px"><button class="release-toggle" onclick="toggleReleaseTracks(this)"><div class="item-name">'+escapeHtml(release.title)+'</div><div class="item-meta">'+release.type.toUpperCase()+" • "+tracks.length+' TRACKS • CLICK TO EXPAND</div></button><div class="actions"><button class="button" onclick="editArtistRelease(\\''+release.id+'\\')">EDIT RELEASE</button><button class="button danger" onclick="deleteArtistRelease(\\''+release.id+'\\')">DELETE</button></div></div><div class="release-tracks">';
+ tracks.forEach(function(t,i){html+='<div class="admin-item"><div><div class="item-name">'+(i+1)+". "+escapeHtml(t.title)+'</div><div class="item-meta">'+(t.video_url?"VIDEO • ":"")+(t.image_url?"ARTWORK":"NO ARTWORK")+'</div></div><button class="button" onclick="editArtistSong(\\''+t.id+'\\')">EDIT SONG</button></div>'});html+="</div>";row.innerHTML=html;list.appendChild(row)}
+}
+function toggleReleaseTracks(button){var t=button.closest(".admin-item").querySelector(".release-tracks");if(t)t.classList.toggle("open")}
+async function editArtistRelease(id){var r=await supabaseClient.from("artist_releases").select("*").eq("id",id).single();if(r.error)return;var title=prompt("Release name:",r.data.title||"");if(title===null)return;var video=prompt("Release video URL (optional):",r.data.video_url||"");if(video===null)return;var remove=confirm("Remove artwork? Click OK to remove, Cancel to keep it.");var artwork=r.data.artwork_url||null;if(remove)artwork=null;var u=await supabaseClient.from("artist_releases").update({title:title,artwork_url:artwork,video_url:video||null}).eq("id",id);if(u.error){alert(u.error.message);return}loadArtistReleasesAdmin();setStatus("RELEASE UPDATED")}
+async function editArtistSong(id){var r=await supabaseClient.from("artist_songs").select("*").eq("id",id).single();if(r.error)return;var title=prompt("Song name:",r.data.title||"");if(title===null)return;var video=prompt("Video URL (optional):",r.data.video_url||"");if(video===null)return;var remove=confirm("Remove artwork? Click OK to remove, Cancel to keep it.");var image=r.data.image_url||null;if(remove)image=null;var u=await supabaseClient.from("artist_songs").update({title:title,image_url:image,video_url:video||null}).eq("id",id);if(u.error){alert(u.error.message);return}loadArtistSongsAdmin();loadArtistReleasesAdmin();setStatus("SONG UPDATED")}
+document.addEventListener("DOMContentLoaded",function(){setupMainPagePanels();var t=document.getElementById("upcomingType");if(t)t.addEventListener("change",populateUpcomingTargetOptions)});
+const adminOriginalShowPanelV2=window.showPanel;
+window.showPanel=function(panelId,button){adminOriginalShowPanelV2(panelId,button);if(panelId==="mainPage"){var first=document.querySelector(".main-page-tabs .button");showMainSubPanel("site",first)}if(panelId==="artistPages"){loadArtistPageSelector()}if(panelId==="upcoming"){loadArtistsForUpcoming();loadUpcomingReleases()}};
 </script>
 
 
