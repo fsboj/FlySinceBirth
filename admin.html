@@ -7403,6 +7403,12 @@ async function addCustomMainSection(){
  var ins=await supabaseClient.from("custom_home_sections").insert({title:title,body:body,link_url:link,content_type:type,sort_order:next,visible:true});
  if(ins.error){alert(ins.error.message);return}await loadCustomMainSections();setStatus("SECTION ADDED");
 }
+
+function ensureEventDeviceUpload(){
+ var panel=document.getElementById("events");if(!panel||document.getElementById("eventImageFile"))return;
+ var input=document.createElement("input");input.type="file";input.accept="image/*";input.id="eventImageFile";input.style.marginTop="15px";var label=document.createElement("label");label.textContent="EVENT IMAGE FROM DEVICE";label.style.display="block";label.style.marginTop="20px";var header=panel.querySelector(".panel-header");if(header){header.parentNode.insertBefore(label,header.nextSibling);header.parentNode.insertBefore(input,label.nextSibling)}
+}
+document.addEventListener("DOMContentLoaded",ensureEventDeviceUpload);
 </script>
 
 
