@@ -79,8 +79,9 @@ body {
 
 .menu-lines {
     width: 23px;
+    min-width: 23px;
 }
-
+   
 .menu-lines span {
     display: block;
 
@@ -490,7 +491,7 @@ body {
 
 .artist-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 300px);
     gap: 18px;
     margin-top: 55px;
 }
@@ -565,10 +566,8 @@ body {
 }
 
 .clothing-box img {
-    width: 80%;
-
-    height: 80%;
-
+    width: 400px;
+    height: 400px;
     object-fit: contain;
 }
 
@@ -581,13 +580,12 @@ body {
     display: grid;
 
     grid-template-columns:
-        repeat(3, 1fr);
+        repeat(3, 320px);
 
     gap: 18px;
 
     margin-top: 55px;
 }
-
 .video-card {
     height: 160px;
 
@@ -754,16 +752,21 @@ footer {
     .clothing-box {
         height: 350px;
     }
-
+.clothing-box img {
+    width: 300px;
+    height: 300px;
+}
 .music-grid {
     grid-template-columns: repeat(2, 260px);
 }
 
-    .artist-grid,
-    .video-grid {
-        grid-template-columns: 1fr;
-    }
+ .artist-grid {
+    grid-template-columns: 300px;
+}
 
+.video-grid {
+    grid-template-columns: 320px;
+}
     .video-card {
         height: 220px;
     }
