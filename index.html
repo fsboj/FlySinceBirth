@@ -820,7 +820,7 @@ footer {
 
 }
 
-</style>
+ .upcoming-card,.vip-empty{min-height:220px;border:1px solid #242424;background:#070707;display:flex;align-items:flex-end;padding:25px;position:relative;overflow:hidden}.upcoming-card{cursor:pointer}.upcoming-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65}.upcoming-card>div{position:relative;z-index:2}.vip-empty{opacity:.35}.custom-home-section{padding:80px 7%;border-top:1px solid #202020}.custom-home-section h2{font-size:clamp(40px,6vw,80px)}.custom-home-section p{max-width:700px;color:#999;line-height:1.7;margin-top:20px}</style>
 </head>
 
 <body>
@@ -1040,12 +1040,14 @@ footer {
     id="musicGrid"
     class="music-grid">
 </div>
-</section>
-
+<div id="vipMusicGrid" class="music-grid" style="margin-top:30px;"></div>
 
 <!-- =====================================================
      ARTISTS
 ===================================================== -->
+
+<section id="upcoming" class="section"><h2 class="section-heading">UPCOMING</h2><div id="upcomingGrid" class="music-grid"></div></section>
+
 
 <section
     id="artists"
@@ -1165,6 +1167,8 @@ footer {
 
 </section>
 
+
+<div id="customHomeSections"></div>
 
 <!-- =====================================================
      FOOTER
@@ -2101,6 +2105,9 @@ loadSiteContent();
 loadSiteImages();
 loadSectionBackgrounds();
 loadMusic();
+loadVipMusic();
+loadUpcomingHome();
+loadCustomHomeSections();
 loadArtists();
 loadVideos();
 loadEvents();
@@ -2141,6 +2148,56 @@ document.addEventListener(
     }
 );
 
+
+async function loadVipMusic(){
+ const grid=document.getElementById("vipMusicGrid");if(!grid)return;
+ const r=await supabaseClient.from("homepage_vip_music").select("*").eq("visible",true).order("slot",{ascending:true});
+ grid.innerHTML="";
+ var slots={};(r.data||[]).forEach(function(x){slots[x.slot]=x});
+ const songs=await supabaseClient.from("artist_songs").select("id,title,image_url,artist_id").is("release_id",null);
+ const releases=await supabaseClient.from("artist_releases").select("id,title,type,artwork_url,artist_id");
+ const artists=await supabaseClient.from("artists").select("id,name");
+ for(var i=1;i<=3;i++){
+  var item=slots[i],card=document.createElement("div");
+  if(!item){card.className="vip-empty";card.innerHTML='<div><div class="card-title">VIP MUSIC</div><div class="card-subtitle">EMPTY</div></div>';grid.appendChild(card);continue}
+  var title="",image="",artistId=null,link="";
+  if(item.content_type==="song"){var s=(songs.data||[]).find(function(x){return x.id===item.song_id});if(s){title=s.title;image=s.image_url||"";artistId=s.artist_id;link="artist.html?id="+encodeURIComponent(s.artist_id)}}
+  else {var rel=(releases.data||[]).find(function(x){return String(x.id)===String(item.release_id)});if(rel){title=rel.title;image=rel.artwork_url||"";artistId=rel.artist_id;link="epalbum.html?id="+encodeURIComponent(rel.id)}}
+  var a=(artists.data||[]).find(function(x){return x.id===artistId});
+  card.className="music-card";if(image)card.style.backgroundImage='url("'+image+'")';card.style.backgroundSize="cover";card.style.backgroundPosition="center";
+  card.innerHTML='<div><div class="card-title">'+escapeHtml(title)+'</div><div class="card-artist">'+escapeHtml(a?a.name:"")+'</div><div class="card-subtitle">VIP MUSIC</div></div>';
+  if(link)card.onclick=function(){window.location.href=link};grid.appendChild(card);
+ }
+}
+async function loadUpcomingHome(){
+ const grid=document.getElementById("upcomingGrid");if(!grid)return;
+ const r=await supabaseClient.from("upcoming_releases").select("*").eq("visible",true).order("release_date",{ascending:true});
+ grid.innerHTML="";
+ (r.data||[]).forEach(function(x){
+  var card=document.createElement("div");card.className="upcoming-card";
+  if(x.image_url)card.innerHTML+='<img src="'+x.image_url+'" alt="">';
+  var link="";
+  if(x.song_id)link="artist.html?id="+encodeURIComponent(x.artist_id||"");
+  else if(x.release_id)link="epalbum.html?id="+encodeURIComponent(x.release_id);
+  else if(x.video_id)link="#videos";
+  else if(x.event_id)link="#events";
+  else if(x.target_url)link=x.target_url;
+  card.innerHTML+='<div><div class="card-subtitle">'+x.type.toUpperCase()+(x.release_date?" • "+escapeHtml(x.release_date):"")+'</div><div class="card-title">'+escapeHtml(x.title)+'</div><div class="card-subtitle">'+escapeHtml(x.description||"")+'</div></div>';
+  if(link)card.onclick=function(){if(link.charAt(0)==="#")document.querySelector(link)?.scrollIntoView({behavior:"smooth"});else window.location.href=link};
+  grid.appendChild(card);
+ });
+}
+async function loadCustomHomeSections(){
+ const host=document.getElementById("customHomeSections");if(!host)return;
+ const r=await supabaseClient.from("custom_home_sections").select("*").eq("visible",true).order("sort_order",{ascending:true});host.innerHTML="";
+ (r.data||[]).forEach(function(x){
+  var s=document.createElement("section");s.className="custom-home-section";
+  var html="<h2>"+escapeHtml(x.title)+"</h2>"+(x.body?"<p>"+escapeHtml(x.body)+"</p>":"");
+  if(x.image_url)html+='<img src="'+x.image_url+'" style="max-width:100%;margin-top:25px" alt="">';
+  if(x.link_url)html+='<p><a class="outline-button" href="'+x.link_url+'">EXPLORE</a></p>';
+  s.innerHTML=html;host.appendChild(s);
+ });
+}
 </script>
 
 </body>
