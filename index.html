@@ -484,6 +484,22 @@ body {
     letter-spacing: 3px;
 }
 
+.card-artist {
+    margin-top: 5px;
+
+    color: #999;
+
+    font-size: 9px;
+
+    letter-spacing: 1.5px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
 
 /* =====================================================
    ARTISTS
@@ -1382,31 +1398,141 @@ async function loadSiteImages() {
 
     if (!grid) return;
 
+    grid.innerHTML = "";
 
-    const { data, error } =
-        await supabaseClient
-            .from("music")
+    /*
+       HOMEPAGE MUSIC:
+       Show the 10 newest songs and releases
+       across ALL FSB artists, regardless of artist.
+       Release date is used when available, with
+       created_at as a fallback.
+    */
+
+    const [
+        { data: songs, error: songsError },
+        { data: releases, error: releasesError },
+        { data: artists, error: artistsError }
+    ] = await Promise.all([
+
+        supabaseClient
+            .from("artist_songs")
             .select("*")
-            .order("sort_order", {
-                ascending: true
-            });
+            .order("release_date", {
+                ascending: false,
+                nullsFirst: false
+            })
+            .order("created_at", {
+                ascending: false
+            }),
 
+        supabaseClient
+            .from("artist_releases")
+            .select("*")
+            .order("release_date", {
+                ascending: false,
+                nullsFirst: false
+            })
+            .order("created_at", {
+                ascending: false
+            }),
 
-    if (error) {
+        supabaseClient
+            .from("artists")
+            .select("id, name")
+    ]);
+
+    if (songsError || releasesError || artistsError) {
 
         console.error(
-            "Could not load music:",
-            error
+            "Could not load homepage music:",
+            songsError || releasesError || artistsError
         );
+
+        grid.innerHTML =
+            '<div class="empty-state">COULD NOT LOAD MUSIC</div>';
 
         return;
     }
 
+    const artistMap = {};
 
-    grid.innerHTML = "";
+    (artists || []).forEach(function(artist) {
 
+        artistMap[String(artist.id)] =
+            artist.name || "FSB ARTIST";
 
-    (data || []).forEach(function(music) {
+    });
+
+    const musicItems = [];
+
+    /*
+       Songs that belong to an album/EP are excluded here
+       so the homepage shows the release itself instead of
+       every individual track from that release.
+       Standalone singles remain eligible.
+    */
+
+    (songs || [])
+        .filter(function(song) {
+            return !song.release_id;
+        })
+        .forEach(function(song) {
+
+            musicItems.push({
+                kind: "song",
+                id: song.id,
+                title: song.title || "Untitled",
+                image: song.image_url || "fsblogo.PNG",
+                artist: artistMap[String(song.artist_id)] || "FSB ARTIST",
+                date: song.release_date || song.created_at,
+                link:
+                    "artist.html?id=" +
+                    encodeURIComponent(song.artist_id)
+            });
+
+        });
+
+    (releases || []).forEach(function(release) {
+
+        musicItems.push({
+            kind: "release",
+            id: release.id,
+            title: release.title || "Untitled",
+            image: release.artwork_url || "fsblogo.PNG",
+            artist: artistMap[String(release.artist_id)] || "FSB ARTIST",
+            type: (release.type || "release").toUpperCase(),
+            date: release.release_date || release.created_at,
+            link:
+                "epalbum.html?id=" +
+                encodeURIComponent(release.id)
+        });
+
+    });
+
+    musicItems.sort(function(a, b) {
+
+        const dateA =
+            a.date ? new Date(a.date).getTime() : 0;
+
+        const dateB =
+            b.date ? new Date(b.date).getTime() : 0;
+
+        return dateB - dateA;
+
+    });
+
+    const newestTen =
+        musicItems.slice(0, 10);
+
+    if (!newestTen.length) {
+
+        grid.innerHTML =
+            '<div class="empty-state">NO MUSIC AVAILABLE</div>';
+
+        return;
+    }
+
+    newestTen.forEach(function(music, index) {
 
         const card =
             document.createElement("div");
@@ -1414,55 +1540,43 @@ async function loadSiteImages() {
         card.className =
             "music-card";
 
+        card.style.backgroundImage =
+            `url("${music.image}")`;
 
-       if (music.image) {
+        card.style.backgroundSize =
+            "cover";
 
-    card.style.backgroundImage =
-        `url("${music.image}")`;
-
-            card.style.backgroundSize =
-                "cover";
-
-            card.style.backgroundPosition =
-                "center";
-
-        }
-
+        card.style.backgroundPosition =
+            "center";
 
         card.innerHTML = `
 
             <div>
 
                 <div class="card-title">
-                    ${escapeHtml(
-                        music.title ||
-                        "Untitled"
-                    )}
+                    ${escapeHtml(music.title)}
+                </div>
+
+                <div class="card-artist">
+                    ${escapeHtml(music.artist)}
                 </div>
 
                 <div class="card-subtitle">
-                  LISTEN NOW
+                    ${music.kind === "release"
+                        ? escapeHtml(music.type)
+                        : "SINGLE"}
                 </div>
 
             </div>
 
         `;
 
+        card.onclick = function() {
 
-if (music.link) {
+            window.location.href =
+                music.link;
 
-            card.onclick =
-                function() {
-
-window.open(
-    music.link,
-    "_blank"
-);
-
-                };
-
-        }
-
+        };
 
         grid.appendChild(card);
 
