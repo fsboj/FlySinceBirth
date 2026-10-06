@@ -5378,6 +5378,8 @@ async function uploadArtistSong() {
         const title = titleInput ? titleInput.value.trim() : "";
         const audioFile = audioInput ? audioInput.files[0] : null;
         const artworkFile = artworkInput ? artworkInput.files[0] : null;
+        const videoInput = document.getElementById("artistSongVideoFile");
+        const videoFile = videoInput ? videoInput.files[0] : null;
 
         const sections = Array.from(
             document.querySelectorAll(".artist-song-section:checked")
@@ -5411,6 +5413,15 @@ async function uploadArtistSong() {
                 sections: sections,
                 is_top_song: sections.includes("top")
             };
+
+            if (videoFile) {
+                const videoExtension = videoFile.name.split(".").pop().toLowerCase();
+                const videoPath = selectedArtistPageId + "/artist-videos/" + Date.now() + "-" + Math.random().toString(36).substring(2) + "." + videoExtension;
+                const { error: videoUploadError } = await supabaseClient.storage.from("videos").upload(videoPath, videoFile);
+                if (videoUploadError) throw videoUploadError;
+                const { data: videoPublicData } = supabaseClient.storage.from("videos").getPublicUrl(videoPath);
+                updateData.video_url = videoPublicData.publicUrl;
+            }
 
             /* REPLACE AUDIO IF NEW AUDIO WAS SELECTED */
 
@@ -5542,6 +5553,7 @@ async function uploadArtistSong() {
             titleInput.value = "";
             audioInput.value = "";
             artworkInput.value = "";
+            if (videoInput) videoInput.value = "";
 
             document.querySelectorAll(
                 ".artist-song-section"
@@ -5673,6 +5685,19 @@ async function uploadArtistSong() {
                 artworkPublicData.publicUrl;
         }
 
+        /* OPTIONAL VIDEO */
+
+        let videoUrl = null;
+
+        if (videoFile) {
+            const videoExtension = videoFile.name.split(".").pop().toLowerCase();
+            const videoPath = selectedArtistPageId + "/artist-videos/" + Date.now() + "-" + Math.random().toString(36).substring(2) + "." + videoExtension;
+            const { error: videoUploadError } = await supabaseClient.storage.from("videos").upload(videoPath, videoFile);
+            if (videoUploadError) throw videoUploadError;
+            const { data: videoPublicData } = supabaseClient.storage.from("videos").getPublicUrl(videoPath);
+            videoUrl = videoPublicData.publicUrl;
+        }
+
         /* SAVE SONG */
 
         const {
@@ -5692,6 +5717,9 @@ async function uploadArtistSong() {
 
                     image_url:
                         artworkUrl,
+
+                    video_url:
+                        videoUrl,
 
                     sort_order:
                         0,
@@ -7319,6 +7347,35 @@ async function editArtistSong(id){var r=await supabaseClient.from("artist_songs"
 document.addEventListener("DOMContentLoaded",function(){setupMainPagePanels();var t=document.getElementById("upcomingType");if(t)t.addEventListener("change",populateUpcomingTargetOptions)});
 const adminOriginalShowPanelV2=window.showPanel;
 window.showPanel=function(panelId,button){adminOriginalShowPanelV2(panelId,button);if(panelId==="mainPage"){var first=document.querySelector(".main-page-tabs .button");showMainSubPanel("site",first)}if(panelId==="artistPages"){loadArtistPageSelector()}if(panelId==="upcoming"){loadArtistsForUpcoming();loadUpcomingReleases()}};
+
+async function openArtistMediaEditor(kind,id){
+ var table=kind==="release"?"artist_releases":"artist_songs";
+ var r=await supabaseClient.from(table).select("*").eq("id",id).single();if(r.error){alert(r.error.message);return}
+ var overlay=document.createElement("div");overlay.id="artistMediaEditor";overlay.style="position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;padding:25px";
+ overlay.innerHTML='<div style="background:#090909;border:1px solid #333;padding:30px;width:min(600px,100%);max-height:90vh;overflow:auto"><div class="panel-title">'+(kind==="release"?"EDIT RELEASE":"EDIT SONG")+'</div><div class="form-group" style="margin-top:20px"><label>NAME</label><input id="mediaEditName" value="'+escapeHtml(r.data.title||"")+'"></div><div class="form-group" style="margin-top:20px"><label>REPLACE ARTWORK FROM DEVICE</label><input id="mediaEditImage" type="file" accept="image/*"></div><div class="form-group" style="margin-top:20px"><label>REPLACE VIDEO FROM DEVICE</label><input id="mediaEditVideo" type="file" accept="video/*"></div><label style="display:flex;gap:8px;margin-top:20px"><input id="mediaRemoveImage" type="checkbox"> REMOVE CURRENT ARTWORK</label><div class="actions"><button class="button primary" id="mediaEditSave">SAVE</button><button class="button" id="mediaEditCancel">CANCEL</button></div></div>';
+ document.body.appendChild(overlay);
+ document.getElementById("mediaEditCancel").onclick=function(){overlay.remove()};
+ document.getElementById("mediaEditSave").onclick=async function(){
+  var name=document.getElementById("mediaEditName").value.trim();if(!name){alert("Enter a name.");return}
+  var imageFile=document.getElementById("mediaEditImage").files[0],videoFile=document.getElementById("mediaEditVideo").files[0];
+  var data={title:name};
+  if(document.getElementById("mediaRemoveImage").checked)data[kind==="release"?"artwork_url":"image_url"]=null;
+  if(imageFile){
+   var bucket="artist-artwork",path=selectedArtistPageId+"/edited-"+Date.now()+"-"+imageFile.name;
+   var up=await supabaseClient.storage.from(bucket).upload(path,imageFile);if(up.error){alert(up.error.message);return}
+   data[kind==="release"?"artwork_url":"image_url"]=supabaseClient.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  }
+  if(videoFile){
+   var vpath=selectedArtistPageId+"/artist-videos/"+Date.now()+"-"+videoFile.name;
+   var vu=await supabaseClient.storage.from("videos").upload(vpath,videoFile);if(vu.error){alert(vu.error.message);return}
+   data.video_url=supabaseClient.storage.from("videos").getPublicUrl(vpath).data.publicUrl;
+  }
+  var save=await supabaseClient.from(table).update(data).eq("id",id);if(save.error){alert(save.error.message);return}
+  overlay.remove();loadArtistSongsAdmin();loadArtistReleasesAdmin();setStatus(kind==="release"?"RELEASE UPDATED":"SONG UPDATED");
+ };
+}
+window.editArtistRelease=function(id){openArtistMediaEditor("release",id)};
+window.editArtistSong=function(id){openArtistMediaEditor("song",id)};
 </script>
 
 
