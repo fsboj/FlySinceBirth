@@ -506,11 +506,32 @@ body {
 ===================================================== */
 
 .artist-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 300px);
+    display: flex;
     gap: 18px;
     margin-top: 55px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    padding-bottom: 14px;
+    -webkit-overflow-scrolling: touch;
 }
+
+.artist-grid::-webkit-scrollbar {
+    height: 6px;
+}
+
+.artist-grid::-webkit-scrollbar-track {
+    background: #111;
+}
+
+.artist-grid::-webkit-scrollbar-thumb {
+    background: #444;
+}
+
+.artist-card {
+    flex: 0 0 300px;
+    scroll-snap-align: start;
 
 .artist-card {
     aspect-ratio: 1 / 1;
@@ -777,7 +798,13 @@ footer {
 }
 
  .artist-grid {
-    grid-template-columns: 300px;
+    display: flex;
+    overflow-x: auto;
+    grid-template-columns: none;
+}
+
+.artist-card {
+    flex-basis: 280px;
 }
 
 .video-grid {
@@ -1595,9 +1622,11 @@ async function loadArtists() {
         await supabaseClient
             .from("artists")
             .select("*")
+            .eq("homepage_featured", true)
             .order("sort_order", {
                 ascending: true
-            });
+            })
+            .limit(10);
 
 
     if (error) {
