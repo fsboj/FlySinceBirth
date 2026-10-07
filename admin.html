@@ -565,7 +565,16 @@ body {
       <input type="file" id="menuImageInput" accept="image/*" style="display:none" onchange="uploadSiteImage('menu_image','menuImageInput','menuImagePreview','menuImageName')">
       <button class="button" type="button" onclick="document.getElementById('menuImageInput').click()">CHANGE</button>
     </div>
-  </div>
+  
+    <div class="panel-header" style="margin-top:35px;">
+      <div class="panel-title">MERCH IMAGES</div>
+      <div class="panel-description">Upload up to 6 images. They rotate automatically in the Merch section on the main page.</div>
+    </div>
+    <div id="merchRotationAdminList" class="item-list"></div>
+    <div class="actions">
+      <input type="file" id="merchRotationInput" accept="image/*" multiple style="display:none" onchange="uploadMerchRotationImages()">
+      <button class="button primary" type="button" onclick="document.getElementById('merchRotationInput').click()">+ ADD MERCH IMAGES</button>
+    </div></div>
 </section>
 
 <section
@@ -2268,6 +2277,34 @@ async function saveChanges() {
    IMAGE UPLOAD
 ===================================================== */
 
+
+async function loadMerchRotationAdmin(){
+ var list=document.getElementById("merchRotationAdminList");if(!list)return;
+ var r=await supabaseClient.from("merch_image_rotation").select("*").order("sort_order",{ascending:true});
+ if(r.error)return;list.innerHTML="";
+ (r.data||[]).forEach(function(x){
+  var row=document.createElement("div");row.className="admin-item";
+  row.innerHTML='<div class="item-info">'+(x.image_url?'<img class="item-image" src="'+x.image_url+'">':'<div class="item-image"></div>')+'<div><div class="item-name">Merch Image '+(x.sort_order+1)+'</div><div class="item-meta">'+(x.visible?"VISIBLE":"HIDDEN")+'</div></div></div><div class="actions"><button class="button" onclick="toggleMerchRotation('+x.id+','+(!x.visible)+')">'+(x.visible?"HIDE":"SHOW")+'</button><button class="button danger" onclick="deleteMerchRotation('+x.id+')">REMOVE</button></div>';
+  list.appendChild(row);
+ });
+}
+async function uploadMerchRotationImages(){
+ var input=document.getElementById("merchRotationInput"),files=Array.from(input&&input.files||[]);
+ if(!files.length)return;
+ var count=await supabaseClient.from("merch_image_rotation").select("id");
+ var existing=(count.data||[]).length;
+ if(existing+files.length>6){alert("You can have up to 6 merch images.");input.value="";return}
+ for(var i=0;i<files.length;i++){
+  var file=files[i],path="merch-rotation/"+Date.now()+"-"+i+"-"+file.name;
+  var up=await supabaseClient.storage.from("site-images").upload(path,file);
+  if(up.error){alert(up.error.message);break}
+  var url=supabaseClient.storage.from("site-images").getPublicUrl(path).data.publicUrl;
+  await supabaseClient.from("merch_image_rotation").insert({image_url:url,sort_order:existing+i,visible:true});
+ }
+ input.value="";loadMerchRotationAdmin();setStatus("MERCH IMAGES UPDATED");
+}
+async function toggleMerchRotation(id,visible){await supabaseClient.from("merch_image_rotation").update({visible:visible}).eq("id",id);loadMerchRotationAdmin()}
+async function deleteMerchRotation(id){if(!confirm("Remove this merch image?"))return;await supabaseClient.from("merch_image_rotation").delete().eq("id",id);loadMerchRotationAdmin()}
 async function uploadSiteImage(
     imageKey,
     inputId,
@@ -6937,7 +6974,7 @@ async function loadArtistReleasesAdmin(){
 function toggleReleaseTracks(button){var t=button.closest(".admin-item").querySelector(".release-tracks");if(t)t.classList.toggle("open")}
 async function editArtistRelease(id){var r=await supabaseClient.from("artist_releases").select("*").eq("id",id).single();if(r.error)return;var title=prompt("Release name:",r.data.title||"");if(title===null)return;var video=prompt("Release video URL (optional):",r.data.video_url||"");if(video===null)return;var remove=confirm("Remove artwork? Click OK to remove, Cancel to keep it.");var artwork=r.data.artwork_url||null;if(remove)artwork=null;var u=await supabaseClient.from("artist_releases").update({title:title,artwork_url:artwork,video_url:video||null}).eq("id",id);if(u.error){alert(u.error.message);return}loadArtistReleasesAdmin();setStatus("RELEASE UPDATED")}
 async function editArtistSong(id){var r=await supabaseClient.from("artist_songs").select("*").eq("id",id).single();if(r.error)return;var title=prompt("Song name:",r.data.title||"");if(title===null)return;var video=prompt("Video URL (optional):",r.data.video_url||"");if(video===null)return;var remove=confirm("Remove artwork? Click OK to remove, Cancel to keep it.");var image=r.data.image_url||null;if(remove)image=null;var u=await supabaseClient.from("artist_songs").update({title:title,image_url:image,video_url:video||null}).eq("id",id);if(u.error){alert(u.error.message);return}loadArtistSongsAdmin();loadArtistReleasesAdmin();setStatus("SONG UPDATED")}
-document.addEventListener("DOMContentLoaded",function(){setupMainPagePanels();var t=document.getElementById("upcomingType");if(t)t.addEventListener("change",populateUpcomingTargetOptions)});
+document.addEventListener("DOMContentLoaded",function(){setupMainPagePanels();loadMerchRotationAdmin();var t=document.getElementById("upcomingType");if(t)t.addEventListener("change",populateUpcomingTargetOptions)});
 const adminOriginalShowPanelV2=window.showPanel;
 window.showPanel=function(panelId,button){adminOriginalShowPanelV2(panelId,button);if(panelId==="mainPage"){var first=document.querySelector(".main-page-tabs .button");showMainSubPanel("site",first)}if(panelId==="artistPages"){loadArtistPageSelector()}if(panelId==="upcoming"){loadArtistsForUpcoming();loadUpcomingReleases()}};
 
