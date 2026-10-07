@@ -1634,7 +1634,92 @@ body {
       <div class="panel-title">MERCH IMAGES</div>
       <div class="panel-description">Six merch image slots. Upload from your device. The homepage cycles through up to 6 filled slots every 10 seconds.</div>
     </div>
-    <div id="merchRotationAdminList" class="item-list"></div>
+    <div id="merchRotationAdminList" class="item-list">
+      <div class="admin-item" id="merchSlotRow1">
+        <div class="item-info">
+          <div class="item-image" id="merchSlotPreview1"></div>
+          <div>
+            <div class="item-name">Merch Image 1</div>
+            <div class="item-meta" id="merchSlotMeta1">BLANK SLOT</div>
+          </div>
+        </div>
+        <div class="actions">
+          <input type="file" id="merchSlotStatic1" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(0, this)">
+          <button class="button" type="button" onclick="document.getElementById('merchSlotStatic1').click()">UPLOAD</button>
+          <button class="button danger" type="button" id="merchSlotRemove1" style="display:none" onclick="clearMerchRotationSlot(0)">REMOVE</button>
+        </div>
+      </div>
+      <div class="admin-item" id="merchSlotRow2">
+        <div class="item-info">
+          <div class="item-image" id="merchSlotPreview2"></div>
+          <div>
+            <div class="item-name">Merch Image 2</div>
+            <div class="item-meta" id="merchSlotMeta2">BLANK SLOT</div>
+          </div>
+        </div>
+        <div class="actions">
+          <input type="file" id="merchSlotStatic2" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(1, this)">
+          <button class="button" type="button" onclick="document.getElementById('merchSlotStatic2').click()">UPLOAD</button>
+          <button class="button danger" type="button" id="merchSlotRemove2" style="display:none" onclick="clearMerchRotationSlot(1)">REMOVE</button>
+        </div>
+      </div>
+      <div class="admin-item" id="merchSlotRow3">
+        <div class="item-info">
+          <div class="item-image" id="merchSlotPreview3"></div>
+          <div>
+            <div class="item-name">Merch Image 3</div>
+            <div class="item-meta" id="merchSlotMeta3">BLANK SLOT</div>
+          </div>
+        </div>
+        <div class="actions">
+          <input type="file" id="merchSlotStatic3" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(2, this)">
+          <button class="button" type="button" onclick="document.getElementById('merchSlotStatic3').click()">UPLOAD</button>
+          <button class="button danger" type="button" id="merchSlotRemove3" style="display:none" onclick="clearMerchRotationSlot(2)">REMOVE</button>
+        </div>
+      </div>
+      <div class="admin-item" id="merchSlotRow4">
+        <div class="item-info">
+          <div class="item-image" id="merchSlotPreview4"></div>
+          <div>
+            <div class="item-name">Merch Image 4</div>
+            <div class="item-meta" id="merchSlotMeta4">BLANK SLOT</div>
+          </div>
+        </div>
+        <div class="actions">
+          <input type="file" id="merchSlotStatic4" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(3, this)">
+          <button class="button" type="button" onclick="document.getElementById('merchSlotStatic4').click()">UPLOAD</button>
+          <button class="button danger" type="button" id="merchSlotRemove4" style="display:none" onclick="clearMerchRotationSlot(3)">REMOVE</button>
+        </div>
+      </div>
+      <div class="admin-item" id="merchSlotRow5">
+        <div class="item-info">
+          <div class="item-image" id="merchSlotPreview5"></div>
+          <div>
+            <div class="item-name">Merch Image 5</div>
+            <div class="item-meta" id="merchSlotMeta5">BLANK SLOT</div>
+          </div>
+        </div>
+        <div class="actions">
+          <input type="file" id="merchSlotStatic5" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(4, this)">
+          <button class="button" type="button" onclick="document.getElementById('merchSlotStatic5').click()">UPLOAD</button>
+          <button class="button danger" type="button" id="merchSlotRemove5" style="display:none" onclick="clearMerchRotationSlot(4)">REMOVE</button>
+        </div>
+      </div>
+      <div class="admin-item" id="merchSlotRow6">
+        <div class="item-info">
+          <div class="item-image" id="merchSlotPreview6"></div>
+          <div>
+            <div class="item-name">Merch Image 6</div>
+            <div class="item-meta" id="merchSlotMeta6">BLANK SLOT</div>
+          </div>
+        </div>
+        <div class="actions">
+          <input type="file" id="merchSlotStatic6" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(5, this)">
+          <button class="button" type="button" onclick="document.getElementById('merchSlotStatic6').click()">UPLOAD</button>
+          <button class="button danger" type="button" id="merchSlotRemove6" style="display:none" onclick="clearMerchRotationSlot(5)">REMOVE</button>
+        </div>
+      </div>
+    </div>
 
 
 
@@ -2241,22 +2326,28 @@ async function saveChanges() {
 async async function loadMerchRotationAdmin(){
  var list=document.getElementById("merchRotationAdminList");if(!list)return;
  var r=await supabaseClient.from("merch_image_rotation").select("*").order("sort_order",{ascending:true});
- if(r.error){console.error(r.error);return}
+ if(r.error){console.error("Merch rotation load failed:",r.error);return}
  var rows=r.data||[];
  var legacy=await supabaseClient.from("site_images").select("image_url").eq("key","merch_image").maybeSingle();
  if(!rows.some(function(x){return Number(x.sort_order)===0})){
    var seedUrl=(legacy.data&&legacy.data.image_url)||"flysincebirthchrome.PNG";
    var seed=await supabaseClient.from("merch_image_rotation").insert({image_url:seedUrl,sort_order:0,visible:true}).select("*").single();
-   if(!seed.error) rows.push(seed.data);
+   if(!seed.error)rows.push(seed.data);
  }
- rows.sort(function(a,b){return Number(a.sort_order)-Number(b.sort_order)});
- var bySlot={};rows.forEach(function(x){if(Number(x.sort_order)>=0&&Number(x.sort_order)<6)bySlot[Number(x.sort_order)]=x});
- list.innerHTML="";
  for(var slot=0;slot<6;slot++){
-   var x=bySlot[slot], url=x&&x.image_url?x.image_url:"";
-   var row=document.createElement("div");row.className="admin-item";
-   row.innerHTML='<div class="item-info">'+(url?'<img class="item-image" src="'+escapeHtml(url)+'">':'<div class="item-image"></div>')+'<div><div class="item-name">Merch Image '+(slot+1)+'</div><div class="item-meta">'+(url?"IMAGE UPLOADED":"BLANK SLOT")+'</div></div></div><div class="actions"><input type="file" id="merchSlotInput'+slot+'" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot('+slot+', this)"><button class="button" type="button" onclick="document.getElementById('merchSlotInput'+slot+'').click()">'+(url?"CHANGE":"UPLOAD")+'</button>'+(url?'<button class="button danger" type="button" onclick="clearMerchRotationSlot('+slot+')">REMOVE</button>':"")+'</div>';
-   list.appendChild(row);
+   var x=rows.find(function(item){return Number(item.sort_order)===slot});
+   var preview=document.getElementById("merchSlotPreview"+(slot+1));
+   var meta=document.getElementById("merchSlotMeta"+(slot+1));
+   var remove=document.getElementById("merchSlotRemove"+(slot+1));
+   if(x&&x.image_url){
+     if(preview)preview.innerHTML='<img class="item-image" src="'+escapeHtml(x.image_url)+'">';
+     if(meta)meta.textContent="IMAGE UPLOADED";
+     if(remove)remove.style.display="inline-block";
+   }else{
+     if(preview)preview.innerHTML="";
+     if(meta)meta.textContent="BLANK SLOT";
+     if(remove)remove.style.display="none";
+   }
  }
 }
 async function uploadMerchRotationSlot(slot,input){
