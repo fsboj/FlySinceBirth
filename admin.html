@@ -549,11 +549,7 @@ body {
       <input type="file" id="projectImageInput" accept="image/*" style="display:none" onchange="uploadSiteImage('project_image','projectImageInput','projectImagePreview','projectImageName')">
       <button class="button" type="button" onclick="document.getElementById('projectImageInput').click()">CHANGE</button>
     </div>
-    <div class="admin-item">
-      <div class="item-info"><img id="merchImagePreview" class="item-image" src="flysincebirthchrome.PNG"><div><div class="item-name">Merch Image</div><div class="item-meta" id="merchImageName">flysincebirthchrome.PNG</div></div></div>
-      <input type="file" id="merchImageInput" accept="image/*" style="display:none" onchange="uploadSiteImage('merch_image','merchImageInput','merchImagePreview','merchImageName')">
-      <button class="button" type="button" onclick="document.getElementById('merchImageInput').click()">CHANGE</button>
-    </div>
+    
     
     <div class="admin-item">
       <div class="item-info"><img id="topLeftImagePreview" class="item-image" src="fsblogo.PNG"><div><div class="item-name">Top Left Image</div><div class="item-meta" id="topLeftImageName">fsblogo.PNG</div></div></div>
@@ -566,6 +562,17 @@ body {
       <button class="button" type="button" onclick="document.getElementById('menuImageInput').click()">CHANGE</button>
     </div>
   
+    <div class="item-list">
+      <div class="admin-item">
+        <div class="item-info">
+          <img id="merchImagePreview" class="item-image" src="flysincebirthchrome.PNG">
+          <div><div class="item-name">Merch Image 1</div><div class="item-meta" id="merchImageName">flysincebirthchrome.PNG</div></div>
+        </div>
+        <input type="file" id="merchImageInput" accept="image/*" style="display:none"
+          onchange="uploadSiteImage('merch_image','merchImageInput','merchImagePreview','merchImageName')">
+        <button class="button" type="button" onclick="document.getElementById('merchImageInput').click()">CHANGE</button>
+      </div>
+    </div>
     <div class="panel-header" style="margin-top:35px;">
       <div class="panel-title">MERCH IMAGES</div>
       <div class="panel-description">Upload up to 6 images. They rotate automatically in the Merch section on the main page.</div>
