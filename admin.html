@@ -3088,109 +3088,27 @@ async function removeMusic(id) {
 ===================================================== */
 
 async function loadArtists() {
-
-    const container =
-        document.getElementById("adminArtistsList");
-
-    if (!container) return;
-
-    const { data, error } =
-        await supabaseClient
-            .from("artists")
-            .select("*")
-            .order("sort_order", {
-                ascending: true
-            });
-
-    if (error) {
-
-        console.error(
-            "ARTISTS LOAD ERROR:",
-            error
-        );
-
+    const container=document.getElementById("adminArtistsList");
+    if(!container) return;
+    const result=await supabaseClient.from("artists")
+        .select("id,name,slug,image,sort_order,homepage_featured")
+        .order("sort_order",{ascending:true});
+    if(result.error){
+        console.error("ARTISTS LOAD ERROR:",result.error);
+        container.innerHTML='<div class="admin-item"><div class="item-name">Could not load artists</div><div class="item-meta">'+escapeHtml(result.error.message)+'</div></div>';
         return;
     }
-
-    container.innerHTML = "";
-
-    (data || []).forEach(function(artist) {
-
-        const item =
-            document.createElement("div");
-
-        item.className =
-            "admin-item";
-
-        item.innerHTML = `
-            <div class="item-info">
-
-                <img
-                    class="item-image"
-                    src="${artist.image || "fsblogo.PNG"}"
-                    alt="${escapeHtml(
-                        artist.name || "Artist"
-                    )}"
-                >
-
-                <div>
-
-                    <div class="item-name">
-                        ${escapeHtml(
-                            artist.name ||
-                            "Unnamed Artist"
-                        )}
-                    </div>
-
-                    <div class="item-meta">
-                        ${escapeHtml(
-                            artist.slug ||
-                            "ARTIST"
-                        )}
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="actions">
-
-                <label
-                    style="
-                        display:flex;
-                        align-items:center;
-                        gap:8px;
-                        color:#999;
-                        font-size:9px;
-                        letter-spacing:2px;
-                        cursor:pointer;
-                    "
-                >
-                    <input
-                        type="checkbox"
-                        ${artist.homepage_featured ? "checked" : ""}
-                        onchange="toggleHomepageArtist('${artist.id}', this.checked, this)"
-                    >
-                    HOME TOP 10
-                </label>
-
-                <button
-                    class="button"
-                    onclick="editArtist('${artist.id}')">
-                    EDIT
-                </button>
-
-                <button
-                    class="button danger"
-                    onclick="removeArtist('${artist.id}')">
-                    REMOVE
-                </button>
-
-            </div>
-        `;
-
+    const artists=result.data||[];
+    container.innerHTML="";
+    if(!artists.length){
+        container.innerHTML='<div class="admin-item"><div class="item-name">No artists found</div><div class="item-meta">Add an artist to begin.</div></div>';
+        return;
+    }
+    artists.forEach(function(artist){
+        const item=document.createElement("div");
+        item.className="admin-item";
+        item.innerHTML='<div class="item-info"><img class="item-image" src="'+(artist.image||"fsblogo.PNG")+'"><div><div class="item-name">'+escapeHtml(artist.name||"Unnamed Artist")+'</div><div class="item-meta">'+escapeHtml(artist.slug||"ARTIST")+'</div></div></div><div class="actions"><label style="display:flex;align-items:center;gap:8px;color:#999;font-size:9px;letter-spacing:2px;cursor:pointer"><input type="checkbox" '+(artist.homepage_featured?"checked":"")+' onchange="toggleHomepageArtist('+artist.id+',this.checked,this)"> HOME TOP 10</label><button class="button" onclick="editArtist('+artist.id+')">EDIT</button><button class="button danger" onclick="removeArtist('+artist.id+')">REMOVE</button></div>';
         container.appendChild(item);
-
     });
 }
 
