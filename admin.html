@@ -494,7 +494,7 @@ body {
     </div>
 
     <div class="admin-status">
-        CONTROL PANEL
+        CONTROL PANEL · LIVE v2026.10.07
     </div>
 
 </header>
@@ -3088,7 +3088,7 @@ async function removeMusic(id) {
 ===================================================== */
 
 async function loadArtists() {
-    const container=document.getElementById("adminArtistsList");
+    const container=document.getElementById("adminArtistsList") || document.querySelector("#artists .item-list");
     if(!container) return;
     const result=await supabaseClient.from("artists")
         .select("id,name,slug,image,sort_order,homepage_featured")
@@ -7019,7 +7019,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js"></script>
+<script src="admin-tabs-fix.js?v=20261007-1"></script>
 </body>
 
 </html>
