@@ -2323,7 +2323,7 @@ async function saveChanges() {
 ===================================================== */
 
 
-async async function loadMerchRotationAdmin(){
+async function loadMerchRotationAdmin(){
  var list=document.getElementById("merchRotationAdminList");if(!list)return;
  var r=await supabaseClient.from("merch_image_rotation").select("*").order("sort_order",{ascending:true});
  if(r.error){console.error("Merch rotation load failed:",r.error);return}
