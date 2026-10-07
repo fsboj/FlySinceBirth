@@ -511,11 +511,9 @@ body {
      SITE
 ===================================================== -->
 
-<section id="mainPage" class="panel active"><div class="panel-header"><div class="panel-title">MAIN PAGE</div><div class="panel-description">Manage everything displayed on the main FSB homepage.</div></div><div class="main-page-tabs"><button type="button" class="button active" onclick="showMainSubPanel('site', this); return false;">GENERAL</button><button type="button" class="button" onclick="showMainSubPanel('photos', this); return false;">PHOTOS</button><button type="button" class="button" onclick="showMainSubPanel('text', this); return false;">TEXT</button><button type="button" class="button" onclick="showMainSubPanel('music', this); return false;">MUSIC</button><button type="button" class="button" onclick="showMainSubPanel('artists', this); return false;">ARTISTS</button><button type="button" class="button" onclick="showMainSubPanel('videos', this); return false;">VIDEO RELEASES</button><button type="button" class="button" onclick="showMainSubPanel('events', this); return false;">EVENTS</button><button type="button" class="button" onclick="showMainSubPanel('merch', this); return false;">MERCH</button><button type="button" class="button" onclick="showMainSubPanel('sections', this); return false;">SECTIONS</button></div><div id="mainPageSubPanels"></div><div class="actions" style="margin-top:30px;"><button class="button primary" type="button" onclick="addCustomMainSection()">+ ADD SECTION</button></div></section>
+<section id="mainPage" class="panel active"><div class="panel-header"><div class="panel-title">MAIN PAGE</div><div class="panel-description">Manage everything displayed on the main FSB homepage.</div></div><div class="main-page-tabs"><button type="button" class="button active" onclick="showMainSubPanel('site', this); return false;">GENERAL</button><button type="button" class="button" onclick="showMainSubPanel('text', this); return false;">TEXT</button><button type="button" class="button" onclick="showMainSubPanel('music', this); return false;">MUSIC</button><button type="button" class="button" onclick="showMainSubPanel('artists', this); return false;">ARTISTS</button><button type="button" class="button" onclick="showMainSubPanel('videos', this); return false;">VIDEO RELEASES</button><button type="button" class="button" onclick="showMainSubPanel('events', this); return false;">EVENTS</button><button type="button" class="button" onclick="showMainSubPanel('merch', this); return false;">MERCH</button><button type="button" class="button" onclick="showMainSubPanel('sections', this); return false;">SECTIONS</button></div><div id="mainPageSubPanels"></div><div class="actions" style="margin-top:30px;"><button class="button primary" type="button" onclick="addCustomMainSection()">+ ADD SECTION</button></div></section>
 
-<section
-    id="site"
-    class="panel active">
+<section id="site" class="panel">
 
     <div class="panel-header">
 
@@ -572,57 +570,11 @@ body {
 
     </div>
 
-</section>
+
+<div class="panel-header" style="margin-top:30px;"><div class="panel-title">PHOTOS</div><div class="panel-description">Change images used throughout the website.</div></div>
 
 
-<!-- =====================================================
-     PHOTOS
-===================================================== -->
-
-<section id="photos" class="panel">
-
-    <div class="panel-header">
-
-        <div class="panel-title">
-            Photos
-        </div>
-
-        <div class="panel-description">
-            Change images used throughout the website.
-        </div>
-
-    </div>
-
-
-    <div class="item-list">
-
-
-        <!-- HERO IMAGE -->
-
-        <div class="admin-item">
-
-            <div class="item-info">
-
-                <img
-                    id="heroImagePreview"
-                    class="item-image"
-                    src="Flysincebirthwhite.png">
-
-                <div>
-
-                    <div class="item-name">
-                        Hero Image
-                    </div>
-
-                    <div
-                        class="item-meta"
-                        id="heroImageName">
-                        Flysincebirthwhite.png
-                    </div>
-
-                </div>
-
-            </div>
+    
 
             <input
                 type="file"
@@ -728,154 +680,118 @@ body {
 
     </div>
 
-</section>
 
-<!-- =====================================================
-     TEXT
-===================================================== -->
 
-<section
-    id="text"
-    class="panel">
+<div class="panel-header" style="margin-top:30px;"><div class="panel-title">MERCH / MAIN IMAGES</div></div>
+<div class="item-list">
 
-    <div class="panel-header">
+        <div class="admin-item">
 
-        <div class="panel-title">
-            Text
+            <div class="item-info">
+
+                <img
+                    class="item-image"
+                    src="flysincebirthchrome.PNG">
+
+                <div>
+
+                    <div class="item-name">
+                        Merch Image 01
+                    </div>
+
+                    <div class="item-meta">
+                        flysincebirthchrome.PNG
+                    </div>
+
+                </div>
+<!-- TOP LEFT IMAGE -->
+
+<div class="admin-item">
+
+    <div class="item-info">
+
+        <img
+            id="topLeftImagePreview"
+            class="item-image"
+            src="fsblogo.PNG">
+
+        <div>
+
+            <div class="item-name">
+                Top Left Image
+            </div>
+
+            <div
+                class="item-meta"
+                id="topLeftImageName">
+                fsblogo.PNG
+            </div>
+
         </div>
 
-        <div class="panel-description">
-            Change current website lettering and descriptions.
-        </div>
-
     </div>
 
+    <input
+        type="file"
+        id="topLeftImageInput"
+        accept="image/*"
+        style="display:none"
+        onchange="uploadSiteImage('top_left_image', 'topLeftImageInput', 'topLeftImagePreview', 'topLeftImageName')">
 
-<div class="form-grid">
-
-    <div class="form-group">
-        <label>HERO TAGLINE</label>
-        <input id="heroTagline" type="text" value="MUSIC • CLOTHING • CULTURE">
-    </div>
-
-    <div class="form-group">
-        <label>HERO BUTTON</label>
-        <input id="heroButton" type="text" value="ENTER FSB">
-    </div>
-
-    <div class="form-group full">
-        <label>PROJECT FSB</label>
-        <input id="projectFsb" type="text" value="PROJECT&lt;br&gt;FSB">
-    </div>
-
-    <div class="form-group full">
-        <label>PROJECT DESCRIPTION</label>
-        <textarea id="projectDescription">Fly Since Birth is more than a brand. It is a creative platform connecting music, clothing, culture and visual expression.</textarea>
-    </div>
-
-    <div class="form-group">
-        <label>LEARN MORE</label>
-        <input id="projectLearnMore" type="text" value="LEARN MORE">
-    </div>
-
-    <div class="form-group">
-        <label>MUSIC</label>
-        <input id="musicHeading" type="text" value="MUSIC">
-    </div>
-
-    <div class="form-group">
-        <label>LATEST RELEASES</label>
-        <input id="latestReleases" type="text" value="Latest Releases">
-    </div>
-
-    <div class="form-group">
-        <label>LISTEN NOW</label>
-        <input id="listenNow" type="text" value="LISTEN NOW">
-    </div>
-
-    <div class="form-group">
-        <label>ALBUMS</label>
-        <input id="albums" type="text" value="Albums">
-    </div>
-
-    <div class="form-group">
-        <label>EXPLORE</label>
-        <input id="explore" type="text" value="EXPLORE">
-    </div>
-
-    <div class="form-group">
-        <label>SINGLES</label>
-        <input id="singles" type="text" value="Singles">
-    </div>
-
-    <div class="form-group">
-        <label>NEW MUSIC</label>
-        <input id="newMusic" type="text" value="NEW MUSIC">
-    </div>
-
-    <div class="form-group">
-        <label>PLAYLISTS</label>
-        <input id="playlists" type="text" value="Playlists">
-    </div>
-
-    <div class="form-group">
-        <label>STREAM FSB</label>
-        <input id="streamFsb" type="text" value="STREAM FSB">
-    </div>
-
-    <div class="form-group">
-        <label>ARTISTS</label>
-        <input id="artistsHeading" type="text" value="ARTISTS">
-    </div>
-
-    <div class="form-group">
-        <label>MERCH HEADING</label>
-        <input id="merchHeading" type="text" value="FSB&lt;br&gt;MERCH">
-    </div>
-
-    <div class="form-group full">
-        <label>MERCH DESCRIPTION</label>
-        <textarea id="merchDescription">FSB clothing, collections, limited drops and upcoming releases.</textarea>
-    </div>
-
-    <div class="form-group">
-        <label>MERCH BUTTON</label>
-        <input id="merchButton" type="text" value="SHOP FSB">
-    </div>
-
-    <div class="form-group">
-        <label>VIDEOS</label>
-        <input id="videosHeading" type="text" value="VIDEOS">
-    </div>
-
-    <div class="form-group">
-        <label>EVENTS</label>
-        <input id="eventsHeading" type="text" value="EVENTS">
-    </div>
-
-    <div class="form-group">
-        <label>VIEW EVENTS</label>
-        <input id="viewEvents" type="text" value="VIEW EVENTS">
-    </div>
+    <button
+        class="button"
+        onclick="document.getElementById('topLeftImageInput').click()">
+        CHANGE
+    </button>
 
 </div>
 
-</section>
 
 
-<!-- =====================================================
-     MENU
-===================================================== -->
+<!-- MENU IMAGE -->
 
-<section
-    id="sideMenu"
-    class="panel">
+<div class="admin-item">
 
-    <div class="panel-header">
+    <div class="item-info">
 
-        <div class="panel-title">SIDE MENU</div>
+        <img
+            id="menuImagePreview"
+            class="item-image"
+            src="FlySinceBirthgd.PNG">
 
-        <div class="panel-description">
+        <div>
+
+            <div class="item-name">
+                Menu Image
+            </div>
+
+            <div
+                class="item-meta"
+                id="menuImageName">
+                FlySinceBirthgd.PNG
+            </div>
+
+        </div>
+
+    </div>
+
+    <input
+        type="file"
+        id="menuImageInput"
+        accept="image/*"
+        style="display:none"
+        onchange="uploadSiteImage('menu_image', 'menuImageInput', 'menuImagePreview', 'menuImageName')">
+
+    <button
+        class="button"
+        onclick="document.getElementById('menuImageInput').click()">
+        CHANGE
+    </button>
+
+
+
+<div class="panel-header" style="margin-top:30px;"><div class="panel-title">MENU ITEMS</div><div class="panel-description">Manage the items shown in the site side menu.</div></div>
+<div class="panel-description">
             Add, remove and rename menu navigation items.
         </div>
 
@@ -1031,7 +947,154 @@ body {
 
     </div>
 
+
 </section>
+
+
+<!-- =====================================================
+     PHOTOS
+===================================================== -->
+
+
+
+<!-- =====================================================
+     TEXT
+===================================================== -->
+
+<section
+    id="text"
+    class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+            Text
+        </div>
+
+        <div class="panel-description">
+            Change current website lettering and descriptions.
+        </div>
+
+    </div>
+
+
+<div class="form-grid">
+
+    <div class="form-group">
+        <label>HERO TAGLINE</label>
+        <input id="heroTagline" type="text" value="MUSIC • CLOTHING • CULTURE">
+    </div>
+
+    <div class="form-group">
+        <label>HERO BUTTON</label>
+        <input id="heroButton" type="text" value="ENTER FSB">
+    </div>
+
+    <div class="form-group full">
+        <label>PROJECT FSB</label>
+        <input id="projectFsb" type="text" value="PROJECT&lt;br&gt;FSB">
+    </div>
+
+    <div class="form-group full">
+        <label>PROJECT DESCRIPTION</label>
+        <textarea id="projectDescription">Fly Since Birth is more than a brand. It is a creative platform connecting music, clothing, culture and visual expression.</textarea>
+    </div>
+
+    <div class="form-group">
+        <label>LEARN MORE</label>
+        <input id="projectLearnMore" type="text" value="LEARN MORE">
+    </div>
+
+    <div class="form-group">
+        <label>MUSIC</label>
+        <input id="musicHeading" type="text" value="MUSIC">
+    </div>
+
+    <div class="form-group">
+        <label>LATEST RELEASES</label>
+        <input id="latestReleases" type="text" value="Latest Releases">
+    </div>
+
+    <div class="form-group">
+        <label>LISTEN NOW</label>
+        <input id="listenNow" type="text" value="LISTEN NOW">
+    </div>
+
+    <div class="form-group">
+        <label>ALBUMS</label>
+        <input id="albums" type="text" value="Albums">
+    </div>
+
+    <div class="form-group">
+        <label>EXPLORE</label>
+        <input id="explore" type="text" value="EXPLORE">
+    </div>
+
+    <div class="form-group">
+        <label>SINGLES</label>
+        <input id="singles" type="text" value="Singles">
+    </div>
+
+    <div class="form-group">
+        <label>NEW MUSIC</label>
+        <input id="newMusic" type="text" value="NEW MUSIC">
+    </div>
+
+    <div class="form-group">
+        <label>PLAYLISTS</label>
+        <input id="playlists" type="text" value="Playlists">
+    </div>
+
+    <div class="form-group">
+        <label>STREAM FSB</label>
+        <input id="streamFsb" type="text" value="STREAM FSB">
+    </div>
+
+    <div class="form-group">
+        <label>ARTISTS</label>
+        <input id="artistsHeading" type="text" value="ARTISTS">
+    </div>
+
+    <div class="form-group">
+        <label>MERCH HEADING</label>
+        <input id="merchHeading" type="text" value="FSB&lt;br&gt;MERCH">
+    </div>
+
+    <div class="form-group full">
+        <label>MERCH DESCRIPTION</label>
+        <textarea id="merchDescription">FSB clothing, collections, limited drops and upcoming releases.</textarea>
+    </div>
+
+    <div class="form-group">
+        <label>MERCH BUTTON</label>
+        <input id="merchButton" type="text" value="SHOP FSB">
+    </div>
+
+    <div class="form-group">
+        <label>VIDEOS</label>
+        <input id="videosHeading" type="text" value="VIDEOS">
+    </div>
+
+    <div class="form-group">
+        <label>EVENTS</label>
+        <input id="eventsHeading" type="text" value="EVENTS">
+    </div>
+
+    <div class="form-group">
+        <label>VIEW EVENTS</label>
+        <input id="viewEvents" type="text" value="VIEW EVENTS">
+    </div>
+
+</div>
+
+</section>
+
+
+<!-- =====================================================
+     MENU
+===================================================== -->
+
+<section id="sideMenu" class="panel"><div class="panel-header"><div class="panel-title">SIDE MENU</div><div class="panel-description">Menu items are managed from MAIN PAGE → GENERAL.</div></div></section>
 
 
 <!-- =====================================================
@@ -1909,9 +1972,7 @@ body {
      MERCH
 ===================================================== -->
 
-<section
-    id="merch"
-    class="panel">
+<section id="merch" class="panel">
 
     <div class="panel-header">
 
@@ -1965,27 +2026,7 @@ body {
     </div>
 
 
-    <div class="item-list">
-
-        <div class="admin-item">
-
-            <div class="item-info">
-
-                <img
-                    class="item-image"
-                    src="flysincebirthchrome.PNG">
-
-                <div>
-
-                    <div class="item-name">
-                        Merch Image 01
-                    </div>
-
-                    <div class="item-meta">
-                        flysincebirthchrome.PNG
-                    </div>
-
-                </div>
+    
 
             </div>
 
@@ -2003,89 +2044,6 @@ body {
         <button class="button primary">
             + ADD MERCH IMAGE
         </button>
-<!-- TOP LEFT IMAGE -->
-
-<div class="admin-item">
-
-    <div class="item-info">
-
-        <img
-            id="topLeftImagePreview"
-            class="item-image"
-            src="fsblogo.PNG">
-
-        <div>
-
-            <div class="item-name">
-                Top Left Image
-            </div>
-
-            <div
-                class="item-meta"
-                id="topLeftImageName">
-                fsblogo.PNG
-            </div>
-
-        </div>
-
-    </div>
-
-    <input
-        type="file"
-        id="topLeftImageInput"
-        accept="image/*"
-        style="display:none"
-        onchange="uploadSiteImage('top_left_image', 'topLeftImageInput', 'topLeftImagePreview', 'topLeftImageName')">
-
-    <button
-        class="button"
-        onclick="document.getElementById('topLeftImageInput').click()">
-        CHANGE
-    </button>
-
-</div>
-
-
-<!-- MENU IMAGE -->
-
-<div class="admin-item">
-
-    <div class="item-info">
-
-        <img
-            id="menuImagePreview"
-            class="item-image"
-            src="FlySinceBirthgd.PNG">
-
-        <div>
-
-            <div class="item-name">
-                Menu Image
-            </div>
-
-            <div
-                class="item-meta"
-                id="menuImageName">
-                FlySinceBirthgd.PNG
-            </div>
-
-        </div>
-
-    </div>
-
-    <input
-        type="file"
-        id="menuImageInput"
-        accept="image/*"
-        style="display:none"
-        onchange="uploadSiteImage('menu_image', 'menuImageInput', 'menuImagePreview', 'menuImageName')">
-
-    <button
-        class="button"
-        onclick="document.getElementById('menuImageInput').click()">
-        CHANGE
-    </button>
-
 </div>
     </div>
 
@@ -7265,7 +7223,7 @@ document.addEventListener(
 );
 }
 
-const mainPagePanelIds=["site","photos","text","music","artists","videos","events","merch","sections"];
+const mainPagePanelIds=["site","text","music","artists","videos","events","merch","sections"];
 function showMainSubPanel(panelId,button){
  document.querySelectorAll(".main-page-subpanel").forEach(function(p){p.classList.remove("active")});
  var target=document.getElementById(panelId); if(target) target.classList.add("active");
