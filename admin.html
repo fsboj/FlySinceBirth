@@ -904,7 +904,7 @@ body {
         <div class="panel-description">Manage the artists that appear across FSB.</div>
     </div>
 
-    <div id="adminArtistsList" class="item-list"></div>
+    <div id="adminArtistsList" class="item-list"><div class="admin-item" data-artist-static="true"><div class="item-info"><img class="item-image" src="https://ccvhvxugoebdqwxxankl.supabase.co/storage/v1/object/public/artist-images/3/1788303911966-artist.png"><div><div class="item-name">FSB CHNXX</div><div class="item-meta">fsb_chnxx</div></div></div><div class="actions"><button class="button" type="button" onclick="editArtist(3)">EDIT</button><button class="button danger" type="button" onclick="removeArtist(3)">REMOVE</button></div></div></div>
 
     <div class="actions">
         <button class="button primary" type="button" onclick="addArtist()">+ ADD ARTIST</button>
@@ -943,9 +943,7 @@ body {
 
         <select id="artistPageSelect">
 
-            <option value="">
-                SELECT AN ARTIST
-            </option>
+            <option value="">SELECT AN ARTIST</option><option value="3">FSB CHNXX</option>
 
         </select>
 
@@ -3090,11 +3088,10 @@ async function removeMusic(id) {
 async function loadArtists() {
     const container=document.getElementById("adminArtistsList") || document.querySelector("#artists .item-list");
     if(!container) return;
-    const result=await supabaseClient.from("artists")
-        .select("id,name,slug,image,sort_order,homepage_featured")
-        .order("sort_order",{ascending:true});
+    const result=await supabaseClient.from("artists").select("id,name,slug,image,sort_order,homepage_featured").order("sort_order",{ascending:true});
     if(result.error){
         console.error("ARTISTS LOAD ERROR:",result.error);
+        container.innerHTML='<div class="admin-item"><div class="item-info"><img class="item-image" src="https://ccvhvxugoebdqwxxankl.supabase.co/storage/v1/object/public/artist-images/3/1788303911966-artist.png"><div><div class="item-name">FSB CHNXX</div><div class="item-meta">fsb_chnxx</div></div></div><div class="actions"><button class="button" type="button" onclick="editArtist(3)">EDIT</button></div></div>';
         container.innerHTML='<div class="admin-item"><div class="item-name">Could not load artists</div><div class="item-meta">'+escapeHtml(result.error.message)+'</div></div>';
         return;
     }
