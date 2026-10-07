@@ -7064,6 +7064,16 @@ window.editEvent=async function(id){
 
 <!-- ADMIN TAB EMERGENCY FIX -->
 <script>
+document.addEventListener("DOMContentLoaded", function(){
+  setTimeout(function(){
+    if (typeof loadMerchRotationAdmin === "function") {
+      loadMerchRotationAdmin().catch(function(error){ console.error("Merch image slots failed to load:", error); });
+    }
+  }, 300);
+});
+</script>
+
+<script>
 (function(){
   function initAdminTabs(){
     const nav=document.querySelector('.admin-nav');
