@@ -1696,10 +1696,21 @@ async async function loadArtists() {
     }
 
 
+    let artists = data || [];
+
+    if (!artists.length) {
+        const fallback = await supabaseClient
+            .from("artists")
+            .select("*")
+            .order("sort_order", { ascending: true })
+            .limit(10);
+        if (!fallback.error) artists = fallback.data || [];
+    }
+
     grid.innerHTML = "";
 
 
-    (data || []).forEach(function(artist) {
+    artists.forEach(function(artist) {
 
         const card =
             document.createElement("div");
