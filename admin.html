@@ -1613,10 +1613,7 @@ body {
                 HOVER DELAY
             </label>
 
-            <input
-                type="number"
-                value="3"
-                min="1">
+            <input id="merchHoverDelay" type="number" value="10" min="1" step="1">
 
         </div>
 
@@ -1627,26 +1624,19 @@ body {
                 HOVER CYCLE
             </label>
 
-            <select>
-
-                <option>
-                    Enabled
-                </option>
-
-                <option>
-                    Disabled
-                </option>
-
-            </select>
+            <select id="merchHoverCycle"><option value="6" selected>6 IMAGES</option><option value="1">1 IMAGE</option><option value="2">2 IMAGES</option><option value="3">3 IMAGES</option><option value="4">4 IMAGES</option><option value="5">5 IMAGES</option></select>
 
         </div>
 
     </div>
 
+    <div class="panel-header" style="margin-top:35px;">
+      <div class="panel-title">MERCH IMAGES</div>
+      <div class="panel-description">Six merch image slots. Upload from your device. The homepage cycles through up to 6 filled slots every 10 seconds.</div>
+    </div>
+    <div id="merchRotationAdminList" class="item-list"></div>
 
-    
 
-            </div>
 
             <button class="button">
                 CHANGE
@@ -1673,12 +1663,7 @@ body {
     <div class="panel-header">
 
         <div class="panel-title">VIDEO RELEASES</div>
-    <div class="panel-header" style="margin-top:35px;">
-      <div class="panel-title">MERCH IMAGES</div>
-      <div class="panel-description">Six merch image slots. Upload from your device. The homepage rotates through filled slots every 10 seconds.</div>
-    </div>
-    <div id="merchRotationAdminList" class="item-list"></div>
-  </div>
+
 
 
         <div class="panel-description">
