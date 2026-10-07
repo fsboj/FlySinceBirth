@@ -2328,21 +2328,39 @@ async async function loadMerchRotationAdmin(){
  var r=await supabaseClient.from("merch_image_rotation").select("*").order("sort_order",{ascending:true});
  if(r.error){console.error("Merch rotation load failed:",r.error);return}
  var rows=r.data||[];
- var legacy=await supabaseClient.from("site_images").select("image_url").eq("key","merch_image").maybeSingle();
- if(!rows.some(function(x){return Number(x.sort_order)===0})){
+
+ /* The original FSB merch image is the default first image. */
+ var first=rows.find(function(x){return Number(x.sort_order)===0});
+ if(!first){
+   var legacy=await supabaseClient.from("site_images").select("image_url").eq("key","merch_image").maybeSingle();
    var seedUrl=(legacy.data&&legacy.data.image_url)||"flysincebirthchrome.PNG";
-   var seed=await supabaseClient.from("merch_image_rotation").insert({image_url:seedUrl,sort_order:0,visible:true}).select("*").single();
-   if(!seed.error)rows.push(seed.data);
+   var seed=await supabaseClient.from("merch_image_rotation").insert({
+     image_url:seedUrl,
+     sort_order:0,
+     visible:true
+   }).select("*").single();
+   if(!seed.error){
+     first=seed.data;
+     rows.push(first);
+   }else{
+     console.warn("Could not save default merch image; showing it locally:",seed.error);
+     first={image_url:seedUrl,sort_order:0,visible:true};
+     rows.push(first);
+   }
  }
+
  for(var slot=0;slot<6;slot++){
    var x=rows.find(function(item){return Number(item.sort_order)===slot});
+   if(slot===0 && (!x || !x.image_url)){
+     x={image_url:"flysincebirthchrome.PNG",sort_order:0,visible:true};
+   }
    var preview=document.getElementById("merchSlotPreview"+(slot+1));
    var meta=document.getElementById("merchSlotMeta"+(slot+1));
    var remove=document.getElementById("merchSlotRemove"+(slot+1));
    if(x&&x.image_url){
      if(preview)preview.innerHTML='<img class="item-image" src="'+escapeHtml(x.image_url)+'">';
-     if(meta)meta.textContent="IMAGE UPLOADED";
-     if(remove)remove.style.display="inline-block";
+     if(meta)meta.textContent=slot===0?"ORIGINAL MERCH IMAGE":"IMAGE UPLOADED";
+     if(remove)remove.style.display=slot===0?"none":"inline-block";
    }else{
      if(preview)preview.innerHTML="";
      if(meta)meta.textContent="BLANK SLOT";
