@@ -562,26 +562,11 @@ body {
       <button class="button" type="button" onclick="document.getElementById('menuImageInput').click()">CHANGE</button>
     </div>
   
-    <div class="item-list">
-      <div class="admin-item">
-        <div class="item-info">
-          <img id="merchImagePreview" class="item-image" src="flysincebirthchrome.PNG">
-          <div><div class="item-name">Merch Image 1</div><div class="item-meta" id="merchImageName">flysincebirthchrome.PNG</div></div>
-        </div>
-        <input type="file" id="merchImageInput" accept="image/*" style="display:none"
-          onchange="uploadSiteImage('merch_image','merchImageInput','merchImagePreview','merchImageName')">
-        <button class="button" type="button" onclick="document.getElementById('merchImageInput').click()">CHANGE</button>
-      </div>
-    </div>
     <div class="panel-header" style="margin-top:35px;">
       <div class="panel-title">MERCH IMAGES</div>
-      <div class="panel-description">Upload up to 6 images. They rotate automatically in the Merch section on the main page.</div>
+      <div class="panel-description">Six merch image slots. Upload from your device. The homepage rotates through filled slots every 10 seconds.</div>
     </div>
     <div id="merchRotationAdminList" class="item-list"></div>
-    <div class="actions">
-      <input type="file" id="merchRotationInput" accept="image/*" multiple style="display:none" onchange="uploadMerchRotationImages()">
-      <button class="button primary" type="button" onclick="document.getElementById('merchRotationInput').click()">+ ADD MERCH IMAGES</button>
-    </div></div>
 </section>
 
 <section
@@ -2282,30 +2267,44 @@ async function saveChanges() {
 async function loadMerchRotationAdmin(){
  var list=document.getElementById("merchRotationAdminList");if(!list)return;
  var r=await supabaseClient.from("merch_image_rotation").select("*").order("sort_order",{ascending:true});
- if(r.error)return;list.innerHTML="";
- (r.data||[]).forEach(function(x){
-  var row=document.createElement("div");row.className="admin-item";
-  row.innerHTML='<div class="item-info">'+(x.image_url?'<img class="item-image" src="'+x.image_url+'">':'<div class="item-image"></div>')+'<div><div class="item-name">Merch Image '+(x.sort_order+1)+'</div><div class="item-meta">'+(x.visible?"VISIBLE":"HIDDEN")+'</div></div></div><div class="actions"><button class="button" onclick="toggleMerchRotation('+x.id+','+(!x.visible)+')">'+(x.visible?"HIDE":"SHOW")+'</button><button class="button danger" onclick="deleteMerchRotation('+x.id+')">REMOVE</button></div>';
-  list.appendChild(row);
- });
-}
-async function uploadMerchRotationImages(){
- var input=document.getElementById("merchRotationInput"),files=Array.from(input&&input.files||[]);
- if(!files.length)return;
- var count=await supabaseClient.from("merch_image_rotation").select("id");
- var existing=(count.data||[]).length;
- if(existing+files.length>6){alert("You can have up to 6 merch images.");input.value="";return}
- for(var i=0;i<files.length;i++){
-  var file=files[i],path="merch-rotation/"+Date.now()+"-"+i+"-"+file.name;
-  var up=await supabaseClient.storage.from("site-images").upload(path,file);
-  if(up.error){alert(up.error.message);break}
-  var url=supabaseClient.storage.from("site-images").getPublicUrl(path).data.publicUrl;
-  await supabaseClient.from("merch_image_rotation").insert({image_url:url,sort_order:existing+i,visible:true});
+ if(r.error){console.error(r.error);return}
+ var rows=r.data||[];
+ var legacy=await supabaseClient.from("site_images").select("image_url").eq("key","merch_image").maybeSingle();
+ if(!rows.some(function(x){return Number(x.sort_order)===0}) && legacy.data&&legacy.data.image_url){
+   var seed=await supabaseClient.from("merch_image_rotation").insert({image_url:legacy.data.image_url,sort_order:0,visible:true}).select("*").single();
+   if(!seed.error) rows.push(seed.data);
  }
- input.value="";loadMerchRotationAdmin();setStatus("MERCH IMAGES UPDATED");
+ rows.sort(function(a,b){return Number(a.sort_order)-Number(b.sort_order)});
+ var bySlot={};rows.forEach(function(x){if(Number(x.sort_order)>=0&&Number(x.sort_order)<6)bySlot[Number(x.sort_order)]=x});
+ list.innerHTML="";
+ for(var slot=0;slot<6;slot++){
+   var x=bySlot[slot], url=x&&x.image_url?x.image_url:"";
+   var row=document.createElement("div");row.className="admin-item";
+   row.innerHTML='<div class="item-info">'+(url?'<img class="item-image" src="'+escapeHtml(url)+'">':'<div class="item-image"></div>')+'<div><div class="item-name">Merch Image '+(slot+1)+'</div><div class="item-meta">'+(url?"IMAGE UPLOADED":"BLANK SLOT")+'</div></div></div><div class="actions"><input type="file" id="merchSlotInput'+slot+'" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot('+slot+', this)"><button class="button" type="button" onclick="document.getElementById('merchSlotInput'+slot+'').click()">'+(url?"CHANGE":"UPLOAD")+'</button>'+(url?'<button class="button danger" type="button" onclick="clearMerchRotationSlot('+slot+')">REMOVE</button>':"")+'</div>';
+   list.appendChild(row);
+ }
+}
+async function uploadMerchRotationSlot(slot,input){
+ var file=input&&input.files&&input.files[0];if(!file)return;
+ var path="merch-rotation/slot-"+(slot+1)+"-"+Date.now()+"-"+file.name;
+ var up=await supabaseClient.storage.from("site-images").upload(path,file);
+ if(up.error){alert(up.error.message);input.value="";return}
+ var url=supabaseClient.storage.from("site-images").getPublicUrl(path).data.publicUrl;
+ var existing=await supabaseClient.from("merch_image_rotation").select("id").eq("sort_order",slot).maybeSingle();
+ var result;
+ if(existing.data)result=await supabaseClient.from("merch_image_rotation").update({image_url:url,visible:true}).eq("id",existing.data.id);
+ else result=await supabaseClient.from("merch_image_rotation").insert({image_url:url,sort_order:slot,visible:true});
+ if(result.error)alert(result.error.message);
+ input.value="";await loadMerchRotationAdmin();setStatus("MERCH IMAGE "+(slot+1)+" UPDATED");
+}
+async function clearMerchRotationSlot(slot){
+ var r=await supabaseClient.from("merch_image_rotation").delete().eq("sort_order",slot);
+ if(r.error){alert(r.error.message);return}
+ await loadMerchRotationAdmin();setStatus("MERCH IMAGE "+(slot+1)+" CLEARED");
 }
 async function toggleMerchRotation(id,visible){await supabaseClient.from("merch_image_rotation").update({visible:visible}).eq("id",id);loadMerchRotationAdmin()}
-async function deleteMerchRotation(id){if(!confirm("Remove this merch image?"))return;await supabaseClient.from("merch_image_rotation").delete().eq("id",id);loadMerchRotationAdmin()}
+async function deleteMerchRotation(id){return clearMerchRotationSlot(id)}
+
 async function uploadSiteImage(
     imageKey,
     inputId,
