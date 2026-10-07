@@ -504,14 +504,14 @@ body {
      ADMIN NAVIGATION
 ===================================================== -->
 
-<nav class="admin-nav"><button class="active" onclick="showPanel('mainPage', this)">MAIN PAGE</button><button onclick="showPanel('sideMenu', this)">SIDE MENU</button><button onclick="showPanel('artistPages', this)">ARTIST PAGES</button><button onclick="showPanel('upcoming', this)">UPCOMING RELEASES</button></nav>
+<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button></nav>
 
 
 <!-- =====================================================
      SITE
 ===================================================== -->
 
-<section id="mainPage" class="panel active"><div class="panel-header"><div class="panel-title">MAIN PAGE</div><div class="panel-description">Manage everything displayed on the main FSB homepage.</div></div><div class="main-page-tabs"><button class="button active" onclick="showMainSubPanel('site', this)">GENERAL</button><button class="button" onclick="showMainSubPanel('photos', this)">PHOTOS</button><button class="button" onclick="showMainSubPanel('text', this)">TEXT</button><button class="button" onclick="showMainSubPanel('music', this)">MUSIC</button><button class="button" onclick="showMainSubPanel('artists', this)">ARTISTS</button><button class="button" onclick="showMainSubPanel('videos', this)">VIDEO RELEASES</button><button class="button" onclick="showMainSubPanel('events', this)">EVENTS</button><button class="button" onclick="showMainSubPanel('merch', this)">MERCH</button><button class="button" onclick="showMainSubPanel('sections', this)">SECTIONS</button></div><div id="mainPageSubPanels"></div><div class="actions" style="margin-top:30px;"><button class="button primary" type="button" onclick="addCustomMainSection()">+ ADD SECTION</button></div></section>
+<section id="mainPage" class="panel active"><div class="panel-header"><div class="panel-title">MAIN PAGE</div><div class="panel-description">Manage everything displayed on the main FSB homepage.</div></div><div class="main-page-tabs"><button type="button" class="button active" onclick="showMainSubPanel('site', this); return false;">GENERAL</button><button type="button" class="button" onclick="showMainSubPanel('photos', this); return false;">PHOTOS</button><button type="button" class="button" onclick="showMainSubPanel('text', this); return false;">TEXT</button><button type="button" class="button" onclick="showMainSubPanel('music', this); return false;">MUSIC</button><button type="button" class="button" onclick="showMainSubPanel('artists', this); return false;">ARTISTS</button><button type="button" class="button" onclick="showMainSubPanel('videos', this); return false;">VIDEO RELEASES</button><button type="button" class="button" onclick="showMainSubPanel('events', this); return false;">EVENTS</button><button type="button" class="button" onclick="showMainSubPanel('merch', this); return false;">MERCH</button><button type="button" class="button" onclick="showMainSubPanel('sections', this); return false;">SECTIONS</button></div><div id="mainPageSubPanels"></div><div class="actions" style="margin-top:30px;"><button class="button primary" type="button" onclick="addCustomMainSection()">+ ADD SECTION</button></div></section>
 
 <section
     id="site"
@@ -7279,7 +7279,7 @@ function showMainSubPanel(panelId,button){
 }
 function setupMainPagePanels(){
  var host=document.getElementById("mainPageSubPanels"); if(!host) return;
- mainPagePanelIds.forEach(function(id){var p=document.getElementById(id);if(!p)return;p.classList.remove("panel");p.classList.add("main-page-subpanel");host.appendChild(p)});
+ mainPagePanelIds.forEach(function(id){var p=document.getElementById(id);if(!p)return;p.classList.remove("panel");p.classList.remove("active");p.classList.add("main-page-subpanel");p.style.display="none";host.appendChild(p)});
  showMainSubPanel("site",document.querySelector(".main-page-tabs .button"));
  loadArtistsForUpcoming(); loadUpcomingReleases(); loadCustomMainSections();
 }
