@@ -7432,6 +7432,64 @@ window.editEvent=async function(id){
 </script>
 
 
+<!-- ADMIN TAB EMERGENCY FIX -->
+<script>
+(function(){
+  function initAdminTabs(){
+    const nav=document.querySelector('.admin-nav');
+    const main=document.getElementById('mainPage');
+    if(!nav || !main) return;
+
+    const topButtons=Array.from(nav.querySelectorAll('button'));
+    const topIds=['mainPage','sideMenu','artistPages','upcoming'];
+    topButtons.forEach((btn,i)=>{
+      btn.onclick=function(e){
+        e.preventDefault();
+        topButtons.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        topIds.forEach(id=>{
+          const p=document.getElementById(id);
+          if(p) p.style.display=(id===topIds[i]?'block':'none');
+        });
+        if(topIds[i]==='mainPage') showSub('site');
+      };
+    });
+
+    const ids=['site','photos','text','music','artists','videos','events','merch','sections'];
+    const tabs=Array.from(document.querySelectorAll('.main-page-tabs button'));
+    const host=document.getElementById('mainPageSubPanels');
+    ids.forEach(id=>{
+      const p=document.getElementById(id);
+      if(p && host && p.parentElement!==host){
+        p.classList.remove('panel','active');
+        p.classList.add('main-page-subpanel');
+        p.style.display='none';
+        host.appendChild(p);
+      }
+    });
+
+    function showSub(id){
+      document.querySelectorAll('.main-page-subpanel').forEach(p=>p.style.display='none');
+      tabs.forEach(b=>b.classList.remove('active'));
+      const p=document.getElementById(id);
+      if(p) p.style.display='block';
+      const b=tabs.find(x=>x.getAttribute('onclick')&&x.getAttribute('onclick').indexOf("'"+id+"'")!==-1);
+      if(b) b.classList.add('active');
+    }
+    tabs.forEach(btn=>{
+      btn.onclick=function(e){
+        e.preventDefault();
+        const m=(btn.getAttribute('onclick')||'').match(/showMainSubPanel\(['"]([^'"]+)/);
+        if(m) showSub(m[1]);
+      };
+    });
+    showSub('site');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initAdminTabs);
+  else initAdminTabs();
+})();
+</script>
+<script src="admin-tabs-fix.js"></script>
 </body>
 
 </html>
