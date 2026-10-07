@@ -569,8 +569,8 @@ body {
     <div id="merchRotationAdminList" class="item-list">
       <div class="admin-item">
         <div class="item-info">
-          <div class="item-image"></div>
-          <div><div class="item-name">Merch Image 1</div><div class="item-meta">BLANK SLOT</div></div>
+          <img class="item-image" src="flysincebirthchrome.PNG">
+          <div><div class="item-name">Merch Image 1</div><div class="item-meta">flysincebirthchrome.PNG</div></div>
         </div>
         <div class="actions">
           <input type="file" id="merchSlotFallback1" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(0, this)">
@@ -2331,10 +2331,7 @@ async function loadMerchRotationAdmin(){
  if(r.error){console.error(r.error);return}
  var rows=r.data||[];
  var legacy=await supabaseClient.from("site_images").select("image_url").eq("key","merch_image").maybeSingle();
- if(!rows.some(function(x){return Number(x.sort_order)===0}) && legacy.data&&legacy.data.image_url){
-   var seed=await supabaseClient.from("merch_image_rotation").insert({image_url:legacy.data.image_url,sort_order:0,visible:true}).select("*").single();
-   if(!seed.error) rows.push(seed.data);
- }
+ if(!rows.some(function(x){return Number(x.sort_order)===0})){\n   var seedUrl=(legacy.data&&legacy.data.image_url)||"flysincebirthchrome.PNG";\n   var seed=await supabaseClient.from("merch_image_rotation").insert({image_url:seedUrl,sort_order:0,visible:true}).select("*").single();\n   if(!seed.error) rows.push(seed.data);\n }
  rows.sort(function(a,b){return Number(a.sort_order)-Number(b.sort_order)});
  var bySlot={};rows.forEach(function(x){if(Number(x.sort_order)>=0&&Number(x.sort_order)<6)bySlot[Number(x.sort_order)]=x});
  list.innerHTML="";
