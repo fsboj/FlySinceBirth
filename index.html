@@ -1211,6 +1211,47 @@ const supabaseClient = supabase.createClient(
 
 </script>
 <script>
+async function loadMerchImageRotation() {
+    const element = document.querySelector(".clothing-box img");
+    if (!element) return;
+
+    const { data, error } = await supabaseClient
+        .from("merch_image_rotation")
+        .select("image_url, sort_order")
+        .eq("visible", true)
+        .not("image_url", "is", null)
+        .order("sort_order", { ascending: true })
+        .limit(6);
+
+    if (error) {
+        console.error("Could not load merch image rotation:", error);
+        return;
+    }
+
+    const images = (data || [])
+        .map(function(item) { return item.image_url; })
+        .filter(Boolean);
+
+    if (!images.length) return;
+
+    let current = 0;
+
+    element.style.transition = "opacity 0.6s ease";
+    element.src = images[current];
+
+    if (images.length > 1) {
+        window.merchRotationTimer = setInterval(function() {
+            current = (current + 1) % images.length;
+            element.style.opacity = "0";
+
+            setTimeout(function() {
+                element.src = images[current];
+                element.style.opacity = "1";
+            }, 300);
+        }, 10000);
+    }
+}
+
 async function loadSiteImages() {
 
     const { data, error } =
@@ -1300,6 +1341,14 @@ async function loadSiteImages() {
 
     }
 
+
+    /* MERCH ROTATION */
+    if (window.merchRotationTimer) {
+        clearInterval(window.merchRotationTimer);
+        window.merchRotationTimer = null;
+    }
+
+    loadMerchImageRotation();
 
     /* TOP LEFT */
 
