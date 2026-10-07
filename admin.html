@@ -533,6 +533,45 @@ body {
   </div>
 </section>
 
+<section id="photos" class="panel">
+  <div class="panel-header">
+    <div class="panel-title">Photos</div>
+    <div class="panel-description">Manage every main-page image from this tab only.</div>
+  </div>
+  <div class="item-list">
+    <div class="admin-item">
+      <div class="item-info"><img id="heroImagePreview" class="item-image" src="Flysincebirthwhite.png"><div><div class="item-name">Hero Image</div><div class="item-meta" id="heroImageName">Flysincebirthwhite.png</div></div></div>
+      <input type="file" id="heroImageInput" accept="image/*" style="display:none" onchange="uploadSiteImage('hero_image','heroImageInput','heroImagePreview','heroImageName')">
+      <button class="button" type="button" onclick="document.getElementById('heroImageInput').click()">CHANGE</button>
+    </div>
+    <div class="admin-item">
+      <div class="item-info"><img id="projectImagePreview" class="item-image" src="fsbchrome.PNG"><div><div class="item-name">Project FSB</div><div class="item-meta" id="projectImageName">fsbchrome.PNG</div></div></div>
+      <input type="file" id="projectImageInput" accept="image/*" style="display:none" onchange="uploadSiteImage('project_image','projectImageInput','projectImagePreview','projectImageName')">
+      <button class="button" type="button" onclick="document.getElementById('projectImageInput').click()">CHANGE</button>
+    </div>
+    <div class="admin-item">
+      <div class="item-info"><img id="merchImagePreview" class="item-image" src="flysincebirthchrome.PNG"><div><div class="item-name">Merch Image</div><div class="item-meta" id="merchImageName">flysincebirthchrome.PNG</div></div></div>
+      <input type="file" id="merchImageInput" accept="image/*" style="display:none" onchange="uploadSiteImage('merch_image','merchImageInput','merchImagePreview','merchImageName')">
+      <button class="button" type="button" onclick="document.getElementById('merchImageInput').click()">CHANGE</button>
+    </div>
+    <div class="admin-item">
+      <div class="item-info"><img id="merchImage01Preview" class="item-image" src="flysincebirthchrome.PNG"><div><div class="item-name">Merch Image 01</div><div class="item-meta" id="merchImage01Name">flysincebirthchrome.PNG</div></div></div>
+      <input type="file" id="merchImage01Input" accept="image/*" style="display:none" onchange="uploadSiteImage('merch_image','merchImage01Input','merchImage01Preview','merchImage01Name')">
+      <button class="button" type="button" onclick="document.getElementById('merchImage01Input').click()">CHANGE</button>
+    </div>
+    <div class="admin-item">
+      <div class="item-info"><img id="topLeftImagePreview" class="item-image" src="fsblogo.PNG"><div><div class="item-name">Top Left Image</div><div class="item-meta" id="topLeftImageName">fsblogo.PNG</div></div></div>
+      <input type="file" id="topLeftImageInput" accept="image/*" style="display:none" onchange="uploadSiteImage('top_left_image','topLeftImageInput','topLeftImagePreview','topLeftImageName')">
+      <button class="button" type="button" onclick="document.getElementById('topLeftImageInput').click()">CHANGE</button>
+    </div>
+    <div class="admin-item">
+      <div class="item-info"><img id="menuImagePreview" class="item-image" src="FlySinceBirthgd.PNG"><div><div class="item-name">Menu Image</div><div class="item-meta" id="menuImageName">FlySinceBirthgd.PNG</div></div></div>
+      <input type="file" id="menuImageInput" accept="image/*" style="display:none" onchange="uploadSiteImage('menu_image','menuImageInput','menuImagePreview','menuImageName')">
+      <button class="button" type="button" onclick="document.getElementById('menuImageInput').click()">CHANGE</button>
+    </div>
+  </div>
+</section>
+
 <section
     id="text"
     class="panel">
