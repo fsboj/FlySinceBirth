@@ -511,7 +511,7 @@ body {
      SITE
 ===================================================== -->
 
-<section id="mainPage" class="panel active"><div class="panel-header"><div class="panel-title">MAIN PAGE</div><div class="panel-description">Manage everything displayed on the main FSB homepage.</div></div><div class="main-page-tabs"><button type="button" class="button active" onclick="showMainSubPanel('site', this); return false;">GENERAL</button><button type="button" class="button" onclick="showMainSubPanel('photos', this); return false;">PHOTOS</button><button type="button" class="button" onclick="showMainSubPanel('text', this); return false;">TEXT</button><button type="button" class="button" onclick="showMainSubPanel('music', this); return false;">MUSIC</button><button type="button" class="button" onclick="showMainSubPanel('artists', this); return false;">ARTISTS</button><button type="button" class="button" onclick="showMainSubPanel('videos', this); return false;">VIDEO RELEASES</button><button type="button" class="button" onclick="showMainSubPanel('events', this); return false;">EVENTS</button><button type="button" class="button" onclick="showMainSubPanel('merch', this); return false;">MERCH</button><button type="button" class="button" onclick="showMainSubPanel('sections', this); return false;">SECTIONS</button><button type="button" class="button primary" onclick="addCustomMainSection(); return false;">+ ADD SECTION</button></div><div id="mainPageSubPanels"></div></section>
+<section id="mainPage" class="panel active"><div class="panel-header"><div class="panel-title">MAIN PAGE</div><div class="panel-description">Manage everything displayed on the main FSB homepage.</div></div><div class="main-page-tabs"><button type="button" class="button active" onclick="showMainSubPanel('site', this); return false;">GENERAL</button><button type="button" class="button" onclick="showMainSubPanel('photos', this); return false;">PHOTOS</button><button type="button" class="button" onclick="showMainSubPanel('music', this); return false;">MUSIC</button><button type="button" class="button" onclick="showMainSubPanel('artists', this); return false;">ARTISTS</button><button type="button" class="button" onclick="showMainSubPanel('videos', this); return false;">VIDEO RELEASES</button><button type="button" class="button" onclick="showMainSubPanel('events', this); return false;">EVENTS</button><button type="button" class="button" onclick="showMainSubPanel('merch', this); return false;">MERCH</button><button type="button" class="button" onclick="showMainSubPanel('sections', this); return false;">SECTIONS</button><button type="button" class="button primary" onclick="addCustomMainSection(); return false;">+ ADD SECTION</button></div><div id="mainPageSubPanels"></div></section>
 <section id="site" class="panel">
   <div class="panel-header">
     <div class="panel-title">Site Settings</div>
@@ -532,6 +532,119 @@ body {
     </div>
   </div>
 </section>
+  <div class="panel-header" style="margin-top:35px;">
+    <div class="panel-title">Homepage Text</div>
+    <div class="panel-description">Change current website lettering and descriptions.</div>
+  </div>
+<div class="form-grid">
+
+    <div class="form-group">
+        <label>HERO TAGLINE</label>
+        <input id="heroTagline" type="text" value="MUSIC • CLOTHING • CULTURE">
+    </div>
+
+    <div class="form-group">
+        <label>HERO BUTTON</label>
+        <input id="heroButton" type="text" value="ENTER FSB">
+    </div>
+
+    <div class="form-group full">
+        <label>PROJECT FSB</label>
+        <input id="projectFsb" type="text" value="PROJECT&lt;br&gt;FSB">
+    </div>
+
+    <div class="form-group full">
+        <label>PROJECT DESCRIPTION</label>
+        <textarea id="projectDescription">Fly Since Birth is more than a brand. It is a creative platform connecting music, clothing, culture and visual expression.</textarea>
+    </div>
+
+    <div class="form-group">
+        <label>LEARN MORE</label>
+        <input id="projectLearnMore" type="text" value="LEARN MORE">
+    </div>
+
+    <div class="form-group">
+        <label>MUSIC</label>
+        <input id="musicHeading" type="text" value="MUSIC">
+    </div>
+
+    <div class="form-group">
+        <label>LATEST RELEASES</label>
+        <input id="latestReleases" type="text" value="Latest Releases">
+    </div>
+
+    <div class="form-group">
+        <label>LISTEN NOW</label>
+        <input id="listenNow" type="text" value="LISTEN NOW">
+    </div>
+
+    <div class="form-group">
+        <label>ALBUMS</label>
+        <input id="albums" type="text" value="Albums">
+    </div>
+
+    <div class="form-group">
+        <label>EXPLORE</label>
+        <input id="explore" type="text" value="EXPLORE">
+    </div>
+
+    <div class="form-group">
+        <label>SINGLES</label>
+        <input id="singles" type="text" value="Singles">
+    </div>
+
+    <div class="form-group">
+        <label>NEW MUSIC</label>
+        <input id="newMusic" type="text" value="NEW MUSIC">
+    </div>
+
+    <div class="form-group">
+        <label>PLAYLISTS</label>
+        <input id="playlists" type="text" value="Playlists">
+    </div>
+
+    <div class="form-group">
+        <label>STREAM FSB</label>
+        <input id="streamFsb" type="text" value="STREAM FSB">
+    </div>
+
+    <div class="form-group">
+        <label>ARTISTS</label>
+        <input id="artistsHeading" type="text" value="ARTISTS">
+    </div>
+
+    <div class="form-group">
+        <label>MERCH HEADING</label>
+        <input id="merchHeading" type="text" value="FSB&lt;br&gt;MERCH">
+    </div>
+
+    <div class="form-group full">
+        <label>MERCH DESCRIPTION</label>
+        <textarea id="merchDescription">FSB clothing, collections, limited drops and upcoming releases.</textarea>
+    </div>
+
+    <div class="form-group">
+        <label>MERCH BUTTON</label>
+        <input id="merchButton" type="text" value="SHOP FSB">
+    </div>
+
+    <div class="form-group">
+        <label>VIDEOS</label>
+        <input id="videosHeading" type="text" value="VIDEOS">
+    </div>
+
+    <div class="form-group">
+        <label>EVENTS</label>
+        <input id="eventsHeading" type="text" value="EVENTS">
+    </div>
+
+    <div class="form-group">
+        <label>VIEW EVENTS</label>
+        <input id="viewEvents" type="text" value="VIEW EVENTS">
+    </div>
+
+
+
 
 <section id="photos" class="panel">
   <div class="panel-header">
@@ -566,77 +679,7 @@ body {
       <div class="panel-title">MERCH IMAGES</div>
       <div class="panel-description">Six merch image slots. Upload from your device. The homepage rotates through filled slots every 10 seconds.</div>
     </div>
-    <div id="merchRotationAdminList" class="item-list">
-      <div class="admin-item">
-        <div class="item-info">
-          <img class="item-image" src="flysincebirthchrome.PNG">
-          <div><div class="item-name">Merch Image 1</div><div class="item-meta">flysincebirthchrome.PNG</div></div>
-        </div>
-        <div class="actions">
-          <input type="file" id="merchSlotFallback1" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(0, this)">
-          <button class="button" type="button" onclick="document.getElementById('merchSlotFallback1').click()">UPLOAD</button>
-        </div>
-      </div>
-      <div class="admin-item">
-        <div class="item-info">
-          <div class="item-image"></div>
-          <div><div class="item-name">Merch Image 2</div><div class="item-meta">BLANK SLOT</div></div>
-        </div>
-        <div class="actions">
-          <input type="file" id="merchSlotFallback2" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(1, this)">
-          <button class="button" type="button" onclick="document.getElementById('merchSlotFallback2').click()">UPLOAD</button>
-        </div>
-      </div>
-      <div class="admin-item">
-        <div class="item-info">
-          <div class="item-image"></div>
-          <div><div class="item-name">Merch Image 3</div><div class="item-meta">BLANK SLOT</div></div>
-        </div>
-        <div class="actions">
-          <input type="file" id="merchSlotFallback3" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(2, this)">
-          <button class="button" type="button" onclick="document.getElementById('merchSlotFallback3').click()">UPLOAD</button>
-        </div>
-      </div>
-      <div class="admin-item">
-        <div class="item-info">
-          <div class="item-image"></div>
-          <div><div class="item-name">Merch Image 4</div><div class="item-meta">BLANK SLOT</div></div>
-        </div>
-        <div class="actions">
-          <input type="file" id="merchSlotFallback4" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(3, this)">
-          <button class="button" type="button" onclick="document.getElementById('merchSlotFallback4').click()">UPLOAD</button>
-        </div>
-      </div>
-      <div class="admin-item">
-        <div class="item-info">
-          <div class="item-image"></div>
-          <div><div class="item-name">Merch Image 5</div><div class="item-meta">BLANK SLOT</div></div>
-        </div>
-        <div class="actions">
-          <input type="file" id="merchSlotFallback5" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(4, this)">
-          <button class="button" type="button" onclick="document.getElementById('merchSlotFallback5').click()">UPLOAD</button>
-        </div>
-      </div>
-      <div class="admin-item">
-        <div class="item-info">
-          <div class="item-image"></div>
-          <div><div class="item-name">Merch Image 6</div><div class="item-meta">BLANK SLOT</div></div>
-        </div>
-        <div class="actions">
-          <input type="file" id="merchSlotFallback6" accept="image/*" style="display:none" onchange="uploadMerchRotationSlot(5, this)">
-          <button class="button" type="button" onclick="document.getElementById('merchSlotFallback6').click()">UPLOAD</button>
-        </div>
-      </div>
-    </div>
-</section>
-
-<section
-    id="text"
-    class="panel">
-
-    <div class="panel-header">
-
-        <div class="panel-title">
+    <div id="merchRotationAdminList" classv class="panel-title">
             Text
         </div>
 
@@ -7153,7 +7196,7 @@ document.addEventListener("DOMContentLoaded", function(){
       };
     });
 
-    const ids=['site','photos','text','music','artists','videos','events','merch','sections'];
+    const ids=['site','photos','music','artists','videos','events','merch','sections'];
     const tabs=Array.from(document.querySelectorAll('.main-page-tabs button'));
     const host=document.getElementById('mainPageSubPanels');
     ids.forEach(id=>{
