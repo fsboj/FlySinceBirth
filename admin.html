@@ -900,144 +900,18 @@ body {
     class="panel">
 
     <div class="panel-header">
-
-        <div class="panel-title">
-            Artists
-        </div>
-
-        <div class="panel-description">
-            Add, remove and edit artist profiles.
-        </div>
-
+        <div class="panel-title">Artists</div>
+        <div class="panel-description">Manage the artists that appear across FSB.</div>
     </div>
 
-
-    <div class="item-list">
-
-        <div class="admin-item">
-
-            <div class="item-info">
-
-                <img
-                    class="item-image"
-                    src="fsblogo.PNG">
-
-                <div>
-
-                    <div class="item-name">
-                        Artist 01
-                    </div>
-
-                    <div class="item-meta">
-                        artist-1
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="actions">
-
-                <button class="button">
-                    EDIT
-                </button>
-
-                <button class="button danger">
-                    REMOVE
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="admin-item">
-
-            <div class="item-info">
-
-                <img
-                    class="item-image"
-                    src="fsblogo.PNG">
-
-                <div>
-
-                    <div class="item-name">
-                        Artist 02
-                    </div>
-
-                    <div class="item-meta">
-                        artist-2
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="actions">
-
-                <button class="button">
-                    EDIT
-                </button>
-
-                <button class="button danger">
-                    REMOVE
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <div class="admin-item">
-
-            <div class="item-info">
-
-                <img
-                    class="item-image"
-                    src="fsblogo.PNG">
-
-                <div>
-
-                    <div class="item-name">
-                        Artist 03
-                    </div>
-
-                    <div class="item-meta">
-                        artist-3
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="actions">
-
-                <button class="button">
-                    EDIT
-                </button>
-
-                <button class="button danger">
-                    REMOVE
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
+    <div id="adminArtistsList" class="item-list"></div>
 
     <div class="actions">
-
-    <button
-    class="button primary"
-    onclick="addArtist()">
-    + ADD ARTIST
-</button>
-
+        <button class="button primary" type="button" onclick="addArtist()">+ ADD ARTIST</button>
     </div>
 
 </section>
+
 <!-- =====================================================
      ARTIST PAGES
 ===================================================== -->
@@ -3216,7 +3090,7 @@ async function removeMusic(id) {
 async function loadArtists() {
 
     const container =
-        document.querySelector("#artists .item-list");
+        document.getElementById("adminArtistsList");
 
     if (!container) return;
 
@@ -7145,6 +7019,20 @@ window.editEvent=async function(id){
 };
 </script>
 
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  setTimeout(async function(){
+    try {
+      if (typeof loadArtists === "function") await loadArtists();
+      if (typeof loadArtistPageSelector === "function") await loadArtistPageSelector();
+      if (typeof loadVideoArtistSelector === "function") await loadVideoArtistSelector();
+      if (typeof loadArtistsForUpcoming === "function") await loadArtistsForUpcoming();
+    } catch (e) {
+      console.error("Artist initialization failed:", e);
+    }
+  }, 500);
+});
+</script>
 
 <!-- ADMIN TAB EMERGENCY FIX -->
 <script>
