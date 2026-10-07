@@ -6839,10 +6839,38 @@ async function loadCustomMainSections(){var panel=document.getElementById("secti
 async function editCustomSection(id){var r=await supabaseClient.from("custom_home_sections").select("*").eq("id",id).single();if(r.error)return;var title=prompt("Section name:",r.data.title||"");if(title===null)return;var body=prompt("Section content:",r.data.body||"");if(body===null)return;var link=prompt("Link URL:",r.data.link_url||"");if(link===null)return;await supabaseClient.from("custom_home_sections").update({title:title,body:body,link_url:link}).eq("id",id);loadCustomMainSections()}
 async function deleteCustomSection(id){if(!confirm("Remove this custom section?"))return;await supabaseClient.from("custom_home_sections").delete().eq("id",id);loadCustomMainSections()}
 async function loadArtistReleasesAdmin(){
- var list=document.getElementById("artistReleasesAdminList");if(!list||!selectedArtistPageId)return;
- var r=await supabaseClient.from("artist_releases").select("*").eq("artist_id",selectedArtistPageId).order("created_at",{ascending:false});if(r.error)return;list.innerHTML="";
- for(const release of (r.data||[])){var tr=await supabaseClient.from("artist_songs").select("*").eq("release_id",release.id).order("track_number",{ascending:true});var row=document.createElement("div");row.className="admin-item";row.style.display="block";var tracks=tr.data||[];var html='<div style="display:flex;justify-content:space-between;align-items:center;gap:15px"><button class="release-toggle" onclick="toggleReleaseTracks(this)"><div class="item-name">'+escapeHtml(release.title)+'</div><div class="item-meta">'+release.type.toUpperCase()+" • "+tracks.length+' TRACKS • CLICK TO EXPAND</div></button><div class="actions"><button class="button" onclick="editArtistRelease(\\''+release.id+'\\')">EDIT RELEASE</button><button class="button danger" onclick="deleteArtistRelease(\\''+release.id+'\\')">DELETE</button></div></div><div class="release-tracks">';
- tracks.forEach(function(t,i){html+='<div class="admin-item"><div><div class="item-name">'+(i+1)+". "+escapeHtml(t.title)+'</div><div class="item-meta">'+(t.video_url?"VIDEO • ":"")+(t.image_url?"ARTWORK":"NO ARTWORK")+'</div></div><button class="button" onclick="editArtistSong(\\''+t.id+'\\')">EDIT SONG</button></div>'});html+="</div>";row.innerHTML=html;list.appendChild(row)}
+ var list=document.getElementById("artistReleasesAdminList");
+ if(!list) return;
+ if(!selectedArtistPageId){
+   list.innerHTML='<div class="admin-item"><div class="item-name">SELECT AN ARTIST</div></div>';
+   return;
+ }
+ list.innerHTML='<div class="admin-item"><div class="item-name">LOADING RELEASES...</div></div>';
+ var r=await supabaseClient.from("artist_releases").select("*").eq("artist_id",selectedArtistPageId).order("created_at",{ascending:false});
+ if(r.error){
+   console.error("ARTIST RELEASES LOAD ERROR:",r.error);
+   list.innerHTML='<div class="admin-item"><div class="item-name">COULD NOT LOAD RELEASES</div><div class="item-meta">'+escapeHtml(r.error.message)+'</div></div>';
+   return;
+ }
+ var releases=r.data||[];
+ list.innerHTML="";
+ if(!releases.length){
+   list.innerHTML='<div class="admin-item"><div class="item-name">NO ALBUMS OR EPS YET</div><div class="item-meta">CREATE A RELEASE ABOVE.</div></div>';
+   return;
+ }
+ for(const release of releases){
+   var tr=await supabaseClient.from("artist_songs").select("*").eq("release_id",release.id).order("track_number",{ascending:true});
+   var tracks=tr.data||[];
+   var row=document.createElement("div");
+   row.className="admin-item";
+   row.style.display="block";
+   var html='<div style="display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap"><button class="release-toggle" type="button" onclick="toggleReleaseTracks(this)"><div class="item-name">'+escapeHtml(release.title||"UNTITLED")+'</div><div class="item-meta">'+escapeHtml((release.type||"release").toUpperCase())+' • '+tracks.length+' TRACKS • CLICK TO EXPAND</div></button><div class="actions" style="margin-top:0"><button class="button" type="button" onclick="editArtistRelease(\''+release.id+'\')">EDIT RELEASE</button><button class="button danger" type="button" onclick="deleteArtistRelease(\''+release.id+'\')">DELETE</button></div></div><div class="release-tracks">';
+ if(tr.error) html+='<div class="item-meta">TRACKS COULD NOT LOAD: '+escapeHtml(tr.error.message)+'</div>';
+ tracks.forEach(function(t,i){html+='<div class="admin-item"><div><div class="item-name">'+(i+1)+". "+escapeHtml(t.title||"UNTITLED")+'</div><div class="item-meta">'+(t.video_url?"VIDEO • ":"")+(t.image_url?"ARTWORK":"NO ARTWORK")+'</div></div><div class="actions" style="margin-top:0"><button class="button" type="button" onclick="editArtistSong(\''+t.id+'\')">EDIT SONG</button><button class="button danger" type="button" onclick="deleteArtistSong(\''+t.id+'\')">DELETE</button></div></div>"});
+ html+="</div>";
+ row.innerHTML=html;
+ list.appendChild(row);
+ }
 }
 function toggleReleaseTracks(button){var t=button.closest(".admin-item").querySelector(".release-tracks");if(t)t.classList.toggle("open")}
 async function editArtistRelease(id){var r=await supabaseClient.from("artist_releases").select("*").eq("id",id).single();if(r.error)return;var title=prompt("Release name:",r.data.title||"");if(title===null)return;var video=prompt("Release video URL (optional):",r.data.video_url||"");if(video===null)return;var remove=confirm("Remove artwork? Click OK to remove, Cancel to keep it.");var artwork=r.data.artwork_url||null;if(remove)artwork=null;var u=await supabaseClient.from("artist_releases").update({title:title,artwork_url:artwork,video_url:video||null}).eq("id",id);if(u.error){alert(u.error.message);return}loadArtistReleasesAdmin();setStatus("RELEASE UPDATED")}
