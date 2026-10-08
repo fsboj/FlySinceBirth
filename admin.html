@@ -950,513 +950,63 @@ body {
     </div>
 
 
-    <div
-        id="artistPageManager"
-        style="
-            margin-top:30px;
-            display:none;
-        "
-    >
+    <div id="artistPageManager" style="margin-top:30px;display:none;">
+  <div class="admin-item" style="display:block;"><div class="item-name" id="selectedArtistName">ARTIST</div><div class="item-meta" style="margin-top:8px;">Manage this artist's page</div></div>
+  <div class="form-grid" style="margin-top:25px;">
+    <div class="form-group"><label>ARTIST NAME</label><input type="text" id="artistPageName" placeholder="Artist name"></div>
+    <div class="form-group"><label>ARTIST IMAGE</label><input type="file" id="artistPageImageFile" accept="image/*"><div id="artistPageImagePreview" style="margin-top:12px;"></div></div>
+    <div class="form-group"><label>BACKGROUND IMAGE</label><input type="file" id="artistPageBackgroundFile" accept="image/*"><div id="artistPageBackgroundPreview" style="margin-top:12px;"></div></div>
+    <div class="form-group full"><label>BIO</label><textarea id="artistPageBio" rows="6" placeholder="Artist bio..."></textarea></div>
+  </div>
+  <div class="actions" style="margin-top:25px;"><button class="button primary" onclick="saveArtistPage()">SAVE ARTIST PAGE</button></div>
 
-        <div
-            class="admin-item"
-            style="display:block;"
-        >
+  <div style="margin-top:45px;padding-top:30px;border-top:1px solid #242424;">
+    <div class="panel-title">ARTIST RELEASES</div><div class="panel-description">Manage this artist's music uploads, album/EP releases, links, singles and projects.</div>
+  </div>
 
-            <div
-                class="item-name"
-                id="selectedArtistName"
-            >
-                ARTIST
-            </div>
+  <div style="margin-top:35px;padding-top:30px;border-top:1px solid #242424;">
+    <div class="panel-title">MUSIC UPLOAD</div><div class="panel-description">Upload a single song for this artist.</div>
+    <div class="form-grid" style="margin-top:25px;">
+      <div class="form-group"><label>SONG TITLE</label><input type="text" id="artistSongTitle" placeholder="Song title"></div>
+      <div class="form-group"><label>SONG ARTWORK</label><input type="file" id="artistSongImageFile" accept="image/*"><div id="artistSongImagePreview" style="margin-top:12px;"></div></div>
+      <div class="form-group full"><label>AUDIO FILE</label><input type="file" id="artistSongFile" accept="audio/*"><label style="display:block;margin-top:15px;">OPTIONAL VIDEO</label><input type="file" id="artistSongVideoFile" accept="video/*"></div>
+      <div class="form-group"><label>MUSIC SECTIONS</label><div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:18px;margin-top:10px;">
+        <label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" class="artist-song-section" value="singles"> SINGLES</label>
+        <label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" class="artist-song-section" value="albums"> ALBUMS</label>
+        <label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" class="artist-song-section" value="eps"> EPS</label>
+        <label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" class="artist-song-section" value="top"> TOP SONGS</label>
+      </div></div>
+    </div>
+    <div class="actions" style="margin-top:20px;"><button id="artistSongSubmitButton" class="button primary" onclick="uploadArtistSong()">UPLOAD SONG</button></div>
+  </div>
 
-            <div
-                class="item-meta"
-                style="margin-top:8px;"
-            >
-                Manage this artist's page
-            </div>
+  <div style="margin-top:45px;padding-top:30px;border-top:1px solid #242424;">
+    <div class="panel-title">ALBUM/EP RELEASE</div><div class="panel-description">Create a full album or EP and add its tracks in order.</div>
+    <div class="form-grid" style="margin-top:25px;">
+      <div class="form-group"><label>RELEASE TYPE</label><select id="artistReleaseType"><option value="album">ALBUM</option><option value="ep">EP</option></select></div>
+      <div class="form-group"><label>PROJECT TITLE</label><input type="text" id="artistReleaseTitle" placeholder="Project title"></div>
+      <div class="form-group"><label>PROJECT ARTWORK</label><input type="file" id="artistReleaseArtwork" accept="image/*"></div>
+      <div class="form-group"><label>RELEASE DATE</label><input type="date" id="artistReleaseDate"></div>
+    </div>
+    <div style="margin-top:30px;"><div class="panel-title">TRACKLIST</div><div class="panel-description">Add the songs in the order they should appear.</div><div id="artistReleaseTracks" style="margin-top:20px;display:flex;flex-direction:column;gap:12px;"></div><div class="actions" style="margin-top:15px;"><button class="button" type="button" onclick="addArtistReleaseTrack()">+ ADD TRACK</button></div></div>
+    <div class="actions" style="margin-top:25px;"><button id="artistReleaseSubmitButton" class="button primary" type="button" onclick="saveArtistRelease()">SAVE RELEASE</button></div>
+  </div>
 
-        </div>
+  <div style="margin-top:45px;padding-top:30px;border-top:1px solid #242424;">
+    <div class="panel-title">LINKS</div><div class="panel-description">Add links that belong only to this artist.</div>
+    <div class="form-grid" style="margin-top:25px;"><div class="form-group"><label>LINK NAME</label><input type="text" id="artistLinkTitle" placeholder="Instagram, Spotify, Website..."></div><div class="form-group"><label>LINK URL</label><input type="text" id="artistLinkUrl" placeholder="https://..."></div></div>
+    <div class="actions" style="margin-top:20px;"><button class="button primary" onclick="addArtistLink()">ADD LINK</button></div><div id="artistLinksAdminList" style="margin-top:25px;"></div>
+  </div>
 
+  <div style="margin-top:45px;padding-top:30px;border-top:1px solid #242424;">
+    <div class="panel-title">SINGLES</div><div class="panel-description">Standalone songs. Select a song to expand its editing controls.</div><div id="artistSongsAdminList" style="margin-top:25px;"></div>
+  </div>
 
-        <div
-            class="form-grid"
-            style="margin-top:25px;"
-        >
-<div class="form-group">
-
-    <label>
-        ARTIST NAME
-    </label>
-
-    <input
-        type="text"
-        id="artistPageName"
-        placeholder="Artist name"
-    >
-
-</div>
-         <div class="form-group">
-
-    <label>
-        ARTIST IMAGE
-    </label>
-
-    <input
-        type="file"
-        id="artistPageImageFile"
-        accept="image/*"
-    >
-
-    <div
-        id="artistPageImagePreview"
-        style="margin-top:12px;"
-    ></div>
-
+  <div style="margin-top:45px;padding-top:30px;border-top:1px solid #242424;">
+    <div class="panel-title">ALBUMS / EPS</div><div class="panel-description">Each project starts collapsed. Select a project to open its tracks and editing controls.</div><div id="artistReleasesAdminList" style="margin-top:25px;"></div>
+  </div>
 </div>
 
-
-<div class="form-group">
-
-    <label>
-        BACKGROUND IMAGE
-    </label>
-
-    <input
-        type="file"
-        id="artistPageBackgroundFile"
-        accept="image/*"
-    >
-
-    <div
-        id="artistPageBackgroundPreview"
-        style="margin-top:12px;"
-    ></div>
-
-</div>
-
-
-            <div class="form-group full">
-
-                <label>
-                    BIO
-                </label>
-
-                <textarea
-                    id="artistPageBio"
-                    rows="6"
-                    placeholder="Artist bio..."
-                ></textarea>
-
-            </div>
-
-        </div>
-
-
-        <div
-            class="actions"
-            style="margin-top:25px;"
-        >
-
-            <button
-                class="button primary"
-                onclick="saveArtistPage()"
-            >
-                SAVE ARTIST PAGE
-            </button>
-
-        </div>
-
-
-        <div
-            style="
-                margin-top:45px;
-                padding-top:30px;
-                border-top:1px solid #242424;
-            "
-        >
-<div
-    style="
-        margin-top:45px;
-        padding-top:30px;
-        border-top:1px solid #242424;
-    "
->
-
-    <div class="panel-title">
-        LINKS
-    </div>
-
-    <div class="panel-description">
-        Add links that belong only to this artist.
-    </div>
-
-    <div
-        class="form-grid"
-        style="margin-top:25px;"
-    >
-
-        <div class="form-group">
-            <label>
-                LINK NAME
-            </label>
-
-            <input
-                type="text"
-                id="artistLinkTitle"
-                placeholder="Instagram, Spotify, Website..."
-            >
-        </div>
-
-        <div class="form-group">
-            <label>
-                LINK URL
-            </label>
-
-            <input
-                type="text"
-                id="artistLinkUrl"
-                placeholder="https://..."
-            >
-        </div>
-
-    </div>
-
-    <div
-        class="actions"
-        style="margin-top:20px;"
-    >
-        <button
-            class="button primary"
-            onclick="addArtistLink()"
-        >
-            ADD LINK
-        </button>
-    </div>
-
-    <div
-        id="artistLinksAdminList"
-        style="margin-top:25px;"
-    ></div>
-
-</div>
-            <div class="panel-title">
-                MUSIC
-            </div>
-
-            <div class="panel-description">
-                Upload songs that belong only to this artist.
-            </div>
-
-
-            <div
-                class="form-grid"
-                style="margin-top:25px;"
-            >
-
-                <div class="form-group">
-
-                    <label>
-                        SONG TITLE
-                    </label>
-
-                    <input
-                        type="text"
-                        id="artistSongTitle"
-                        placeholder="Song title"
-                    >
-
-                </div>
-
-
-                <div class="form-group">
-
-    <label>
-        SONG ARTWORK
-    </label>
-
-    <input
-        type="file"
-        id="artistSongImageFile"
-        accept="image/*"
-    >
-
-    <div
-        id="artistSongImagePreview"
-        style="margin-top:12px;"
-    ></div>
-
-</div>
-
-
-                <div class="form-group full">
-
-                    <label>
-                        AUDIO FILE
-                    </label>
-
-                    <input
-                        type="file"
-                        id="artistSongFile"
-                        accept="audio/*"
-                    >
-                    <label style="display:block;margin-top:15px;">OPTIONAL VIDEO</label>
-                    <input type="file" id="artistSongVideoFile" accept="video/*">
-
-                </div>
-<div class="form-group">
-
-    <label>
-        MUSIC SECTIONS
-    </label>
-
-    <div style="
-        display:flex;
-        flex-direction:row;
-        flex-wrap:wrap;
-        gap:18px;
-        margin-top:10px;
-    ">
-
-        <label style="display:flex;align-items:center;gap:10px;">
-            <input
-                type="checkbox"
-                class="artist-song-section"
-                value="singles"
-            >
-            SINGLES
-        </label>
-
-        <label style="display:flex;align-items:center;gap:10px;">
-            <input
-                type="checkbox"
-                class="artist-song-section"
-                value="albums"
-            >
-            ALBUMS
-        </label>
-
-        <label style="display:flex;align-items:center;gap:10px;">
-            <input
-                type="checkbox"
-                class="artist-song-section"
-                value="eps"
-            >
-            EPS
-        </label>
-
-        <label style="display:flex;align-items:center;gap:10px;">
-            <input
-                type="checkbox"
-                class="artist-song-section"
-                value="top"
-            >
-            TOP SONGS
-        </label>
-
-    </div>
-
-</div>
-            </div>
-
-
-            <div
-                class="actions"
-                style="margin-top:20px;"
-            >
-
-              <button
-    id="artistSongSubmitButton"
-    class="button primary"
-    onclick="uploadArtistSong()"
->
-    UPLOAD SONG
-</button>
-
-            </div>
-
-
-            <div
-                id="artistSongsAdminList"
-                class="item-list"
-                style="margin-top:25px;"
-            ></div>
-
-        </div>
-
-    </div>
-
-
-<!-- =====================================================
-     ARTIST RELEASES
-===================================================== -->
-
-<div
-    style="
-        margin-top:45px;
-        padding-top:30px;
-        border-top:1px solid #242424;
-    "
->
-
-    <div class="panel-title">
-        ARTIST RELEASES
-    </div>
-
-    <div class="panel-description">
-        Upload full albums and EPs with multiple tracks.
-    </div>
-
-
-    <!-- RELEASE FORM -->
-
-    <div
-        class="form-grid"
-        style="margin-top:25px;"
-    >
-
-        <div class="form-group">
-
-            <label>
-                RELEASE TYPE
-            </label>
-
-            <select id="artistReleaseType">
-
-                <option value="album">
-                    ALBUM
-                </option>
-
-                <option value="ep">
-                    EP
-                </option>
-
-            </select>
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                PROJECT TITLE
-            </label>
-
-            <input
-                type="text"
-                id="artistReleaseTitle"
-                placeholder="Project title"
-            >
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                PROJECT ARTWORK
-            </label>
-
-            <input
-                type="file"
-                id="artistReleaseArtwork"
-                accept="image/*"
-            >
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                RELEASE DATE
-            </label>
-
-            <input
-                type="date"
-                id="artistReleaseDate"
-            >
-
-        </div>
-
-    </div>
-
-
-    <!-- TRACKS -->
-
-    <div
-        style="
-            margin-top:30px;
-        "
-    >
-
-        <div class="panel-title">
-            TRACKLIST
-        </div>
-
-        <div class="panel-description">
-            Add the songs in the order they should appear.
-        </div>
-
-
-        <div
-            id="artistReleaseTracks"
-            style="
-                margin-top:20px;
-                display:flex;
-                flex-direction:column;
-                gap:12px;
-            "
-        ></div>
-
-
-        <div
-            class="actions"
-            style="margin-top:15px;"
-        >
-
-            <button
-                class="button"
-                type="button"
-                onclick="addArtistReleaseTrack()"
-            >
-                + ADD TRACK
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- SAVE RELEASE -->
-
-    <div
-        class="actions"
-        style="margin-top:25px;"
-    >
-
-        <button
-            id="artistReleaseSubmitButton"
-            class="button primary"
-            type="button"
-            onclick="saveArtistRelease()"
-        >
-            SAVE RELEASE
-        </button>
-
-    </div>
-
-
-    <!-- EXISTING RELEASES -->
-
-    <div
-        id="artistReleasesAdminList"
-        class="item-list"
-        style="margin-top:30px;"
-    ></div>
-
-</div>
 </section>
 <!-- =====================================================
      MERCH
