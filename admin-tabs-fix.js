@@ -133,6 +133,7 @@ function artistUploadTrackRow(container,number){
 async function createArtistScheduledRelease(type,title,date,artworkFile,rows){
  if(!selectedArtistPageId)throw new Error('Please select an artist page first.');
  if(!title)throw new Error('Enter a project title.');
+ if(!date)throw new Error('Select a release date.');
  if(!artworkFile)throw new Error('Select project artwork.');
  if(!rows.length)throw new Error('Add at least one song.');
  const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
@@ -188,6 +189,17 @@ window.saveArtistRelease=async function(){
 };
 function setupArtistMusicUploadUI(){
  const type=document.getElementById('artistMusicUploadType'),fields=document.getElementById('artistMusicProjectFields'),tracks=document.getElementById('artistMusicProjectTracks'),add=document.getElementById('artistMusicAddTrack');
+ const releaseTracks=document.getElementById('artistReleaseTracks');
+ if(releaseTracks){
+  [...releaseTracks.children].forEach(row=>{
+   if(!row.querySelector('.artist-release-track-video')){
+    const audio=row.querySelector('.artist-release-track-file');
+    const input=document.createElement('input');input.type='file';input.accept='video/*';input.className='artist-release-track-video';
+    if(audio)audio.insertAdjacentElement('afterend',input);
+   }
+   row.style.display='grid';row.style.gridTemplateColumns='45px 1fr 1fr 1fr 90px';row.style.gap='10px';
+  });
+ }
  if(!type||!fields||!tracks||!add)return;
  const sync=()=>{const project=type.value!=='single';fields.style.display=project?'block':'none';['artistSingleTitleGroup','artistSingleArtworkGroup','artistSingleAudioGroup','artistSingleSectionsGroup'].forEach(id=>{const x=document.getElementById(id);if(x)x.style.display=project?'none':''});if(project&&!tracks.children.length)artistUploadTrackRow(tracks,1)};
  type.addEventListener('change',sync);add.onclick=()=>artistUploadTrackRow(tracks,tracks.children.length+1);sync();
