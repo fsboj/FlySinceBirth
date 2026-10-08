@@ -114,3 +114,82 @@ function renderReleases(list,releases,songs){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
+async function artistUploadFile(bucket,artistId,file,folder){
+ if(!file)return null;
+ const ext=file.name.split('.').pop().toLowerCase();
+ const path=artistId+'/'+(folder?folder+'/':'')+Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
+ const u=await supabaseClient.storage.from(bucket).upload(path,file);
+ if(u.error)throw u.error;
+ return supabaseClient.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+}
+function artistUploadTrackRow(container,number){
+ const row=document.createElement('div');
+ row.className='admin-item';
+ row.style.cssText='display:grid;grid-template-columns:45px 1fr 1fr 1fr 90px;gap:10px;align-items:center';
+ row.innerHTML='<div style="text-align:center">'+number+'</div><input class="artist-upload-track-title" placeholder="Track title"><input class="artist-upload-track-file" type="file" accept="audio/*"><input class="artist-upload-track-video" type="file" accept="video/*"><button class="button danger" type="button">REMOVE</button>';
+ row.querySelector('button').onclick=()=>{row.remove();[...container.children].forEach((x,i)=>x.firstElementChild.textContent=i+1)};
+ container.appendChild(row);
+}
+async function createArtistScheduledRelease(type,title,date,artworkFile,rows){
+ if(!selectedArtistPageId)throw new Error('Please select an artist page first.');
+ if(!title)throw new Error('Enter a project title.');
+ if(!artworkFile)throw new Error('Select project artwork.');
+ if(!rows.length)throw new Error('Add at least one song.');
+ const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
+ const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,release_date:date||null,sort_order:0}).select().single();
+ if(ins.error)throw ins.error;
+ for(let i=0;i<rows.length;i++){
+  const titleEl=rows[i].querySelector('.artist-upload-track-title,.artist-release-track-title');
+  const audioEl=rows[i].querySelector('.artist-upload-track-file,.artist-release-track-file');
+  const videoEl=rows[i].querySelector('.artist-upload-track-video,.artist-release-track-video');
+  const trackTitle=titleEl&&titleEl.value.trim(),audio=audioEl&&audioEl.files[0],video=videoEl&&videoEl.files[0];
+  if(!trackTitle)throw new Error('Enter a title for track '+(i+1)+'.');
+  if(!audio)throw new Error('Select an audio file for track '+(i+1)+'.');
+  const audioUrl=await artistUploadFile('artist-music',selectedArtistPageId,audio,'releases/'+ins.data.id);
+  const videoUrl=await artistUploadFile('videos',selectedArtistPageId,video,'artist-videos/'+ins.data.id);
+  const song=await supabaseClient.from('artist_songs').insert({artist_id:selectedArtistPageId,title:trackTitle,audio_url:audioUrl,image_url:artwork,video_url:videoUrl,sort_order:i+1,plays:0,is_top_song:false,sections:[type==='album'?'albums':'eps'],release_id:ins.data.id,track_number:i+1});
+  if(song.error)throw song.error;
+ }
+ return ins.data;
+}
+window.addArtistReleaseTrack=function(){
+ const container=document.getElementById('artistReleaseTracks');if(!container)return;
+ artistUploadTrackRow(container,container.children.length+1);
+};
+window.uploadArtistMusic=async function(){
+ const type=document.getElementById('artistMusicUploadType')?.value||'single';
+ if(type==='single'){if(typeof uploadArtistSong==='function')return uploadArtistSong();return}
+ try{
+  const title=document.getElementById('artistMusicProjectTitle').value.trim();
+  const date=document.getElementById('artistMusicProjectDate').value;
+  const art=document.getElementById('artistMusicProjectArtwork').files[0];
+  const rows=[...document.querySelectorAll('#artistMusicProjectTracks .admin-item')];
+  const button=document.getElementById('artistSongSubmitButton');if(button){button.disabled=true;button.textContent='UPLOADING...'}
+  await createArtistScheduledRelease(type,title,date,art,rows);
+  document.getElementById('artistMusicProjectTitle').value='';document.getElementById('artistMusicProjectDate').value='';document.getElementById('artistMusicProjectArtwork').value='';
+  document.getElementById('artistMusicProjectTracks').innerHTML='';
+  await renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('MUSIC UPLOADED');
+  alert(type.toUpperCase()+' uploaded successfully. It will release on '+(date||'the selected release date')+'.');
+ }catch(e){alert('Music upload failed: '+(e.message||e))}finally{const b=document.getElementById('artistSongSubmitButton');if(b){b.disabled=false;b.textContent='UPLOAD MUSIC'}}
+};
+window.saveArtistRelease=async function(){
+ try{
+  const type=document.getElementById('artistReleaseType').value;
+  const title=document.getElementById('artistReleaseTitle').value.trim();
+  const date=document.getElementById('artistReleaseDate').value;
+  const art=document.getElementById('artistReleaseArtwork').files[0];
+  const rows=[...document.querySelectorAll('#artistReleaseTracks .admin-item')];
+  const b=document.getElementById('artistReleaseSubmitButton');if(b){b.disabled=true;b.textContent='UPLOADING...'}
+  await createArtistScheduledRelease(type,title,date,art,rows);
+  document.getElementById('artistReleaseTitle').value='';document.getElementById('artistReleaseDate').value='';document.getElementById('artistReleaseArtwork').value='';document.getElementById('artistReleaseTracks').innerHTML='';
+  await renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('UPCOMING RELEASE SAVED');
+  alert('Upcoming '+type.toUpperCase()+' saved. It will appear publicly on '+(date||'the release date')+'.');
+ }catch(e){alert('Upcoming release failed: '+(e.message||e))}finally{const b=document.getElementById('artistReleaseSubmitButton');if(b){b.disabled=false;b.textContent='SAVE UPCOMING RELEASE'}}
+};
+function setupArtistMusicUploadUI(){
+ const type=document.getElementById('artistMusicUploadType'),fields=document.getElementById('artistMusicProjectFields'),tracks=document.getElementById('artistMusicProjectTracks'),add=document.getElementById('artistMusicAddTrack');
+ if(!type||!fields||!tracks||!add)return;
+ const sync=()=>{const project=type.value!=='single';fields.style.display=project?'block':'none';['artistSingleTitleGroup','artistSingleArtworkGroup','artistSingleAudioGroup','artistSingleSectionsGroup'].forEach(id=>{const x=document.getElementById(id);if(x)x.style.display=project?'none':''});if(project&&!tracks.children.length)artistUploadTrackRow(tracks,1)};
+ type.addEventListener('change',sync);add.onclick=()=>artistUploadTrackRow(tracks,tracks.children.length+1);sync();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupArtistMusicUploadUI);else setupArtistMusicUploadUI();
