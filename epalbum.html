@@ -264,6 +264,21 @@ const { data: release, error } = await supabaseClient
 
 console.log("Supabase release data:", release);
 console.log("Supabase release error:", error);
+    if (release && release.release_date) {
+        const releaseDay = new Date(release.release_date + "T00:00:00");
+        const today = new Date();
+        today.setHours(23,59,59,999);
+        if (releaseDay > today) {
+            document.getElementById("releaseTitle").textContent = "Upcoming Release";
+            document.getElementById("releaseType").textContent = (release.type || "RELEASE").toUpperCase();
+            document.getElementById("releaseArtist").textContent = "";
+            document.getElementById("releaseDate").textContent = "Releases " + releaseDay.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
+            document.getElementById("releaseImage").style.display = "none";
+            document.getElementById("releaseTracks").style.display = "none";
+            return;
+        }
+    }
+
     if (error || !release) {
 
         console.error("Release error:", error);
