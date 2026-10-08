@@ -998,6 +998,7 @@ body {
       <div class="form-group"><label>RELEASE TYPE</label><select id="artistReleaseType"><option value="album">ALBUM</option><option value="ep">EP</option></select></div>
       <div class="form-group"><label>PROJECT TITLE</label><input type="text" id="artistReleaseTitle" placeholder="Project title"></div>
       <div class="form-group"><label>PROJECT ARTWORK</label><input type="file" id="artistReleaseArtwork" accept="image/*"></div>
+      <div class="form-group"><label>RELEASE VIDEO</label><input type="file" id="artistReleaseVideo" accept="video/*"><div class="item-meta" style="margin-top:8px;">Optional video for the album/EP release.</div></div>
       <div class="form-group"><label>RELEASE DATE</label><input type="date" id="artistReleaseDate"></div>
     </div>
     <div style="margin-top:30px;"><div class="panel-title">TRACKLIST</div><div class="panel-description">Add the songs in the order they should appear. Each track can also have its own video.</div><div id="artistReleaseTracks" style="margin-top:20px;display:flex;flex-direction:column;gap:12px;"></div><div class="actions" style="margin-top:15px;"><button class="button" type="button" onclick="addArtistReleaseTrack()">+ ADD TRACK</button></div></div>
