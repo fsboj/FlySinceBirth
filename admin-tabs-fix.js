@@ -130,16 +130,24 @@ function artistUploadTrackRow(container,number){
  row.querySelector('button').onclick=()=>{row.remove();[...container.children].forEach((x,i)=>x.firstElementChild.textContent=i+1)};
  container.appendChild(row);
 }
-async function createArtistScheduledRelease(type,title,date,artworkFile,rows,releaseVideoFile){
+async function createArtistScheduledRelease(type,title,date,artworkFile,rows,releaseVideoFiles){
  if(!selectedArtistPageId)throw new Error('Please select an artist page first.');
  if(!title)throw new Error('Enter a project title.');
  if(!date)throw new Error('Select a release date.');
  if(!artworkFile)throw new Error('Select project artwork.');
  if(!rows.length)throw new Error('Add at least one song.');
  const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
- const releaseVideo=await artistUploadFile('videos',selectedArtistPageId,releaseVideoFile,'artist-releases');
  const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,video_url:releaseVideo,release_date:date||null,sort_order:0}).select().single();
  if(ins.error)throw ins.error;
+ const releaseVideos=releaseVideoFiles||[];
+ for(let i=0;i<releaseVideos.length;i++){
+  const v=releaseVideos[i];
+  if(!v.file)continue;
+  const link=await artistUploadFile('videos',selectedArtistPageId,v.file,'artist-releases/'+ins.data.id);
+  const thumb=await artistUploadFile('artist-artwork',selectedArtistPageId,v.thumbnail,'release-video-thumbnails/'+ins.data.id);
+  const vr=await supabaseClient.from('videos').insert({title:v.title||('Video '+(i+1)),link,image:thumb,sort_order:i+1,artist_id:selectedArtistPageId,release_id:ins.data.id});
+  if(vr.error)throw vr.error;
+ }
  for(let i=0;i<rows.length;i++){
   const titleEl=rows[i].querySelector('.artist-upload-track-title,.artist-release-track-title');
   const audioEl=rows[i].querySelector('.artist-upload-track-file,.artist-release-track-file');
@@ -167,7 +175,7 @@ window.uploadArtistMusic=async function(){
   const art=document.getElementById('artistMusicProjectArtwork').files[0];
   const rows=[...document.querySelectorAll('#artistMusicProjectTracks .admin-item')];
   const button=document.getElementById('artistSongSubmitButton');if(button){button.disabled=true;button.textContent='UPLOADING...'}
-  await createArtistScheduledRelease(type,title,date,art,rows,null);
+  await createArtistScheduledRelease(type,title,date,art,rows,[]);
   document.getElementById('artistMusicProjectTitle').value='';document.getElementById('artistMusicProjectDate').value='';document.getElementById('artistMusicProjectArtwork').value='';
   document.getElementById('artistMusicProjectTracks').innerHTML='';
   await renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('MUSIC UPLOADED');
@@ -182,14 +190,23 @@ window.saveArtistRelease=async function(){
   const art=document.getElementById('artistReleaseArtwork').files[0];
   const rows=[...document.querySelectorAll('#artistReleaseTracks .admin-item')];
   const b=document.getElementById('artistReleaseSubmitButton');if(b){b.disabled=true;b.textContent='UPLOADING...'}
-  await createArtistScheduledRelease(type,title,date,art,rows,document.getElementById('artistReleaseVideo')?.files[0]||null);
-  document.getElementById('artistReleaseTitle').value='';document.getElementById('artistReleaseDate').value='';document.getElementById('artistReleaseArtwork').value='';if(document.getElementById('artistReleaseVideo'))document.getElementById('artistReleaseVideo').value='';document.getElementById('artistReleaseTracks').innerHTML='';
+  const releaseVideos=[...document.querySelectorAll('#artistReleaseVideos .artist-release-video-row')].map(function(row){return {title:row.querySelector('.artist-release-video-title')?.value.trim()||'',file:row.querySelector('.artist-release-video-file')?.files[0]||null,thumbnail:row.querySelector('.artist-release-video-thumb')?.files[0]||null}}); if(releaseVideos.some(function(v){return !v.file}))throw new Error('Select a video file for every release video row.'); await createArtistScheduledRelease(type,title,date,art,rows,releaseVideos);
+  document.getElementById('artistReleaseTitle').value='';document.getElementById('artistReleaseDate').value='';document.getElementById('artistReleaseArtwork').value='';if(document.getElementById('artistReleaseVideos'))document.getElementById('artistReleaseVideos').innerHTML='';document.getElementById('artistReleaseTracks').innerHTML='';
   await renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('UPCOMING RELEASE SAVED');
   alert('Upcoming '+type.toUpperCase()+' saved. It will appear publicly on '+(date||'the release date')+'.');
  }catch(e){alert('Upcoming release failed: '+(e.message||e))}finally{const b=document.getElementById('artistReleaseSubmitButton');if(b){b.disabled=false;b.textContent='SAVE UPCOMING RELEASE'}}
 };
 function setupArtistMusicUploadUI(){
  const type=document.getElementById('artistMusicUploadType'),fields=document.getElementById('artistMusicProjectFields'),tracks=document.getElementById('artistMusicProjectTracks'),add=document.getElementById('artistMusicAddTrack');
+ const releaseVideos=document.getElementById('artistReleaseVideos'),addReleaseVideo=document.getElementById('artistAddReleaseVideo');
+ if(releaseVideos&&addReleaseVideo){
+  const addVideo=()=>{
+   const row=document.createElement('div');row.className='admin-item artist-release-video-row';row.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr 90px;gap:10px;align-items:center';
+   row.innerHTML='<input class="artist-release-video-title" placeholder="Video title"><input class="artist-release-video-file" type="file" accept="video/*"><input class="artist-release-video-thumb" type="file" accept="image/*"><button class="button danger" type="button">REMOVE</button>';
+   row.querySelector('button').onclick=()=>row.remove();releaseVideos.appendChild(row);
+  };
+  addReleaseVideo.onclick=addVideo;
+ }
  const releaseTracks=document.getElementById('artistReleaseTracks');
  if(releaseTracks){
   [...releaseTracks.children].forEach(row=>{
