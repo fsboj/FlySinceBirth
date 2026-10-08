@@ -22,7 +22,7 @@ async function loadArtistProfile(id){
   const n=document.getElementById('artistPageName');if(n)n.value=a.name||'';
   const b=document.getElementById('artistPageBio');if(b)b.value=a.bio||'';
   const ip=document.getElementById('artistPageImagePreview');if(ip)ip.innerHTML=a.image?'<img src="'+esc(a.image)+'" style="width:120px;height:120px;object-fit:cover;border:1px solid #242424">':'';
-  const bp=document.getElementById('artistPageBackgroundPreview');if(bp)bp.innerHTML=a.background_image?'<img src="'+esc(a.background_image)+'" style="width:220px;height:120px;object-fit:cover;border:1px solid #242424">':'';
+  const bp=document.getElementById('artistPageBackgroundPreview');if(bp)bp.innerHTML=a.background_image_url?'<img src="'+esc(a.background_image)+'" style="width:220px;height:120px;object-fit:cover;border:1px solid #242424">':'';
  }catch(e){console.error('Artist profile load error:',e)}
 }
 async function renderArtistMusic(artistId){
