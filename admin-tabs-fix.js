@@ -20,15 +20,18 @@ function openArtistManager(){
   const manager=document.getElementById('artistPageManager');
   if(!id){if(manager)manager.style.display='none';return}
   if(manager)manager.style.display='block';
-  window.selectedArtistPageId=String(id);
   const opt=this.options[this.selectedIndex];
   const name=opt?opt.textContent:'ARTIST';
   const ni=document.getElementById('artistPageName');if(ni)ni.value=name;
   const sn=document.getElementById('selectedArtistName');if(sn)sn.textContent=name;
   Promise.resolve().then(async function(){
-   if(typeof window.loadArtistSongsAdmin==='function')await window.loadArtistSongsAdmin();
-   if(typeof window.loadArtistReleasesAdmin==='function')await window.loadArtistReleasesAdmin();
-   if(typeof window.loadArtistLinksAdmin==='function')await window.loadArtistLinksAdmin();
+   if(typeof window.loadSelectedArtistPage==='function'){
+     await window.loadSelectedArtistPage(id);
+   }else{
+     if(typeof window.loadArtistSongsAdmin==='function')await window.loadArtistSongsAdmin();
+     if(typeof window.loadArtistReleasesAdmin==='function')await window.loadArtistReleasesAdmin();
+     if(typeof window.loadArtistLinksAdmin==='function')await window.loadArtistLinksAdmin();
+   }
   }).catch(function(e){
    console.error('Artist manager error',e);
    const r=document.getElementById('artistReleasesAdminList');
