@@ -2770,7 +2770,7 @@ if (musicSection) {
     );
 
 
-    (newestReleases || []).forEach(
+    visibleNewestReleases.forEach(
         function(release) {
 
             newestItems.push({
@@ -2968,15 +2968,23 @@ async function loadArtistReleases() {
         return;
     }
 
+    const today = new Date();
+    today.setHours(23,59,59,999);
+
+    const visibleReleases = (releases || []).filter(function(release) {
+        if (!release.release_date) return true;
+        return new Date(release.release_date + "T00:00:00") <= today;
+    });
+
     const albumList =
-        (releases || []).filter(
+        visibleReleases.filter(
             function(release) {
                 return release.type === "album";
             }
         );
 
     const epList =
-        (releases || []).filter(
+        visibleReleases.filter(
             function(release) {
                 return release.type === "ep";
             }
