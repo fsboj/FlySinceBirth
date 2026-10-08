@@ -965,31 +965,43 @@ body {
   </div>
 
   <div style="margin-top:35px;padding-top:30px;border-top:1px solid #242424;">
-    <div class="panel-title">MUSIC UPLOAD</div><div class="panel-description">Upload a single song for this artist.</div>
+    <div class="panel-title">MUSIC UPLOAD</div><div class="panel-description">Upload a single, album, or EP. Albums and EPs can contain multiple songs and a video for every track.</div>
     <div class="form-grid" style="margin-top:25px;">
-      <div class="form-group"><label>SONG TITLE</label><input type="text" id="artistSongTitle" placeholder="Song title"></div>
-      <div class="form-group"><label>SONG ARTWORK</label><input type="file" id="artistSongImageFile" accept="image/*"><div id="artistSongImagePreview" style="margin-top:12px;"></div></div>
-      <div class="form-group full"><label>AUDIO FILE</label><input type="file" id="artistSongFile" accept="audio/*"><label style="display:block;margin-top:15px;">OPTIONAL VIDEO</label><input type="file" id="artistSongVideoFile" accept="video/*"></div>
-      <div class="form-group"><label>MUSIC SECTIONS</label><div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:18px;margin-top:10px;">
+      <div class="form-group"><label>UPLOAD TYPE</label><select id="artistMusicUploadType"><option value="single">SINGLE</option><option value="album">ALBUM</option><option value="ep">EP</option></select></div>
+      <div class="form-group" id="artistSingleTitleGroup"><label>SONG TITLE</label><input type="text" id="artistSongTitle" placeholder="Song title"></div>
+      <div class="form-group" id="artistSingleArtworkGroup"><label>SONG ARTWORK</label><input type="file" id="artistSongImageFile" accept="image/*"><div id="artistSongImagePreview" style="margin-top:12px;"></div></div>
+      <div class="form-group full" id="artistSingleAudioGroup"><label>AUDIO FILE</label><input type="file" id="artistSongFile" accept="audio/*"><label style="display:block;margin-top:15px;">OPTIONAL VIDEO</label><input type="file" id="artistSongVideoFile" accept="video/*"></div>
+      <div class="form-group" id="artistSingleSectionsGroup"><label>MUSIC SECTIONS</label><div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:18px;margin-top:10px;">
         <label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" class="artist-song-section" value="singles"> SINGLES</label>
         <label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" class="artist-song-section" value="albums"> ALBUMS</label>
         <label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" class="artist-song-section" value="eps"> EPS</label>
         <label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" class="artist-song-section" value="top"> TOP SONGS</label>
       </div></div>
     </div>
-    <div class="actions" style="margin-top:20px;"><button id="artistSongSubmitButton" class="button primary" onclick="uploadArtistSong()">UPLOAD SONG</button></div>
+    <div id="artistMusicProjectFields" style="display:none;margin-top:25px;">
+      <div class="form-grid">
+        <div class="form-group"><label>PROJECT TITLE</label><input id="artistMusicProjectTitle" placeholder="Album / EP title"></div>
+        <div class="form-group"><label>PROJECT ARTWORK</label><input id="artistMusicProjectArtwork" type="file" accept="image/*"></div>
+        <div class="form-group"><label>RELEASE DATE</label><input id="artistMusicProjectDate" type="date"></div>
+      </div>
+      <div class="panel-title" style="font-size:18px;margin-top:25px;">PROJECT TRACKS</div>
+      <div class="panel-description">Add as many songs as needed. Each track can have its own audio and video.</div>
+      <div id="artistMusicProjectTracks" style="margin-top:15px;display:flex;flex-direction:column;gap:10px;"></div>
+      <div class="actions"><button class="button" type="button" id="artistMusicAddTrack">+ ADD SONG</button></div>
+    </div>
+    <div class="actions" style="margin-top:20px;"><button id="artistSongSubmitButton" class="button primary" onclick="uploadArtistMusic()">UPLOAD MUSIC</button></div>
   </div>
 
   <div style="margin-top:45px;padding-top:30px;border-top:1px solid #242424;">
-    <div class="panel-title">ALBUM/EP RELEASE</div><div class="panel-description">Create a full album or EP and add its tracks in order.</div>
+    <div class="panel-title">UPCOMING RELEASE</div><div class="panel-description">Upload an album or EP now and keep it hidden until the selected release date.</div>
     <div class="form-grid" style="margin-top:25px;">
       <div class="form-group"><label>RELEASE TYPE</label><select id="artistReleaseType"><option value="album">ALBUM</option><option value="ep">EP</option></select></div>
       <div class="form-group"><label>PROJECT TITLE</label><input type="text" id="artistReleaseTitle" placeholder="Project title"></div>
       <div class="form-group"><label>PROJECT ARTWORK</label><input type="file" id="artistReleaseArtwork" accept="image/*"></div>
       <div class="form-group"><label>RELEASE DATE</label><input type="date" id="artistReleaseDate"></div>
     </div>
-    <div style="margin-top:30px;"><div class="panel-title">TRACKLIST</div><div class="panel-description">Add the songs in the order they should appear.</div><div id="artistReleaseTracks" style="margin-top:20px;display:flex;flex-direction:column;gap:12px;"></div><div class="actions" style="margin-top:15px;"><button class="button" type="button" onclick="addArtistReleaseTrack()">+ ADD TRACK</button></div></div>
-    <div class="actions" style="margin-top:25px;"><button id="artistReleaseSubmitButton" class="button primary" type="button" onclick="saveArtistRelease()">SAVE RELEASE</button></div>
+    <div style="margin-top:30px;"><div class="panel-title">TRACKLIST</div><div class="panel-description">Add the songs in the order they should appear. Each track can also have its own video.</div><div id="artistReleaseTracks" style="margin-top:20px;display:flex;flex-direction:column;gap:12px;"></div><div class="actions" style="margin-top:15px;"><button class="button" type="button" onclick="addArtistReleaseTrack()">+ ADD TRACK</button></div></div>
+    <div class="actions" style="margin-top:25px;"><button id="artistReleaseSubmitButton" class="button primary" type="button" onclick="saveArtistRelease()">SAVE UPCOMING RELEASE</button></div>
   </div>
 
   <div style="margin-top:45px;padding-top:30px;border-top:1px solid #242424;">
