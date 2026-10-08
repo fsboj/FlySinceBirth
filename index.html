@@ -1537,6 +1537,13 @@ async function loadSiteImages() {
         return;
     }
 
+    const today = new Date();
+    today.setHours(23,59,59,999);
+    releases = (releases || []).filter(function(release) {
+        if (!release.release_date) return true;
+        return new Date(release.release_date + "T00:00:00") <= today;
+    });
+
     const artistMap = {};
 
     (artists || []).forEach(function(artist) {
@@ -2220,7 +2227,9 @@ async function loadVipMusic(){
  grid.innerHTML="";
  var slots={};(r.data||[]).forEach(function(x){slots[x.slot]=x});
  const songs=await supabaseClient.from("artist_songs").select("id,title,image_url,artist_id").is("release_id",null);
- const releases=await supabaseClient.from("artist_releases").select("id,title,type,artwork_url,artist_id");
+ let releases=(await supabaseClient.from("artist_releases").select("id,title,type,artwork_url,artist_id,release_date")).data||[];
+ const today=new Date(); today.setHours(23,59,59,999);
+ releases=releases.filter(function(release){if(!release.release_date)return true;return new Date(release.release_date+"T00:00:00")<=today;});
  const artists=await supabaseClient.from("artists").select("id,name");
  for(var i=1;i<=3;i++){
   var item=slots[i],card=document.createElement("div");
