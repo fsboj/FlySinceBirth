@@ -10,6 +10,26 @@ function init(){
  ts.forEach(b=>b.onclick=e=>{e.preventDefault();const z=(b.getAttribute('onclick')||'').match(/showMainSubPanel\(['"]([^'"]+)/);if(z)sub(z[1])});
  sub('site');openArtistManager();
 }
+async function addArtist(){
+ const name=prompt('ARTIST NAME');
+ if(!name||!name.trim())return;
+ const cleanName=name.trim();
+ const slug=cleanName.toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+ if(!slug){alert('Please enter a valid artist name.');return;}
+ try{
+  const existing=await supabaseClient.from('artists').select('id').eq('slug',slug).maybeSingle();
+  if(existing.error)throw existing.error;
+  if(existing.data){alert('An artist with that name already exists.');return;}
+  const maxResult=await supabaseClient.from('artists').select('sort_order').order('sort_order',{ascending:false}).limit(1);
+  if(maxResult.error)throw maxResult.error;
+  const nextOrder=((maxResult.data&&maxResult.data[0]&&Number(maxResult.data[0].sort_order))||0)+1;
+  const created=await supabaseClient.from('artists').insert({name:cleanName,slug:slug,sort_order:nextOrder,homepage_featured:false}).select('id,name,slug').single();
+  if(created.error)throw created.error;
+  const select=document.getElementById('artistPageSelect');
+  if(select){const option=document.createElement('option');option.value=created.data.id;option.textContent=created.data.name;select.appendChild(option);select.value=String(created.data.id);select.dispatchEvent(new Event('change'));}
+  alert(cleanName+' added successfully.');
+ }catch(e){alert('Could not add artist: '+(e.message||e));}
+}
 function openArtistManager(){
  const s=document.getElementById('artistPageSelect'); if(!s)return;
  s.onchange=function(){const id=this.value,manager=document.getElementById('artistPageManager');if(!id){if(manager)manager.style.display='none';return}if(manager)manager.style.display='block';window.selectedArtistPageId=id;loadArtistProfile(id);renderArtistMusic(id);if(typeof loadArtistLinksAdmin==='function')loadArtistLinksAdmin()};
