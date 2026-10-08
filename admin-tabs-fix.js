@@ -137,7 +137,7 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
  if(!artworkFile)throw new Error('Select project artwork.');
  if(!rows.length)throw new Error('Add at least one song.');
  const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
- const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,video_url:releaseVideo,release_date:date||null,sort_order:0}).select().single();
+ const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,release_date:date||null,sort_order:0}).select().single();
  if(ins.error)throw ins.error;
  const releaseVideos=releaseVideoFiles||[];
  for(let i=0;i<releaseVideos.length;i++){
