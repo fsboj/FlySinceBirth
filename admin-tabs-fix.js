@@ -126,7 +126,7 @@ function artistUploadTrackRow(container,number){
  const row=document.createElement('div');
  row.className='admin-item';
  row.style.cssText='display:grid;grid-template-columns:45px 1fr 1fr 1fr 90px;gap:10px;align-items:center';
- row.innerHTML='<div style="text-align:center">'+number+'</div><input class="artist-upload-track-title" placeholder="Track title"><input class="artist-upload-track-file" type="file" accept="audio/*"><input class="artist-upload-track-video" type="file" accept="video/*"><button class="button danger" type="button">REMOVE</button>';
+ row.innerHTML='<div style="text-align:center">'+number+'</div><input class="artist-upload-track-title" placeholder="Track title"><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">AUDIO<input class="artist-upload-track-file" type="file" accept="audio/*"></label><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">VIDEO<input class="artist-upload-track-video" type="file" accept="video/*"></label><button class="button danger" type="button">REMOVE</button>';
  row.querySelector('button').onclick=()=>{row.remove();[...container.children].forEach((x,i)=>x.firstElementChild.textContent=i+1)};
  container.appendChild(row);
 }
