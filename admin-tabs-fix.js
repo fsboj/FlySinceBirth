@@ -137,7 +137,9 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows){
  if(!artworkFile)throw new Error('Select project artwork.');
  if(!rows.length)throw new Error('Add at least one song.');
  const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
- const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,release_date:date||null,sort_order:0}).select().single();
+ const releaseVideoFile=document.getElementById('artistReleaseVideo')?.files[0]||null;
+ const releaseVideo=await artistUploadFile('videos',selectedArtistPageId,releaseVideoFile,'artist-releases');
+ const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,video_url:releaseVideo,release_date:date||null,sort_order:0}).select().single();
  if(ins.error)throw ins.error;
  for(let i=0;i<rows.length;i++){
   const titleEl=rows[i].querySelector('.artist-upload-track-title,.artist-release-track-title');
@@ -182,7 +184,7 @@ window.saveArtistRelease=async function(){
   const rows=[...document.querySelectorAll('#artistReleaseTracks .admin-item')];
   const b=document.getElementById('artistReleaseSubmitButton');if(b){b.disabled=true;b.textContent='UPLOADING...'}
   await createArtistScheduledRelease(type,title,date,art,rows);
-  document.getElementById('artistReleaseTitle').value='';document.getElementById('artistReleaseDate').value='';document.getElementById('artistReleaseArtwork').value='';document.getElementById('artistReleaseTracks').innerHTML='';
+  document.getElementById('artistReleaseTitle').value='';document.getElementById('artistReleaseDate').value='';document.getElementById('artistReleaseArtwork').value='';if(document.getElementById('artistReleaseVideo'))document.getElementById('artistReleaseVideo').value='';document.getElementById('artistReleaseTracks').innerHTML='';
   await renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('UPCOMING RELEASE SAVED');
   alert('Upcoming '+type.toUpperCase()+' saved. It will appear publicly on '+(date||'the release date')+'.');
  }catch(e){alert('Upcoming release failed: '+(e.message||e))}finally{const b=document.getElementById('artistReleaseSubmitButton');if(b){b.disabled=false;b.textContent='SAVE UPCOMING RELEASE'}}
