@@ -130,14 +130,13 @@ function artistUploadTrackRow(container,number){
  row.querySelector('button').onclick=()=>{row.remove();[...container.children].forEach((x,i)=>x.firstElementChild.textContent=i+1)};
  container.appendChild(row);
 }
-async function createArtistScheduledRelease(type,title,date,artworkFile,rows){
+async function createArtistScheduledRelease(type,title,date,artworkFile,rows,releaseVideoFile){
  if(!selectedArtistPageId)throw new Error('Please select an artist page first.');
  if(!title)throw new Error('Enter a project title.');
  if(!date)throw new Error('Select a release date.');
  if(!artworkFile)throw new Error('Select project artwork.');
  if(!rows.length)throw new Error('Add at least one song.');
  const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
- const releaseVideoFile=document.getElementById('artistReleaseVideo')?.files[0]||null;
  const releaseVideo=await artistUploadFile('videos',selectedArtistPageId,releaseVideoFile,'artist-releases');
  const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,video_url:releaseVideo,release_date:date||null,sort_order:0}).select().single();
  if(ins.error)throw ins.error;
@@ -168,7 +167,7 @@ window.uploadArtistMusic=async function(){
   const art=document.getElementById('artistMusicProjectArtwork').files[0];
   const rows=[...document.querySelectorAll('#artistMusicProjectTracks .admin-item')];
   const button=document.getElementById('artistSongSubmitButton');if(button){button.disabled=true;button.textContent='UPLOADING...'}
-  await createArtistScheduledRelease(type,title,date,art,rows);
+  await createArtistScheduledRelease(type,title,date,art,rows,null);
   document.getElementById('artistMusicProjectTitle').value='';document.getElementById('artistMusicProjectDate').value='';document.getElementById('artistMusicProjectArtwork').value='';
   document.getElementById('artistMusicProjectTracks').innerHTML='';
   await renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('MUSIC UPLOADED');
@@ -183,7 +182,7 @@ window.saveArtistRelease=async function(){
   const art=document.getElementById('artistReleaseArtwork').files[0];
   const rows=[...document.querySelectorAll('#artistReleaseTracks .admin-item')];
   const b=document.getElementById('artistReleaseSubmitButton');if(b){b.disabled=true;b.textContent='UPLOADING...'}
-  await createArtistScheduledRelease(type,title,date,art,rows);
+  await createArtistScheduledRelease(type,title,date,art,rows,document.getElementById('artistReleaseVideo')?.files[0]||null);
   document.getElementById('artistReleaseTitle').value='';document.getElementById('artistReleaseDate').value='';document.getElementById('artistReleaseArtwork').value='';if(document.getElementById('artistReleaseVideo'))document.getElementById('artistReleaseVideo').value='';document.getElementById('artistReleaseTracks').innerHTML='';
   await renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('UPCOMING RELEASE SAVED');
   alert('Upcoming '+type.toUpperCase()+' saved. It will appear publicly on '+(date||'the release date')+'.');
