@@ -916,7 +916,7 @@ body {
      ARTIST PAGES
 ===================================================== -->
 
-<section id="upcoming" class="panel"><div class="panel-header"><div class="panel-title">UPCOMING RELEASES</div><div class="panel-description">Schedule upcoming songs, EPs, albums, events, merch and videos and link each item to its proper page.</div></div><div class="form-grid"><div class="form-group"><label>TYPE</label><select id="upcomingType"><option value="song">SONG</option><option value="ep">EP</option><option value="album">ALBUM</option><option value="event">EVENT</option><option value="merch">MERCH</option><option value="video">VIDEO</option></select></div><div class="form-group"><label>TITLE</label><input id="upcomingTitle" type="text" placeholder="Upcoming title"></div><div class="form-group"><label>DATE</label><input id="upcomingDate" type="date"></div><div class="form-group"><label>ARTWORK / IMAGE</label><input id="upcomingImage" type="file" accept="image/*"></div><div class="form-group full"><label>DESCRIPTION</label><textarea id="upcomingDescription" placeholder="Optional description"></textarea></div><div class="form-group"><label>ARTIST</label><select id="upcomingArtist"><option value="">NONE</option></select></div><div class="form-group"><label>LINK TO</label><select id="upcomingTarget"><option value="">CHOOSE AUTOMATIC LINK</option></select><input id="upcomingMerchUrl" type="url" placeholder="MERCH LINK (USED FOR MERCH)" style="margin-top:10px"></div></div><div class="actions"><button class="button primary" onclick="saveUpcomingRelease()">ADD UPCOMING RELEASE</button></div><div id="upcomingList" class="item-list"></div></section>
+<section id="upcoming" class="panel"><div class="panel-header"><div class="panel-title">UPCOMING RELEASES</div><div class="panel-description">Schedule upcoming songs, EPs, albums, events, merch and videos and link each item to its proper page.</div></div><div class="form-grid"><div class="form-group"><label>TYPE</label><select id="upcomingType"><option value="song">SONG</option><option value="ep">EP</option><option value="album">ALBUM</option><option value="event">EVENT</option><option value="merch">MERCH</option><option value="video">VIDEO</option></select></div><div class="form-group"><label>TITLE</label><input id="upcomingTitle" type="text" placeholder="Upcoming title"></div><div class="form-group"><label>DATE</label><input id="upcomingDate" type="date"></div><div class="form-group"><label>ARTWORK / IMAGE</label><input id="upcomingImage" type="file" accept="image/*"></div><div class="form-group full" id="upcomingVideoUploadGroup" style="display:none"><label>VIDEO FILE</label><input id="upcomingVideoFile" type="file" accept="video/*"></div><div class="form-group full"><label>DESCRIPTION</label><textarea id="upcomingDescription" placeholder="Optional description"></textarea></div><div class="form-group"><label>ARTIST</label><select id="upcomingArtist"><option value="">NONE</option></select></div><div class="form-group"><label>LINK TO</label><select id="upcomingTarget"><option value="">CHOOSE AUTOMATIC LINK</option></select><input id="upcomingMerchUrl" type="url" placeholder="MERCH LINK (USED FOR MERCH)" style="margin-top:10px"></div></div><div class="actions"><button class="button" type="button" onclick="prepareUpcomingVideo()">+ ADD VIDEO</button><button class="button primary" onclick="saveUpcomingRelease()">ADD UPCOMING RELEASE</button></div><div id="upcomingList" class="item-list"></div></section>
 
 <section
     id="artistPages"
@@ -6386,14 +6386,35 @@ async function populateUpcomingTargetOptions(){
  if(type==="event"){r=await supabaseClient.from("events").select("id,title").order("sort_order",{ascending:true});(r.data||[]).forEach(function(x){html+='<option value="event:'+x.id+'">EVENT — '+escapeHtml(x.title)+"</option>"})}
  s.innerHTML=html;
 }
+function prepareUpcomingVideo(){
+ var type=document.getElementById("upcomingType");if(type)type.value="video";
+ var group=document.getElementById("upcomingVideoUploadGroup");if(group)group.style.display="block";
+ var input=document.getElementById("upcomingVideoFile");if(input)input.click();
+}
+document.addEventListener("DOMContentLoaded",function(){
+ var type=document.getElementById("upcomingType"),group=document.getElementById("upcomingVideoUploadGroup");
+ if(type&&group)type.addEventListener("change",function(){group.style.display=this.value==="video"?"block":"none";});
+});
 async function saveUpcomingRelease(){
  var title=document.getElementById("upcomingTitle").value.trim();if(!title){alert("Enter a title.");return}
+ var type=document.getElementById("upcomingType").value;
  var file=document.getElementById("upcomingImage").files[0],imageUrl=null;
  if(file){var path="upcoming/"+Date.now()+"-"+file.name;var up=await supabaseClient.storage.from("site-images").upload(path,file);if(up.error){alert(up.error.message);return}imageUrl=supabaseClient.storage.from("site-images").getPublicUrl(path).data.publicUrl}
- var target=document.getElementById("upcomingTarget").value,parts=target?target.split(":"):["",""];
- var payload={title:title,type:document.getElementById("upcomingType").value,description:document.getElementById("upcomingDescription").value.trim()||null,image_url:imageUrl,release_date:document.getElementById("upcomingDate").value||null,artist_id:document.getElementById("upcomingArtist").value||null,song_id:parts[0]==="song"?Number(parts[1]):null,release_id:parts[0]==="release"?parts[1]:null,video_id:parts[0]==="video"?Number(parts[1]):null,event_id:parts[0]==="event"?Number(parts[1]):null,target_url:document.getElementById("upcomingType").value==="merch"?(document.getElementById("upcomingMerchUrl").value.trim()||null):null,visible:true};
+ var target=document.getElementById("upcomingTarget").value,parts=target?target.split(":"):["",""],videoId=parts[0]==="video"?Number(parts[1]):null;
+ if(type==="video"){
+  var videoFile=document.getElementById("upcomingVideoFile").files[0];
+  if(!videoFile){alert("Choose a video file.");return}
+  var videoPath="upcoming-videos/"+Date.now()+"-"+videoFile.name;
+  var videoUpload=await supabaseClient.storage.from("videos").upload(videoPath,videoFile);
+  if(videoUpload.error){alert(videoUpload.error.message);return}
+  var videoUrl=supabaseClient.storage.from("videos").getPublicUrl(videoPath).data.publicUrl;
+  var videoInsert=await supabaseClient.from("videos").insert({title:title,image:imageUrl,link:videoUrl,sort_order:Date.now(),artist_id:document.getElementById("upcomingArtist").value||null,release_id:null}).select("id").single();
+  if(videoInsert.error){alert(videoInsert.error.message);return}
+  videoId=videoInsert.data.id;
+ }
+ var payload={title:title,type:type,description:document.getElementById("upcomingDescription").value.trim()||null,image_url:imageUrl,release_date:document.getElementById("upcomingDate").value||null,artist_id:document.getElementById("upcomingArtist").value||null,song_id:parts[0]==="song"?Number(parts[1]):null,release_id:parts[0]==="release"?parts[1]:null,video_id:videoId,event_id:parts[0]==="event"?Number(parts[1]):null,target_url:type==="merch"?(document.getElementById("upcomingMerchUrl").value.trim()||null):null,visible:true};
  var r=await supabaseClient.from("upcoming_releases").insert(payload);if(r.error){alert(r.error.message);return}
- document.getElementById("upcomingTitle").value="";document.getElementById("upcomingDescription").value="";document.getElementById("upcomingDate").value="";document.getElementById("upcomingImage").value="";if(document.getElementById("upcomingMerchUrl"))document.getElementById("upcomingMerchUrl").value="";loadUpcomingReleases();setStatus("UPCOMING RELEASE ADDED");
+ document.getElementById("upcomingTitle").value="";document.getElementById("upcomingDescription").value="";document.getElementById("upcomingDate").value="";document.getElementById("upcomingImage").value="";document.getElementById("upcomingVideoFile").value="";document.getElementById("upcomingVideoUploadGroup").style.display="none";if(document.getElementById("upcomingMerchUrl"))document.getElementById("upcomingMerchUrl").value="";loadUpcomingReleases();setStatus("UPCOMING RELEASE ADDED");
 }
 async function loadUpcomingReleases(){
  var list=document.getElementById("upcomingList");if(!list)return;var r=await supabaseClient.from("upcoming_releases").select("*").order("release_date",{ascending:true});if(r.error){return}list.innerHTML="";(r.data||[]).forEach(function(x){var row=document.createElement("div");row.className="admin-item";row.innerHTML='<div class="item-info">'+(x.image_url?'<img class="item-image" src="'+x.image_url+'">':'<div class="item-image"></div>')+'<div><div class="item-name">'+escapeHtml(x.title)+'</div><div class="item-meta">'+x.type.toUpperCase()+(x.release_date?" • "+escapeHtml(x.release_date):"")+"</div></div></div><div class=\"actions\"><label><input type=\"checkbox\" "+(x.visible?"checked":"")+" onchange=\"toggleUpcoming("+x.id+",this.checked)\"> SHOW</label><button class=\"button danger\" onclick=\"deleteUpcoming("+x.id+")\">REMOVE</button></div>';list.appendChild(row)})}
