@@ -3293,11 +3293,9 @@ async function loadArtistVideos() {
             card.appendChild(title);
         }
 
-        if (video.link) {
-            card.onclick = function() {
-                window.open(video.link, "_blank", "noopener,noreferrer");
-            };
-        }
+        card.onclick = function() {
+            window.location.href = "video.html?video_id=" + encodeURIComponent(video.id);
+        };
 
         videoSection.appendChild(card);
     });
