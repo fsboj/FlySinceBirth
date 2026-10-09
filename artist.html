@@ -3196,99 +3196,104 @@ async function loadArtistReleaseTracks(
 
 async function loadArtistVideos() {
 
-    const videoSection =
-        document.getElementById("artistVideos");
+    const videoSection = document.getElementById("artistVideos");
+    if (!videoSection || !artistId) return;
 
-    if (!videoSection || !artistId) {
-        return;
-    }
-
-    const { data: videos, error } =
-        await supabaseClient
-            .from("videos")
-            .select("*")
-            .eq("artist_id", artistId)
-            .order("created_at", {
-                ascending: false
-            });
+    const { data: videos, error } = await supabaseClient
+        .from("videos")
+        .select("*")
+        .eq("artist_id", artistId)
+        .order("created_at", { ascending: false });
 
     if (error) {
-
-        console.error(
-            "Could not load artist videos:",
-            error
-        );
-
+        console.error("Could not load artist videos:", error);
         return;
     }
 
     videoSection.innerHTML = "";
 
     if (!videos || videos.length === 0) {
-
-        videoSection.innerHTML =
-            '<div class="empty-state">NO VIDEOS AVAILABLE</div>';
-
+        videoSection.innerHTML = '<div class="empty-state">NO VIDEOS AVAILABLE</div>';
         return;
     }
 
     videos.forEach(function(video) {
+        const card = document.createElement("div");
+        card.className = "video-card";
 
-        const card =
-            document.createElement("div");
+        const image = document.createElement("img");
+        image.className = "video-thumbnail";
+        image.alt = video.title || "FSB Video";
+        image.src = video.image || "fsblogo.PNG";
+        card.appendChild(image);
 
-        card.className =
-            "video-card";
+        // If the link is a directly playable video file, replace the saved
+        // artwork with a frame sampled from a random point in the video.
+        // External watch pages (such as YouTube pages) cannot be sampled here.
+        if (video.link && /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(video.link)) {
+            const sourceVideo = document.createElement("video");
+            sourceVideo.muted = true;
+            sourceVideo.preload = "metadata";
+            sourceVideo.crossOrigin = "anonymous";
+            sourceVideo.playsInline = true;
 
-        if (video.image) {
+            sourceVideo.addEventListener("loadedmetadata", function() {
+                const duration = sourceVideo.duration;
+                if (!Number.isFinite(duration) || duration <= 0) return;
+                const safeEnd = Math.max(0, duration - 0.25);
+                sourceVideo.currentTime = Math.random() * safeEnd;
+            }, { once: true });
 
-           const image =
-    document.createElement("img");
+            sourceVideo.addEventListener("seeked", function() {
+                try {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = 640;
+                    canvas.height = 360;
+                    const context = canvas.getContext("2d");
+                    if (!context) return;
 
-image.className =
-    "video-thumbnail";
+                    const videoRatio = sourceVideo.videoWidth / sourceVideo.videoHeight;
+                    const canvasRatio = canvas.width / canvas.height;
+                    let sx = 0, sy = 0, sw = sourceVideo.videoWidth, sh = sourceVideo.videoHeight;
 
-image.src =
-    video.image;
+                    if (videoRatio > canvasRatio) {
+                        sw = sourceVideo.videoHeight * canvasRatio;
+                        sx = (sourceVideo.videoWidth - sw) / 2;
+                    } else {
+                        sh = sourceVideo.videoWidth / canvasRatio;
+                        sy = (sourceVideo.videoHeight - sh) / 2;
+                    }
 
-image.alt =
-    video.title ||
-    "FSB Video";
+                    context.drawImage(sourceVideo, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+                    image.src = canvas.toDataURL("image/jpeg", 0.82);
+                } catch (frameError) {
+                    // Keep the saved thumbnail if the video host blocks frame capture.
+                    console.warn("Could not create a video frame thumbnail:", frameError);
+                }
+            }, { once: true });
 
-            card.appendChild(image);
+            sourceVideo.addEventListener("error", function() {
+                // Keep the saved thumbnail if this is not a directly playable video URL.
+            }, { once: true });
+
+            sourceVideo.src = video.link;
         }
 
         if (video.title) {
-
-            const title =
-                document.createElement("div");
-
-            title.className =
-                "video-card-title";
-
-            title.textContent =
-                video.title;
-
+            const title = document.createElement("div");
+            title.className = "video-title";
+            title.textContent = video.title;
             card.appendChild(title);
         }
 
         if (video.link) {
-
-            card.onclick =
-                function() {
-
-                    window.open(
-                        video.link,
-                        "_blank"
-                    );
-
-                };
+            card.onclick = function() {
+                window.open(video.link, "_blank", "noopener,noreferrer");
+            };
         }
 
         videoSection.appendChild(card);
-
     });
-
 }
 
 
