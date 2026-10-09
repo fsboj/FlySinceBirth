@@ -2737,7 +2737,8 @@ if (musicSection) {
     =============================== */
 
     const {
-        data: newestReleases
+        data: newestReleases,
+        error: newestReleasesError
     } =
         await supabaseClient
             .from("artist_releases")
@@ -2748,6 +2749,16 @@ if (musicSection) {
             })
             .limit(5);
 
+    if (newestReleasesError) {
+        console.error("Could not load newest artist releases:", newestReleasesError);
+    }
+
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const visibleNewestReleases = (newestReleases || []).filter(function(release) {
+        if (!release.release_date) return true;
+        return new Date(release.release_date + "T00:00:00") <= today;
+    });
 
     /* ===============================
        COMBINE EVERYTHING
