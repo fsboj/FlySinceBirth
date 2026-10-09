@@ -2055,9 +2055,18 @@ async function loadSiteContent() {
 
     if (content.artists_heading) {
         const element = document.querySelector("#artists .section-heading");
-
         if (element) {
-            element.textContent = content.artists_heading;
+            const link = element.querySelector("a");
+            if (link) {
+                const label = link.firstChild;
+                if (label && label.nodeType === Node.TEXT_NODE) {
+                    label.textContent = content.artists_heading + " ";
+                } else {
+                    link.insertBefore(document.createTextNode(content.artists_heading + " "), link.firstChild);
+                }
+            } else {
+                element.textContent = content.artists_heading;
+            }
         }
     }
 
