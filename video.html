@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video | Fly Since Birth</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{background:#050505;color:#fff;font-family:Arial,Helvetica,sans-serif;min-height:100vh}a{color:inherit;text-decoration:none}.navbar{position:sticky;top:0;z-index:10;background:rgba(5,5,5,.92);backdrop-filter:blur(10px);display:flex;justify-content:space-between;align-items:center;padding:20px 6%;border-bottom:1px solid #202020}.nav-logo img{width:52px;height:52px;object-fit:contain}.back-button{border:1px solid #444;padding:12px 18px;font-size:9px;letter-spacing:2px}.back-button:hover{background:#fff;color:#000}.page{width:min(1180px,88%);margin:48px auto 80px}.video-player{width:100%;aspect-ratio:16/9;background:#111;border:1px solid #242424;display:block;max-height:75vh}.video-title{font-size:clamp(24px,4vw,42px);font-weight:800;letter-spacing:-1px;margin-top:25px;line-height:1.1}.video-byline{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:12px;color:#999;font-size:14px}.artist-link{font-size:15px;font-weight:600;color:#fff}.release-link{font-size:13px;color:#999}.artist-link:hover,.release-link:hover{text-decoration:underline;color:#fff}.separator{color:#555}.section-heading{font-size:12px;letter-spacing:4px;color:#888;margin:52px 0 20px}.next-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.next-card{min-width:0;cursor:pointer}.next-card img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#151515;border:1px solid #242424}.next-card:hover img{opacity:.8}.next-title{font-size:14px;font-weight:700;margin-top:10px;line-height:1.35}.next-artist{font-size:11px;color:#777;margin-top:5px}.empty{font-size:10px;letter-spacing:2px;color:#666;padding:20px 0}footer{padding:35px 6%;border-top:1px solid #202020;color:#555;font-size:9px;letter-spacing:3px;display:flex;justify-content:space-between}@media(max-width:700px){.page{width:92%;margin:28px auto 55px}.navbar{padding:14px 4%}.next-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.video-byline{font-size:12px}.artist-link{font-size:13px}footer{flex-direction:column;gap:15px}}
+</style>
+</head>
+<body>
+<nav class="navbar"><a class="nav-logo" href="index.html"><img src="fsblogo.PNG" alt="Fly Since Birth"></a><a class="back-button" id="backArtist" href="artists.html">BACK TO ARTIST</a></nav>
+<main class="page">
+<div id="playerHost"><div class="empty">LOADING VIDEO...</div></div>
+<h1 class="video-title" id="videoTitle"></h1>
+<div class="video-byline" id="videoByline"></div>
+<section><h2 class="section-heading">UP NEXT · MORE FROM THIS ARTIST</h2><div class="next-grid" id="nextVideos"><div class="empty">LOADING VIDEOS...</div></div></section>
+</main>
+<footer><div>© 2026 FLY SINCE BIRTH</div><div>FSB WORLDWIDE</div></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseClient=supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co","sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
+const params=new URLSearchParams(location.search);
+const videoId=params.get("video_id");
+let currentVideo=null;
+let artistVideos=[];
+function safeText(value){return value==null?"":String(value)}
+function escapeHtml(value){return safeText(value).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function videoPlayer(url,title){
+ const host=document.getElementById("playerHost");host.innerHTML="";
+ if(!url){host.innerHTML='<div class="empty">VIDEO LINK NOT AVAILABLE</div>';return}
+ const isFile=/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url);
+ if(isFile){const v=document.createElement("video");v.className="video-player";v.controls=true;v.playsInline=true;v.preload="metadata";v.src=url;v.setAttribute("aria-label",title||"Video player");host.appendChild(v);return}
+ let embed=url;
+ const yt=url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
+ const vm=url.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+ if(yt)embed="https://www.youtube-nocookie.com/embed/"+yt[1];
+ else if(vm)embed="https://player.vimeo.com/video/"+vm[1];
+ const frame=document.createElement("iframe");frame.className="video-player";frame.src=embed;frame.title=title||"Video player";frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";frame.allowFullscreen=true;frame.referrerPolicy="strict-origin-when-cross-origin";host.appendChild(frame);
+}
+async function loadPage(){
+ if(!videoId){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
+ const result=await supabaseClient.from("videos").select("*").eq("id",videoId).single();
+ if(result.error||!result.data){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
+ currentVideo=result.data;
+ document.title=(currentVideo.title||"Video")+" | Fly Since Birth";
+ document.getElementById("videoTitle").textContent=currentVideo.title||"Untitled Video";
+ videoPlayer(currentVideo.link,currentVideo.title);
+ let artist=null,release=null;
+ if(currentVideo.artist_id){
+  const a=await supabaseClient.from("artists").select("id,name").eq("id",currentVideo.artist_id).maybeSingle();
+  artist=a.data;
+ }
+ if(currentVideo.release_id){
+  const r=await supabaseClient.from("artist_releases").select("id,title,type").eq("id",currentVideo.release_id).maybeSingle();
+  release=r.data;
+ }
+ const byline=document.getElementById("videoByline");
+ byline.innerHTML="";
+ if(artist){const a=document.createElement("a");a.className="artist-link";a.href="artist.html?id="+encodeURIComponent(artist.id);a.textContent=artist.name||"Artist";byline.appendChild(a)}
+ if(artist&&release){const dot=document.createElement("span");dot.className="separator";dot.textContent="·";byline.appendChild(dot)}
+ if(release){const a=document.createElement("a");a.className="release-link";a.href="epalbum.html?id="+encodeURIComponent(release.id);a.textContent=release.title||"Release";byline.appendChild(a);if(release.type){const type=document.createElement("span");type.className="release-link";type.textContent="("+(release.type==="ep"?"EP":release.type==="album"?"Album":release.type)+")";byline.appendChild(type)}}
+ if(artist)document.getElementById("backArtist").href="artist.html?id="+encodeURIComponent(artist.id);
+ await loadNextVideos();
+}
+async function loadNextVideos(){
+ const host=document.getElementById("nextVideos");
+ if(!currentVideo||!currentVideo.artist_id){host.innerHTML='<div class="empty">NO OTHER VIDEOS AVAILABLE</div>';return}
+ const result=await supabaseClient.from("videos").select("*").eq("artist_id",currentVideo.artist_id).neq("id",currentVideo.id);
+ if(result.error){host.innerHTML='<div class="empty">COULD NOT LOAD VIDEOS</div>';return}
+ artistVideos=(result.data||[]);
+ for(let i=artistVideos.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[artistVideos[i],artistVideos[j]]=[artistVideos[j],artistVideos[i]]}
+ artistVideos=artistVideos.slice(0,9);
+ host.innerHTML="";
+ if(!artistVideos.length){host.innerHTML='<div class="empty">NO OTHER VIDEOS AVAILABLE</div>';return}
+ artistVideos.forEach(function(video){
+  const card=document.createElement("article");card.className="next-card";card.tabIndex=0;
+  const image=document.createElement("img");image.src=video.image||"fsblogo.PNG";image.alt=video.title||"Video thumbnail";image.loading="lazy";card.appendChild(image);
+  const title=document.createElement("div");title.className="next-title";title.textContent=video.title||"Untitled Video";card.appendChild(title);
+  const artist=document.createElement("div");artist.className="next-artist";artist.textContent="PLAY NEXT";card.appendChild(artist);
+  function open(){location.href="video.html?video_id="+encodeURIComponent(video.id)}
+  card.addEventListener("click",open);card.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}});
+  host.appendChild(card);
+ });
+}
+loadPage().catch(function(error){console.error(error);document.getElementById("playerHost").innerHTML='<div class="empty">COULD NOT LOAD VIDEO</div>'});
+</script>
+</body>
+</html>
