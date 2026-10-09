@@ -622,14 +622,10 @@ body {
 ===================================================== */
 
 .release-grid {
-    margin-top: 50px;
-
+    margin-top: 35px;
     display: grid;
-
-    grid-template-columns:
-        repeat(4, 250px);
-
-    gap: 18px;
+    grid-template-columns: repeat(5, 180px);
+    gap: 14px;
 }
 
 .release-card {
@@ -649,13 +645,10 @@ body {
 }
 
 .release-cover {
-    width: 250px;
-    height: 250px;
-
+    width: 180px;
+    height: 180px;
     object-fit: cover;
-
     background: #111;
-
     display: block;
 }
 
@@ -687,7 +680,7 @@ body {
     font-size: 9px;
 }
 .artist-release-card {
-    width: 250px;
+    width: 180px;
     border: 1px solid #242424;
     background: #090909;
     overflow: hidden;
@@ -701,8 +694,8 @@ body {
 }
 
 .artist-release-cover {
-    width: 250px;
-    height: 250px;
+    width: 180px;
+    height: 180px;
     object-fit: cover;
     display: block;
     background: #111;
@@ -896,29 +889,21 @@ body {
 ===================================================== */
 
 .video-grid {
-    margin-top: 50px;
-
+    margin-top: 35px;
     display: grid;
-
-    grid-template-columns:
-        repeat(3, 1fr);
-
-    gap: 18px;
+    grid-template-columns: repeat(3, minmax(0, 260px));
+    gap: 16px;
 }
 
 .video-card {
     position: relative;
-
-    min-height: 160px;
-
+    width: 100%;
+    max-width: 260px;
+    min-height: 150px;
     border: 1px solid #242424;
-
     background: #090909;
-
     overflow: hidden;
-
     cursor: pointer;
-
     transition: 0.3s;
 }
 
@@ -1093,8 +1078,30 @@ footer {
     gap: 10px;
 }
     .release-grid {
-        grid-template-columns:
-            repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 180px));
+        gap: 12px;
+    }
+
+    .release-cover,
+    .artist-release-cover {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1 / 1;
+    }
+
+    .artist-release-card {
+        width: 100%;
+        max-width: 180px;
+    }
+
+    .video-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .video-card {
+        max-width: 100%;
+        min-width: 0;
     }
 #eps,
 #albums {
