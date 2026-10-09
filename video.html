@@ -59,7 +59,7 @@ async function loadPage(){
  byline.innerHTML="";
  if(artist){const a=document.createElement("a");a.className="artist-link";a.href="artist.html?id="+encodeURIComponent(artist.id);a.textContent=artist.name||"Artist";byline.appendChild(a)}
  if(artist&&release){const dot=document.createElement("span");dot.className="separator";dot.textContent="·";byline.appendChild(dot)}
- if(release){const a=document.createElement("a");a.className="release-link";a.href="epalbum.html?id="+encodeURIComponent(release.id);a.textContent=release.title||"Release";byline.appendChild(a);if(release.type){const type=document.createElement("span");type.className="release-link";type.textContent="("+(release.type==="ep"?"EP":release.type==="album"?"Album":release.type)+")";byline.appendChild(type)}}
+ if(release){const a=document.createElement("a");a.className="release-link";a.href="epalbum.html?id="+encodeURIComponent(release.id);a.textContent=release.title||"Release";byline.appendChild(a);}
  if(artist)document.getElementById("backArtist").href="artist.html?id="+encodeURIComponent(artist.id);
  await loadNextVideos();
 }
