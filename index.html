@@ -1002,7 +1002,7 @@ footer {
 
         <li>
             <a
-                href="#events"
+                href="events.html"
                 onclick="closeMenu()">
 
                 Events
@@ -1221,9 +1221,7 @@ footer {
     id="events"
     class="section events">
 
-    <h2 class="section-heading">
-        EVENTS
-    </h2>
+    <h2 class="section-heading" role="link" tabindex="0" style="cursor:pointer" onclick="window.location.href='events.html'" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='events.html';}"><a href="events.html" style="color:inherit;text-decoration:none">EVENTS</a></h2>
 
 
     <div id="events-featured"></div>
@@ -2095,7 +2093,7 @@ async function loadSiteContent() {
     ===================================================== */
 
     if (content.events_heading) {
-        const element = document.querySelector("#events .section-heading");
+        const element = document.querySelector("#events .section-heading a") || document.querySelector("#events .section-heading");
 
         if (element) {
             element.textContent = content.events_heading;
@@ -2148,7 +2146,7 @@ async function loadSiteContent() {
     }
 
     if (content.menu_events) {
-        const element = document.querySelector('.menu a[href="#events"]');
+        const element = document.querySelector('.menu a[href="events.html"]');
 
         if (element) {
             element.textContent = content.menu_events;
