@@ -6444,8 +6444,31 @@ async function saveUpcomingRelease(){
  var r=await supabaseClient.from("upcoming_releases").insert(payload);if(r.error){alert(r.error.message);return}
  document.getElementById("upcomingTitle").value="";document.getElementById("upcomingDescription").value="";document.getElementById("upcomingDate").value="";document.getElementById("upcomingImage").value="";document.getElementById("upcomingVideoFile").value="";document.getElementById("upcomingVideoUploadGroup").style.display="none";if(document.getElementById("upcomingMerchUrl"))document.getElementById("upcomingMerchUrl").value="";loadUpcomingReleases();setStatus("UPCOMING RELEASE ADDED");
 }
-async function loadUpcomingReleases(){
- var list=document.getElementById("upcomingList");if(!list)return;var r=await supabaseClient.from("upcoming_releases").select("*").order("release_date",{ascending:true});if(r.error){return}list.innerHTML="";(r.data||[]).forEach(function(x){var row=document.createElement("div");row.className="admin-item";row.innerHTML='<div class="item-info">'+(x.image_url?'<img class="item-image" src="'+x.image_url+'">':'<div class="item-image"></div>')+'<div><div class="item-name">'+escapeHtml(x.title)+'</div><div class="item-meta">'+x.type.toUpperCase()+(x.release_date?" • "+escapeHtml(x.release_date):"")+"</div></div></div><div class=\"actions\"><label><input type=\"checkbox\" "+(x.visible?"checked":"")+" onchange=\"toggleUpcoming("+x.id+",this.checked)\"> SHOW</label><button class=\"button danger\" onclick=\"deleteUpcoming("+x.id+")\">REMOVE</button></div>';list.appendChild(row)})}
+async function loadUpcomingReleases() {
+  var list = document.getElementById("upcomingList");
+  if (!list) return;
+  var result = await supabaseClient.from("upcoming_releases").select("*").order("release_date", { ascending: true });
+  if (result.error) {
+    console.error("UPCOMING RELEASES LOAD ERROR:", result.error);
+    list.innerHTML = '<div class="admin-item"><div class="item-meta">Could not load upcoming releases.</div></div>';
+    return;
+  }
+  list.innerHTML = "";
+  (result.data || []).forEach(function (item) {
+    var row = document.createElement("div");
+    row.className = "admin-item";
+    var imageHtml = item.image_url ? '<img class="item-image" src="' + escapeHtml(item.image_url) + '" alt="">' : '<div class="item-image"></div>';
+    var releaseDate = item.release_date ? " • " + escapeHtml(item.release_date) : "";
+    row.innerHTML = '<div class="item-info">' + imageHtml +
+      '<div><div class="item-name">' + escapeHtml(item.title || "") +
+      '</div><div class="item-meta">' + escapeHtml((item.type || "").toUpperCase()) + releaseDate +
+      '</div></div></div><div class="actions"><label><input type="checkbox" ' +
+      (item.visible ? "checked" : "") + ' onchange="toggleUpcoming(' + JSON.stringify(item.id) +
+      ',this.checked)"> SHOW</label><button class="button danger" onclick="deleteUpcoming(' +
+      JSON.stringify(item.id) + ')">REMOVE</button></div>';
+    list.appendChild(row);
+  });
+}
 async function toggleUpcoming(id,visible){await supabaseClient.from("upcoming_releases").update({visible:visible}).eq("id",id)}
 async function deleteUpcoming(id){if(!confirm("Remove this upcoming release?"))return;await supabaseClient.from("upcoming_releases").delete().eq("id",id);loadUpcomingReleases()}
 async function addCustomMainSection(){var title=prompt("Section name:");if(!title)return;var type=prompt("Content type: text, image, video, link, or mixed","text")||"text";var body=prompt("Section content (optional):","")||"";var link=prompt("Link URL (optional):","")||"";var r=await supabaseClient.from("custom_home_sections").select("sort_order").order("sort_order",{ascending:false}).limit(1);var next=r.data&&r.data.length?(r.data[0].sort_order||0)+1:1;var ins=await supabaseClient.from("custom_home_sections").insert({title:title,body:body,link_url:link,content_type:type,sort_order:next,visible:true});if(ins.error){alert(ins.error.message);return}loadCustomMainSections();setStatus("SECTION ADDED")}
