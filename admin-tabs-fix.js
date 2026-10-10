@@ -267,3 +267,56 @@ function setupArtistMusicUploadUI(){
  type.addEventListener('change',sync);add.onclick=()=>artistUploadTrackRow(tracks,tracks.children.length+1);sync();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupArtistMusicUploadUI);else setupArtistMusicUploadUI();
+
+
+// Events fallback: define these in this file so the Events panel works even if
+// another legacy inline admin script fails to initialize.
+window.loadEvents = async function(){
+ const container=document.getElementById('eventsList');
+ if(!container)return;
+ if(!window.supabaseClient){container.innerHTML='<div class="admin-item"><div class="item-name">Supabase is not initialized. Refresh and try again.</div></div>';return;}
+ container.innerHTML='<div class="admin-item"><div class="item-name">Loading events...</div></div>';
+ try{
+  const r=await window.supabaseClient.from('events').select('*').order('sort_order',{ascending:true});
+  if(r.error)throw r.error;
+  container.innerHTML='';
+  (r.data||[]).forEach(function(ev){
+   const item=document.createElement('div');item.className='admin-item';
+   const safe=function(v){return esc(v||'')};
+   item.innerHTML='<div class="item-info"><div class="item-image">'+(ev.image?'<img src="'+safe(ev.image)+'" alt="" style="width:100%;height:100%;object-fit:cover">':'')+'</div><div><div class="item-name">'+safe(ev.title||ev.name||'Untitled Event')+'</div><div class="item-meta">'+safe(ev.date||'DATE NOT SET')+' · '+safe(ev.location||'LOCATION NOT SET')+'</div><div class="item-meta">'+(ev.featured?'FEATURED EVENT · ':'')+(ev.video_link?'EVENT VIDEOS LINK ADDED':'NO EVENT VIDEOS LINK')+'</div></div></div><div class="actions"><button class="button event-edit" type="button">EDIT</button><button class="button danger event-remove" type="button">REMOVE</button></div>';
+   item.querySelector('.event-edit').onclick=function(){window.editEvent(ev.id)};
+   item.querySelector('.event-remove').onclick=function(){window.removeEvent(ev.id)};
+   container.appendChild(item);
+  });
+  if(!(r.data||[]).length)container.innerHTML='<div class="admin-item"><div class="item-name">NO EVENTS YET</div><div class="item-meta">Use + ADD EVENT to create one.</div></div>';
+ }catch(e){
+  console.error('Events loader failed:',e);
+  container.innerHTML='<div class="admin-item"><div class="item-name">ERROR LOADING EVENTS</div><div class="item-meta">'+esc(e.message||e)+'</div></div>';
+ }
+};
+window.addEvent = async function(){
+ try{
+  const title=prompt('Event name:');if(!title||!title.trim())return;
+  const date=prompt('Event date (e.g. Oct 15, 2026):')||'';
+  const location=prompt('Venue / location:')||'';
+  const link=prompt('Ticket or event information URL (optional):')||'';
+  const video_link=prompt('Link to videos from this event (optional):')||'';
+  const featured=confirm('Feature this event at the top of Upcoming Events? Choose OK for YES, Cancel for NO.');
+  let image='';
+  const fileInput=document.getElementById('eventImageFile'),file=fileInput&&fileInput.files&&fileInput.files[0];
+  if(file){
+   const path='events/'+Date.now()+'-'+file.name;
+   const up=await window.supabaseClient.storage.from('site-images').upload(path,file);
+   if(up.error)throw up.error;
+   image=window.supabaseClient.storage.from('site-images').getPublicUrl(path).data.publicUrl;
+  }
+  const sr=await window.supabaseClient.from('events').select('sort_order').order('sort_order',{ascending:false}).limit(1);
+  if(sr.error)throw sr.error;
+  const next=sr.data&&sr.data.length?(sr.data[0].sort_order||0)+1:1;
+  const ins=await window.supabaseClient.from('events').insert({title:title.trim(),date,location,link,image,video_link,featured,sort_order:next});
+  if(ins.error)throw ins.error;
+  if(fileInput)fileInput.value='';
+  await window.loadEvents();
+  if(typeof window.setStatus==='function')window.setStatus('EVENT ADDED');
+ }catch(e){alert('Could not add event: '+(e.message||e))}
+};
