@@ -1499,203 +1499,112 @@ async function loadSiteImages() {
 
    
    async function loadMusic() {
-
-    const grid =
-        document.getElementById("musicGrid");
-
+    const grid = document.getElementById("musicGrid");
     if (!grid) return;
-
     grid.innerHTML = "";
 
-    /*
-       HOMEPAGE MUSIC:
-       Show the 10 newest songs and releases
-       across ALL FSB artists, regardless of artist.
-       Release date is used when available, with
-       created_at as a fallback.
-    */
-
+    // Combine artist-page songs/releases with older items saved in the legacy music table.
     const [
         { data: songs, error: songsError },
         { data: releases, error: releasesError },
-        { data: artists, error: artistsError }
+        { data: artists, error: artistsError },
+        { data: legacyMusic, error: legacyMusicError }
     ] = await Promise.all([
-
-        supabaseClient
-            .from("artist_songs")
-            .select("*")
-            .order("release_date", {
-                ascending: false,
-                nullsFirst: false
-            })
-            .order("created_at", {
-                ascending: false
-            }),
-
-        supabaseClient
-            .from("artist_releases")
-            .select("*")
-            .order("release_date", {
-                ascending: false,
-                nullsFirst: false
-            })
-            .order("created_at", {
-                ascending: false
-            }),
-
-        supabaseClient
-            .from("artists")
-            .select("id, name")
+        supabaseClient.from("artist_songs").select("*")
+            .order("release_date", { ascending: false, nullsFirst: false })
+            .order("created_at", { ascending: false }),
+        supabaseClient.from("artist_releases").select("*")
+            .order("release_date", { ascending: false, nullsFirst: false })
+            .order("created_at", { ascending: false }),
+        supabaseClient.from("artists").select("id, name"),
+        supabaseClient.from("music").select("*").order("sort_order", { ascending: true })
     ]);
 
     if (songsError || releasesError || artistsError) {
-
-        console.error(
-            "Could not load homepage music:",
-            songsError || releasesError || artistsError
-        );
-
-        grid.innerHTML =
-            '<div class="empty-state">COULD NOT LOAD MUSIC</div>';
-
+        console.error("Could not load homepage music:", songsError || releasesError || artistsError);
+        grid.innerHTML = '<div class="empty-state">COULD NOT LOAD MUSIC</div>';
         return;
     }
+    if (legacyMusicError) console.warn("Could not load older music entries:", legacyMusicError);
 
     const today = new Date();
-    today.setHours(23,59,59,999);
-    releases = (releases || []).filter(function(release) {
+    today.setHours(23, 59, 59, 999);
+    const eligibleReleases = (releases || []).filter(function(release) {
         if (!release.release_date) return true;
         return new Date(release.release_date + "T00:00:00") <= today;
     });
 
     const artistMap = {};
-
     (artists || []).forEach(function(artist) {
-
-        artistMap[String(artist.id)] =
-            artist.name || "FSB ARTIST";
-
+        artistMap[String(artist.id)] = artist.name || "FSB ARTIST";
     });
 
     const musicItems = [];
-
-    /*
-       Songs that belong to an album/EP are excluded here
-       so the homepage shows the release itself instead of
-       every individual track from that release.
-       Standalone singles remain eligible.
-    */
-
-    (songs || [])
-        .filter(function(song) {
-            return !song.release_id;
-        })
-        .forEach(function(song) {
-
-            musicItems.push({
-                kind: "song",
-                id: song.id,
-                title: song.title || "Untitled",
-                image: song.image_url || "fsblogo.PNG",
-                artist: artistMap[String(song.artist_id)] || "FSB ARTIST",
-                date: song.release_date || song.created_at,
-                link:
-                    "artist.html?id=" +
-                    encodeURIComponent(song.artist_id)
-            });
-
-        });
-
-    (releases || []).forEach(function(release) {
-
+    (songs || []).filter(function(song) {
+        return !song.release_id;
+    }).forEach(function(song) {
         musicItems.push({
-            kind: "release",
-            id: release.id,
-            title: release.title || "Untitled",
+            kind: "song", id: song.id, title: song.title || "Untitled",
+            image: song.image_url || "fsblogo.PNG",
+            artist: artistMap[String(song.artist_id)] || "FSB ARTIST",
+            date: song.release_date || song.created_at,
+            link: "artist.html?id=" + encodeURIComponent(song.artist_id)
+        });
+    });
+
+    eligibleReleases.forEach(function(release) {
+        musicItems.push({
+            kind: "release", id: release.id, title: release.title || "Untitled",
             image: release.artwork_url || "fsblogo.PNG",
             artist: artistMap[String(release.artist_id)] || "FSB ARTIST",
             type: (release.type || "release").toUpperCase(),
             date: release.release_date || release.created_at,
-            link:
-                "epalbum.html?id=" +
-                encodeURIComponent(release.id)
+            link: "epalbum.html?id=" + encodeURIComponent(release.id)
         });
+    });
 
+    // Include tracks previously uploaded through the original Music admin section.
+    (legacyMusic || []).forEach(function(item) {
+        if (!item.title) return;
+        musicItems.push({
+            kind: "legacy", id: item.id, title: item.title,
+            image: item.image || "fsblogo.PNG", artist: item.artist || "",
+            date: item.created_at || null, sortOrder: item.sort_order || 0,
+            link: item.link || "#music"
+        });
     });
 
     musicItems.sort(function(a, b) {
-
-        const dateA =
-            a.date ? new Date(a.date).getTime() : 0;
-
-        const dateB =
-            b.date ? new Date(b.date).getTime() : 0;
-
-        return dateB - dateA;
-
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        if (dateA !== dateB) return dateB - dateA;
+        return (a.sortOrder || 0) - (b.sortOrder || 0);
     });
 
-    const newestTen =
-        musicItems.slice(0, 10);
-
+    const newestTen = musicItems.slice(0, 10);
     if (!newestTen.length) {
-
-        grid.innerHTML =
-            '<div class="empty-state">NO MUSIC AVAILABLE</div>';
-
+        grid.innerHTML = '<div class="empty-state">NO MUSIC AVAILABLE</div>';
         return;
     }
 
-    newestTen.forEach(function(music, index) {
-
-        const card =
-            document.createElement("div");
-
-        card.className =
-            "music-card";
-
-        card.style.backgroundImage =
-            `url("${music.image}")`;
-
-        card.style.backgroundSize =
-            "cover";
-
-        card.style.backgroundPosition =
-            "center";
-
-        card.innerHTML = `
-
-            <div>
-
-                <div class="card-title">
-                    ${escapeHtml(music.title)}
-                </div>
-
-                <div class="card-artist">
-                    ${escapeHtml(music.artist)}
-                </div>
-
-                <div class="card-subtitle">
-                    ${music.kind === "release"
-                        ? escapeHtml(music.type)
-                        : "SINGLE"}
-                </div>
-
-            </div>
-
-        `;
-
+    newestTen.forEach(function(music) {
+        const card = document.createElement("div");
+        card.className = "music-card";
+        card.style.backgroundImage = 'url("' + String(music.image || "fsblogo.PNG").replace(/"/g, '\\"') + '")';
+        card.style.backgroundSize = "cover";
+        card.style.backgroundPosition = "center";
+        const subtitle = music.kind === "release" ? escapeHtml(music.type) :
+            (music.kind === "legacy" ? "MUSIC" : "SINGLE");
+        card.innerHTML = '<div><div class="card-title">' + escapeHtml(music.title) +
+            '</div><div class="card-artist">' + escapeHtml(music.artist || "") +
+            '</div><div class="card-subtitle">' + subtitle + '</div></div>';
         card.onclick = function() {
-
-            window.location.href =
-                music.link;
-
+            if (!music.link || music.link === "#music") return;
+            if (/^https?:\/\//i.test(music.link)) window.open(music.link, "_blank", "noopener");
+            else window.location.href = music.link;
         };
-
         grid.appendChild(card);
-
     });
-
 }
 async function loadArtists() {
 
@@ -2262,27 +2171,69 @@ document.addEventListener(
 );
 
 
-async function loadVipMusic(){
- const grid=document.getElementById("vipMusicGrid");if(!grid)return;
- const r=await supabaseClient.from("homepage_vip_music").select("*").eq("visible",true).order("slot",{ascending:true});
- grid.innerHTML="";
- var slots={};(r.data||[]).forEach(function(x){slots[x.slot]=x});
- const songs=await supabaseClient.from("artist_songs").select("id,title,image_url,artist_id").is("release_id",null);
- let releases=(await supabaseClient.from("artist_releases").select("id,title,type,artwork_url,artist_id,release_date")).data||[];
- const today=new Date(); today.setHours(23,59,59,999);
- releases=releases.filter(function(release){if(!release.release_date)return true;return new Date(release.release_date+"T00:00:00")<=today;});
- const artists=await supabaseClient.from("artists").select("id,name");
- for(var i=1;i<=3;i++){
-  var item=slots[i],card=document.createElement("div");
-  if(!item){card.className="vip-empty";card.innerHTML='<div><div class="card-title">VIP MUSIC</div><div class="card-subtitle">EMPTY</div></div>';grid.appendChild(card);continue}
-  var title="",image="",artistId=null,link="";
-  if(item.content_type==="song"){var s=(songs.data||[]).find(function(x){return x.id===item.song_id});if(s){title=s.title;image=s.image_url||"";artistId=s.artist_id;link="artist.html?id="+encodeURIComponent(s.artist_id)}}
-  else {var rel=(releases.data||[]).find(function(x){return String(x.id)===String(item.release_id)});if(rel){title=rel.title;image=rel.artwork_url||"";artistId=rel.artist_id;link="epalbum.html?id="+encodeURIComponent(rel.id)}}
-  var a=(artists.data||[]).find(function(x){return x.id===artistId});
-  card.className="music-card";if(image)card.style.backgroundImage='url("'+image+'")';card.style.backgroundSize="cover";card.style.backgroundPosition="center";
-  card.innerHTML='<div><div class="card-title">'+escapeHtml(title)+'</div><div class="card-artist">'+escapeHtml(a?a.name:"")+'</div><div class="card-subtitle">VIP MUSIC</div></div>';
-  if(link)card.onclick=function(){window.location.href=link};grid.appendChild(card);
- }
+async function loadVipMusic() {
+    const grid = document.getElementById("vipMusicGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    grid.style.display = "none";
+
+    const [slotsResult, songsResult, releasesResult, artistsResult] = await Promise.all([
+        supabaseClient.from("homepage_vip_music").select("*").eq("visible", true).order("slot", { ascending: true }),
+        supabaseClient.from("artist_songs").select("id,title,image_url,artist_id,release_id"),
+        supabaseClient.from("artist_releases").select("id,title,type,artwork_url,artist_id,release_date"),
+        supabaseClient.from("artists").select("id,name")
+    ]);
+    if (slotsResult.error) {
+        console.error("Could not load VIP music:", slotsResult.error);
+        return;
+    }
+
+    const songs = songsResult.data || [];
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const releases = (releasesResult.data || []).filter(function(release) {
+        if (!release.release_date) return true;
+        return new Date(release.release_date + "T00:00:00") <= today;
+    });
+    const artists = artistsResult.data || [];
+    const cards = [];
+
+    (slotsResult.data || []).forEach(function(item) {
+        let title = "", image = "", artistId = null, link = "";
+        if (item.content_type === "song") {
+            const song = songs.find(function(x) { return String(x.id) === String(item.song_id); });
+            if (!song || song.release_id) return;
+            title = song.title || "";
+            image = song.image_url || "";
+            artistId = song.artist_id;
+            link = "artist.html?id=" + encodeURIComponent(song.artist_id || "");
+        } else if (item.content_type === "release") {
+            const release = releases.find(function(x) { return String(x.id) === String(item.release_id); });
+            if (!release) return;
+            title = release.title || "";
+            image = release.artwork_url || "";
+            artistId = release.artist_id;
+            link = "epalbum.html?id=" + encodeURIComponent(release.id);
+        } else return;
+        if (!title) return;
+        const artist = artists.find(function(x) { return String(x.id) === String(artistId); });
+        cards.push({ title: title, image: image, artist: artist ? artist.name : "", link: link });
+    });
+
+    if (!cards.length) return;
+    grid.style.display = "";
+    cards.forEach(function(item) {
+        const card = document.createElement("div");
+        card.className = "music-card";
+        if (item.image) card.style.backgroundImage = 'url("' + String(item.image).replace(/"/g, '\\"') + '")';
+        card.style.backgroundSize = "cover";
+        card.style.backgroundPosition = "center";
+        card.innerHTML = '<div><div class="card-title">' + escapeHtml(item.title) +
+            '</div><div class="card-artist">' + escapeHtml(item.artist) +
+            '</div><div class="card-subtitle">VIP MUSIC</div></div>';
+        card.onclick = function() { window.location.href = item.link; };
+        grid.appendChild(card);
+    });
 }
 async function loadUpcomingHome(){
  const grid=document.getElementById("upcomingGrid");if(!grid)return;
