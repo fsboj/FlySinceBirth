@@ -708,43 +708,93 @@ body {
 }
 
 .events-list {
-    margin-top: 35px;
+    margin-top: 24px;
 }
-
-.event-card {
-    border-top: 1px solid #242424;
-
-    padding: 25px 0;
-
-    max-width: 800px;
-}
-
-.event-card:last-child {
-    border-bottom: 1px solid #242424;
-}
-
-.event-date {
-    color: #777;
-
-    font-size: 9px;
-
+.events-subheading {
+    margin: 34px 0 14px;
+    color: #888;
+    font-size: 11px;
+    font-weight: 700;
     letter-spacing: 3px;
-
-    margin-bottom: 10px;
 }
-
+.events-featured {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 28px;
+    align-items: center;
+    margin: 28px 0 36px;
+    padding: 22px;
+    border: 1px solid #303030;
+    background: linear-gradient(120deg, #101010, #070707);
+}
+.events-featured-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: #111;
+}
+.events-featured-label {
+    color: #aaa;
+    font-size: 9px;
+    letter-spacing: 3px;
+    margin-bottom: 14px;
+}
+.event-card {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 22px;
+    align-items: center;
+    border-top: 1px solid #242424;
+    padding: 20px 0;
+    max-width: 1000px;
+}
+.event-card:last-child { border-bottom: 1px solid #242424; }
+.event-card-image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    background: #111;
+}
+.event-date {
+    color: #888;
+    font-size: 10px;
+    letter-spacing: 2px;
+    margin-bottom: 9px;
+}
 .event-title {
-    font-size: 24px;
-
+    font-size: 20px;
     font-weight: 700;
 }
-
 .event-location {
     margin-top: 8px;
-
     color: #888;
-
     font-size: 13px;
+}
+.event-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+}
+.event-action {
+    display: inline-block;
+    border: 1px solid #444;
+    padding: 10px 13px;
+    color: #fff;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-decoration: none;
+}
+.event-action:hover { background: #fff; color: #000; }
+.event-empty {
+    color: #666;
+    font-size: 12px;
+    padding: 16px 0;
+}
+@media (max-width: 650px) {
+    .events-featured { grid-template-columns: 1fr; padding: 14px; gap: 18px; }
+    .event-card { grid-template-columns: 100px minmax(0, 1fr); gap: 14px; }
+    .event-title { font-size: 17px; }
 }
 
 
@@ -1176,24 +1226,13 @@ footer {
     </h2>
 
 
-    <p>
-    <div
-    id="events-list"
-    class="events-list">
+    <div id="events-featured"></div>
 
-    <!-- Events added from Admin will appear here -->
+    <h3 class="events-subheading">UPCOMING EVENTS</h3>
+    <div id="events-list" class="events-list"></div>
 
-</div>
-    </p>
-
-
-    <a
-        href="#"
-        class="outline-button">
-
-        VIEW EVENTS
-
-    </a>
+    <h3 class="events-subheading">PAST EVENTS</h3>
+    <div id="past-events-list" class="events-list"></div>
 
 </section>
 
@@ -1804,101 +1843,121 @@ grid.appendChild(card);
     });
 }
    async function loadEvents() {
+    const upcomingContainer = document.getElementById("events-list");
+    const pastContainer = document.getElementById("past-events-list");
+    const featuredContainer = document.getElementById("events-featured");
+    if (!upcomingContainer || !pastContainer || !featuredContainer) return;
 
-    const container =
-        document.getElementById("events-list");
-
-    if (!container) return;
-
-    const { data, error } =
-        await supabaseClient
-            .from("events")
-            .select("*")
-            .order("sort_order", {
-                ascending: true
-            });
+    const { data, error } = await supabaseClient
+        .from("events")
+        .select("*")
+        .order("sort_order", { ascending: true });
 
     if (error) {
-
-        console.error(
-            "Could not load events:",
-            error
-        );
-
+        console.error("Could not load events:", error);
+        upcomingContainer.innerHTML = '<p class="event-empty">EVENTS COULD NOT BE LOADED.</p>';
         return;
     }
 
-    container.innerHTML = "";
+    featuredContainer.innerHTML = "";
+    upcomingContainer.innerHTML = "";
+    pastContainer.innerHTML = "";
 
-    (data || []).forEach(function(event) {
+    const allEvents = (data || []).map(function(event) {
+        const parsedDate = event.date ? new Date(event.date) : null;
+        const hasValidDate = parsedDate && !Number.isNaN(parsedDate.getTime());
+        return Object.assign({}, event, {
+            _parsedDate: hasValidDate ? parsedDate : null,
+            _isPast: hasValidDate && parsedDate.getTime() < new Date().setHours(0,0,0,0)
+        });
+    });
 
-        const card =
-            document.createElement("div");
+    const upcoming = allEvents.filter(event => !event._isPast);
+    const past = allEvents.filter(event => event._isPast);
 
-        card.className =
-            "event-card";
+    upcoming.sort((a,b) => {
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        if (a._parsedDate && b._parsedDate) return a._parsedDate - b._parsedDate;
+        if (a._parsedDate) return -1;
+        if (b._parsedDate) return 1;
+        return (a.sort_order || 0) - (b.sort_order || 0);
+    });
+    past.sort((a,b) => {
+        if (a._parsedDate && b._parsedDate) return b._parsedDate - a._parsedDate;
+        return (b.sort_order || 0) - (a.sort_order || 0);
+    });
 
+    function makeLink(url, label) {
+        if (!url) return null;
+        const link = document.createElement("a");
+        link.className = "event-action";
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = label;
+        return link;
+    }
 
-        const date =
-            document.createElement("div");
+    function makeEventCard(event, isFeatured) {
+        const card = document.createElement("article");
+        card.className = isFeatured ? "events-featured" : "event-card";
 
-        date.className =
-            "event-date";
-
-        date.textContent =
-            event.date ||
-            event.event_date ||
-            "";
-
-
-        const title =
-            document.createElement("div");
-
-        title.className =
-            "event-title";
-
-        title.textContent =
-            event.title ||
-            event.name ||
-            "Event";
-
-
-        const location =
-            document.createElement("div");
-
-        location.className =
-            "event-location";
-
-        location.textContent =
-            event.location ||
-            "";
-
-
-        card.appendChild(date);
-        card.appendChild(title);
-        card.appendChild(location);
-
-
-        if (event.link) {
-            card.style.cursor =
-                "pointer";
-
-            card.onclick =
-                function() {
-
-                    window.open(
-                       event.link,
-                        "_blank"
-                    );
-
-                };
-
+        if (event.image) {
+            const img = document.createElement("img");
+            img.className = isFeatured ? "events-featured-image" : "event-card-image";
+            img.src = event.image;
+            img.alt = (event.title || "Event") + " flyer";
+            img.loading = "lazy";
+            card.appendChild(img);
         }
 
+        const details = document.createElement("div");
+        if (isFeatured) {
+            const badge = document.createElement("div");
+            badge.className = "events-featured-label";
+            badge.textContent = "FEATURED EVENT";
+            details.appendChild(badge);
+        }
 
-        container.appendChild(card);
+        const date = document.createElement("div");
+        date.className = "event-date";
+        date.textContent = event.date || "";
+        details.appendChild(date);
 
+        const title = document.createElement("div");
+        title.className = "event-title";
+        title.textContent = event.title || event.name || "Event";
+        details.appendChild(title);
+
+        const location = document.createElement("div");
+        location.className = "event-location";
+        location.textContent = event.location || "";
+        if (event.location) details.appendChild(location);
+
+        const actions = document.createElement("div");
+        actions.className = "event-actions";
+        const ticketLink = makeLink(event.link, "MORE INFO / TICKETS");
+        const videoLink = makeLink(event.video_link, "WATCH EVENT VIDEOS");
+        if (ticketLink) actions.appendChild(ticketLink);
+        if (videoLink) actions.appendChild(videoLink);
+        if (actions.childElementCount) details.appendChild(actions);
+
+        card.appendChild(details);
+        return card;
+    }
+
+    const featured = upcoming.find(event => event.featured);
+    if (featured) featuredContainer.appendChild(makeEventCard(featured, true));
+
+    upcoming.forEach(function(event) {
+        if (featured && String(event.id) === String(featured.id)) return;
+        upcomingContainer.appendChild(makeEventCard(event, false));
     });
+    past.forEach(event => pastContainer.appendChild(makeEventCard(event, false)));
+
+    if (!upcoming.length) upcomingContainer.innerHTML = '<p class="event-empty">NO UPCOMING EVENTS RIGHT NOW.</p>';
+    if (!past.length) pastContainer.innerHTML = '<p class="event-empty">NO PAST EVENTS YET.</p>';
 }
 async function loadSiteContent() {
 
