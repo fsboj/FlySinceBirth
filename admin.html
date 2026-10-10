@@ -511,7 +511,7 @@ body {
      ADMIN NAVIGATION
 ===================================================== -->
 
-<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showPanel('events', this); loadEvents(); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button></nav>
+<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showEventsAdminPanel(this); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button></nav>
 
 
 <!-- =====================================================
@@ -2975,6 +2975,27 @@ async function removeArtist(id) {
 /* =====================================================
    EVENTS
 ===================================================== */
+
+function showEventsAdminPanel(button) {
+    document.querySelectorAll(".admin-nav button").forEach(function(btn) { btn.classList.remove("active"); });
+    if (button) button.classList.add("active");
+    document.querySelectorAll("section.panel").forEach(function(panel) {
+        panel.classList.remove("active");
+        panel.style.display = "none";
+    });
+    var panel = document.getElementById("events");
+    if (!panel) { alert("Events panel could not be found."); return; }
+    panel.classList.add("active");
+    panel.style.display = "block";
+    panel.style.visibility = "visible";
+    panel.style.opacity = "1";
+    panel.style.position = "relative";
+    panel.style.zIndex = "1";
+    var list = document.getElementById("eventsList");
+    if (list && !list.innerHTML.trim()) list.innerHTML = '<div class="admin-item"><div class="item-name">Loading events...</div></div>';
+    if (typeof loadEvents === "function") await loadEvents();
+}
+window.showEventsAdminPanel = showEventsAdminPanel;
 
 async function loadEvents() {
     const container = document.getElementById("eventsList");
@@ -6581,7 +6602,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261010-8"></script>
+<script src="admin-tabs-fix.js?v=20261010-9"></script>
 </body>
 
 </html>
