@@ -2,6 +2,10 @@
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
 function init(){
  const n=document.querySelector('.admin-nav'),m=document.getElementById('mainPage'); if(!n||!m)return;
+ const eventsPanel=document.getElementById('events');
+ if(eventsPanel && m.parentElement && eventsPanel.previousElementSibling!==m){
+  m.parentElement.insertBefore(eventsPanel,m.nextElementSibling);
+ }
  const bs=[...n.querySelectorAll('button')],ids=['mainPage','sideMenu','artistPages','events','upcoming'];
  bs.forEach((b,i)=>b.onclick=async e=>{
   e.preventDefault();
