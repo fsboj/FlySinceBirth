@@ -356,61 +356,7 @@ body {
 }
 
 
-/* =====================================================
-   SIDE MENU LABELS
-===================================================== */
-const sideMenuLabelFields = {
-    menu_music: "sideMenuMusic",
-    menu_artists: "sideMenuArtists",
-    menu_clothing: "sideMenuClothing",
-    menu_videos: "sideMenuVideos",
-    menu_events: "sideMenuEvents"
-};
 
-async function loadSideMenuLabels() {
-    const status = document.getElementById("sideMenuStatus");
-    try {
-        const { data, error } = await supabaseClient
-            .from("site_content")
-            .select("key,value")
-            .in("key", Object.keys(sideMenuLabelFields));
-        if (error) throw error;
-        (data || []).forEach(function(item) {
-            const fieldId = sideMenuLabelFields[item.key];
-            const input = fieldId && document.getElementById(fieldId);
-            if (input && item.value != null) input.value = item.value;
-        });
-        if (status) status.textContent = "";
-    } catch (error) {
-        console.error("Could not load side menu labels:", error);
-        if (status) status.textContent = "LOAD FAILED";
-    }
-}
-
-async function saveSideMenuLabels() {
-    const status = document.getElementById("sideMenuStatus");
-    if (status) status.textContent = "SAVING...";
-    try {
-        for (const [key, fieldId] of Object.entries(sideMenuLabelFields)) {
-            const input = document.getElementById(fieldId);
-            const { error } = await supabaseClient
-                .from("site_content")
-                .upsert({
-                    key: key,
-                    value: input ? input.value.trim() : "",
-                    updated_at: new Date().toISOString()
-                }, { onConflict: "key" });
-            if (error) throw error;
-        }
-        if (status) status.textContent = "CHANGES SAVED";
-    } catch (error) {
-        console.error("Could not save side menu labels:", error);
-        if (status) status.textContent = "SAVE FAILED";
-        alert("Could not save side menu labels: " + (error.message || error));
-    }
-}
-
-document.addEventListener("DOMContentLoaded", loadSideMenuLabels);
 
 /* =====================================================
    IMAGE UPLOAD
@@ -1497,6 +1443,62 @@ const supabaseClient = supabase.createClient(
 
 <script>
 
+
+/* =====================================================
+   SIDE MENU LABELS
+===================================================== */
+const sideMenuLabelFields = {
+    menu_music: "sideMenuMusic",
+    menu_artists: "sideMenuArtists",
+    menu_clothing: "sideMenuClothing",
+    menu_videos: "sideMenuVideos",
+    menu_events: "sideMenuEvents"
+};
+
+async function loadSideMenuLabels() {
+    const status = document.getElementById("sideMenuStatus");
+    try {
+        const { data, error } = await supabaseClient
+            .from("site_content")
+            .select("key,value")
+            .in("key", Object.keys(sideMenuLabelFields));
+        if (error) throw error;
+        (data || []).forEach(function(item) {
+            const fieldId = sideMenuLabelFields[item.key];
+            const input = fieldId && document.getElementById(fieldId);
+            if (input && item.value != null) input.value = item.value;
+        });
+        if (status) status.textContent = "";
+    } catch (error) {
+        console.error("Could not load side menu labels:", error);
+        if (status) status.textContent = "LOAD FAILED";
+    }
+}
+
+async function saveSideMenuLabels() {
+    const status = document.getElementById("sideMenuStatus");
+    if (status) status.textContent = "SAVING...";
+    try {
+        for (const [key, fieldId] of Object.entries(sideMenuLabelFields)) {
+            const input = document.getElementById(fieldId);
+            const { error } = await supabaseClient
+                .from("site_content")
+                .upsert({
+                    key: key,
+                    value: input ? input.value.trim() : "",
+                    updated_at: new Date().toISOString()
+                }, { onConflict: "key" });
+            if (error) throw error;
+        }
+        if (status) status.textContent = "CHANGES SAVED";
+    } catch (error) {
+        console.error("Could not save side menu labels:", error);
+        if (status) status.textContent = "SAVE FAILED";
+        alert("Could not save side menu labels: " + (error.message || error));
+    }
+}
+
+document.addEventListener("DOMContentLoaded", loadSideMenuLabels);
 
 /* =====================================================
    PANEL NAVIGATION
