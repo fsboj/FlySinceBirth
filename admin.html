@@ -506,7 +506,7 @@ body {
      ADMIN NAVIGATION
 ===================================================== -->
 
-<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('events', this); loadEvents(); return false;">EVENTS</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button></nav>
+<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showPanel('events', this); loadEvents(); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button></nav>
 
 
 <!-- =====================================================
@@ -6467,7 +6467,7 @@ document.addEventListener("DOMContentLoaded", function(){
     if(!nav || !main) return;
 
     const topButtons=Array.from(nav.querySelectorAll('button'));
-    const topIds=['mainPage','sideMenu','artistPages','upcoming'];
+    const topIds=['mainPage','sideMenu','artistPages','events','upcoming'];
     topButtons.forEach((btn,i)=>{
       btn.onclick=function(e){
         e.preventDefault();
@@ -6477,7 +6477,7 @@ document.addEventListener("DOMContentLoaded", function(){
           const p=document.getElementById(id);
           if(p) p.style.display=(id===topIds[i]?'block':'none');
         });
-        if(topIds[i]==='mainPage') showSub('site');
+        if(topIds[i]==='mainPage') showSub('site'); if(topIds[i]==='events' && typeof loadEvents==='function') loadEvents();
       };
     });
 
