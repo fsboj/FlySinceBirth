@@ -1167,6 +1167,43 @@ body {
     </div>
 
 </section>
+    <div style="margin-top:45px;padding-top:30px;border-top:1px solid #242424;">
+      <div class="panel-header">
+        <div class="panel-title">STORE PRODUCTS</div>
+        <div class="panel-description">Create products for the premium FSB storefront. Each item can use Printful, another supplier, or your own inventory. Checkout integration is a separate setup step.</div>
+      </div>
+      <input type="hidden" id="merchProductId">
+      <div class="form-grid">
+        <div class="form-group"><label>PRODUCT NAME</label><input id="merchProductName" placeholder="FSB Signature Hoodie"></div>
+        <div class="form-group"><label>CATEGORY</label><select id="merchProductCategory"><option>Apparel</option><option>Headwear</option><option>Accessories</option><option>Limited Drop</option></select></div>
+        <div class="form-group"><label>PRICE (USD)</label><input id="merchProductPrice" type="number" min="0" step="0.01" placeholder="55.00"></div>
+        <div class="form-group"><label>COMPARE-AT PRICE (OPTIONAL)</label><input id="merchProductComparePrice" type="number" min="0" step="0.01" placeholder="65.00"></div>
+        <div class="form-group full"><label>DESCRIPTION</label><textarea id="merchProductDescription" placeholder="Product details, fit, materials, care..."></textarea></div>
+        <div class="form-group full"><label>PRODUCT IMAGE URLS (ONE PER LINE)</label><textarea id="merchProductImages" placeholder="https://.../front.jpg&#10;https://.../back.jpg"></textarea></div>
+        <div class="form-group"><label>SIZES (COMMA SEPARATED)</label><input id="merchProductSizes" placeholder="S, M, L, XL"></div>
+        <div class="form-group"><label>COLORS (COMMA SEPARATED)</label><input id="merchProductColors" placeholder="Black, White"></div>
+        <div class="form-group"><label>FULFILLMENT METHOD</label><select id="merchProductFulfillment"><option value="printful">Printful</option><option value="supplier">Other supplier / store</option><option value="own_inventory" selected>My own inventory</option></select></div>
+        <div class="form-group"><label>SUPPLIER NAME</label><input id="merchProductSupplier" placeholder="Supplier or store name"></div>
+        <div class="form-group"><label>SUPPLIER PRODUCT ID (OPTIONAL)</label><input id="merchProductSupplierId" placeholder="Supplier SKU / product ID"></div>
+        <div class="form-group"><label>SUPPLIER PRODUCT URL (OPTIONAL)</label><input id="merchProductSupplierUrl" type="url" placeholder="https://..."></div>
+        <div class="form-group"><label>PRINTFUL PRODUCT ID (OPTIONAL)</label><input id="merchProductPrintfulId" placeholder="Connect Printful later"></div>
+        <div class="form-group"><label>PRINTFUL VARIANT ID (OPTIONAL)</label><input id="merchProductPrintfulVariant" placeholder="Variant ID"></div>
+        <div class="form-group"><label>OWN INVENTORY STOCK</label><input id="merchProductStock" type="number" min="0" value="0"></div>
+        <div class="form-group"><label>DISPLAY ORDER</label><input id="merchProductSort" type="number" value="0"></div>
+        <div class="form-group full" style="display:flex;flex-direction:row;gap:24px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:10px;letter-spacing:1px;"><input id="merchProductTrackStock" type="checkbox" checked> TRACK MY INVENTORY</label>
+          <label style="display:flex;align-items:center;gap:10px;letter-spacing:1px;"><input id="merchProductFeatured" type="checkbox"> FEATURE THIS PRODUCT</label>
+          <label style="display:flex;align-items:center;gap:10px;letter-spacing:1px;"><input id="merchProductActive" type="checkbox"> PUBLISH TO STORE</label>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="button primary" type="button" onclick="saveMerchProduct()">SAVE PRODUCT</button>
+        <button class="button" type="button" onclick="resetMerchProductForm()">CLEAR FORM</button>
+      </div>
+      <div class="panel-header" style="margin-top:35px;"><div class="panel-title">PRODUCT INVENTORY</div><div class="panel-description">Edit or remove products, change fulfillment routing, and control which products are visible in the storefront.</div></div>
+      <div id="merchProductsAdminList" class="item-list"><div class="admin-item"><div class="item-name">Loading products…</div></div></div>
+    </div>
+
 
 
 <!-- =====================================================
