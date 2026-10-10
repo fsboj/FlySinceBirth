@@ -2,9 +2,9 @@
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
 function init(){
  const n=document.querySelector('.admin-nav'),m=document.getElementById('mainPage'); if(!n||!m)return;
- const bs=[...n.querySelectorAll('button')],ids=['mainPage','sideMenu','artistPages','upcoming'];
- bs.forEach((b,i)=>b.onclick=e=>{e.preventDefault();bs.forEach(x=>x.classList.remove('active'));b.classList.add('active');ids.forEach(id=>{const p=document.getElementById(id);if(p)p.style.display=id===ids[i]?'block':'none'});if(ids[i]==='mainPage')sub('site');if(ids[i]==='artistPages')openArtistManager()});
- const ids2=['site','photos','music','artists','videos','events','merch','sections'],ts=[...document.querySelectorAll('.main-page-tabs button')],h=document.getElementById('mainPageSubPanels');
+ const bs=[...n.querySelectorAll('button')],ids=['mainPage','sideMenu','artistPages','events','upcoming'];
+ bs.forEach((b,i)=>b.onclick=e=>{e.preventDefault();bs.forEach(x=>x.classList.remove('active'));b.classList.add('active');ids.forEach(id=>{const p=document.getElementById(id);if(p)p.style.display=id===ids[i]?'block':'none'});if(ids[i]==='mainPage')sub('site');if(ids[i]==='artistPages')openArtistManager();if(ids[i]==='events'&&typeof loadEvents==='function')loadEvents()});
+ const ids2=['site','photos','music','artists','videos','merch','sections'],ts=[...document.querySelectorAll('.main-page-tabs button')],h=document.getElementById('mainPageSubPanels');
  ids2.forEach(id=>{const p=document.getElementById(id);if(p&&h&&p.parentElement!==h){p.classList.remove('panel','active');p.classList.add('main-page-subpanel');p.style.display='none';h.appendChild(p)}});
  function sub(id){document.querySelectorAll('.main-page-subpanel').forEach(p=>p.style.display='none');ts.forEach(x=>x.classList.remove('active'));const p=document.getElementById(id);if(p)p.style.display='block';const b=ts.find(x=>(x.getAttribute('onclick')||'').includes("'"+id+"'"));if(b)b.classList.add('active')}
  ts.forEach(b=>b.onclick=e=>{e.preventDefault();const z=(b.getAttribute('onclick')||'').match(/showMainSubPanel\(['"]([^'"]+)/);if(z)sub(z[1])});
