@@ -4967,6 +4967,7 @@ async function loadArtistSongsAdmin() {
                     : "NO SECTION"
             }
         </div>
+        ${!song.release_id ? '<label style="display:inline-flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;position:relative;z-index:2"><input class="admin-top-song-toggle" type="checkbox" '+(song.is_top_song===true || (Array.isArray(song.sections)&&song.sections.includes("top"))?'checked':'')+' style="width:18px;height:18px;accent-color:#fff;cursor:pointer"> TOP SONG</label>' : ''}
     </div>
 
     <div style="
@@ -4994,6 +4995,32 @@ async function loadArtistSongsAdmin() {
     </div>
 `;
 
+
+        const topToggle = row.querySelector(".admin-top-song-toggle");
+        if (topToggle) {
+            topToggle.addEventListener("click", function(event) { event.stopPropagation(); });
+            topToggle.addEventListener("change", async function() {
+                const enabled = topToggle.checked;
+                const currentSections = Array.isArray(song.sections) ? song.sections.slice() : [];
+                const nextSections = enabled
+                    ? (currentSections.includes("top") ? currentSections : currentSections.concat(["top"]))
+                    : currentSections.filter(function(section) { return section !== "top"; });
+                topToggle.disabled = true;
+                const saved = await supabaseClient.from("artist_songs").update({
+                    sections: nextSections,
+                    is_top_song: enabled
+                }).eq("id", song.id);
+                topToggle.disabled = false;
+                if (saved.error) {
+                    topToggle.checked = !enabled;
+                    alert("Could not update Top Song: " + saved.error.message);
+                } else {
+                    song.sections = nextSections;
+                    song.is_top_song = enabled;
+                    if (typeof setStatus === "function") setStatus(enabled ? "TOP SONG ENABLED" : "TOP SONG DISABLED");
+                }
+            });
+        }
 
         list.appendChild(row);
 
@@ -6498,7 +6525,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261010-2"></script>
+<script src="admin-tabs-fix.js?v=20261010-3"></script>
 </body>
 
 </html>
