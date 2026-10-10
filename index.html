@@ -2179,7 +2179,7 @@ async function loadSiteContent() {
     }
 
     if (content.menu_artists) {
-        const element = document.querySelector('.menu a[href="#artists"]');
+        const element = document.querySelector('.menu a[href="artists.html"], .menu a[href="#artists"]');
 
         if (element) {
             element.textContent = content.menu_artists;
