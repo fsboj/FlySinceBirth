@@ -6330,13 +6330,20 @@ async function openArtistMediaEditor(kind,id){
  var table=kind==="release"?"artist_releases":"artist_songs";
  var r=await supabaseClient.from(table).select("*").eq("id",id).single();if(r.error){alert(r.error.message);return}
  var overlay=document.createElement("div");overlay.id="artistMediaEditor";overlay.style="position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;padding:25px";
- overlay.innerHTML='<div style="background:#090909;border:1px solid #333;padding:30px;width:min(600px,100%);max-height:90vh;overflow:auto"><div class="panel-title">'+(kind==="release"?"EDIT RELEASE":"EDIT SONG")+'</div><div class="form-group" style="margin-top:20px"><label>NAME</label><input id="mediaEditName" value="'+escapeHtml(r.data.title||"")+'"></div><div class="form-group" style="margin-top:20px"><label>REPLACE ARTWORK FROM DEVICE</label><input id="mediaEditImage" type="file" accept="image/*"></div><div class="form-group" style="margin-top:20px"><label>REPLACE VIDEO FROM DEVICE</label><input id="mediaEditVideo" type="file" accept="video/*"></div><label style="display:flex;gap:8px;margin-top:20px"><input id="mediaRemoveImage" type="checkbox"> REMOVE CURRENT ARTWORK</label><div class="actions"><button class="button primary" id="mediaEditSave">SAVE</button><button class="button" id="mediaEditCancel">CANCEL</button></div></div>';
+ var sectionOptions=kind==="song"?'<div class="form-group" style="margin-top:20px"><label>MUSIC SECTIONS</label><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">'+['singles','albums','eps','top'].map(function(section){return '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px;border:1px solid #333"><input class="mediaEditSection" type="checkbox" value="'+section+'" '+(Array.isArray(r.data.sections)&&r.data.sections.includes(section)?'checked':'')+'> '+section.toUpperCase()+'</label>'}).join('')+'</div></div>':'';
+ overlay.innerHTML='<div style="background:#090909;border:1px solid #333;padding:30px;width:min(600px,100%);max-height:90vh;overflow:auto"><div class="panel-title">'+(kind==="release"?"EDIT RELEASE":"EDIT SONG")+'</div><div class="form-group" style="margin-top:20px"><label>NAME</label><input id="mediaEditName" value="'+escapeHtml(r.data.title||"")+'"></div>'+sectionOptions+'<div class="form-group" style="margin-top:20px"><label>REPLACE ARTWORK FROM DEVICE</label><input id="mediaEditImage" type="file" accept="image/*"></div><div class="form-group" style="margin-top:20px"><label>REPLACE VIDEO FROM DEVICE</label><input id="mediaEditVideo" type="file" accept="video/*"></div><label style="display:flex;gap:8px;margin-top:20px"><input id="mediaRemoveImage" type="checkbox"> REMOVE CURRENT ARTWORK</label><div class="actions"><button class="button primary" id="mediaEditSave">SAVE</button><button class="button" id="mediaEditCancel">CANCEL</button></div></div>';
  document.body.appendChild(overlay);
  document.getElementById("mediaEditCancel").onclick=function(){overlay.remove()};
  document.getElementById("mediaEditSave").onclick=async function(){
   var name=document.getElementById("mediaEditName").value.trim();if(!name){alert("Enter a name.");return}
   var imageFile=document.getElementById("mediaEditImage").files[0],videoFile=document.getElementById("mediaEditVideo").files[0];
   var data={title:name};
+  if(kind==="song"){
+   var sections=Array.from(overlay.querySelectorAll(".mediaEditSection:checked")).map(function(x){return x.value});
+   if(!sections.length){alert("Select at least one music section.");return}
+   data.sections=sections;
+   data.is_top_song=sections.includes("top");
+  }
   if(document.getElementById("mediaRemoveImage").checked)data[kind==="release"?"artwork_url":"image_url"]=null;
   if(imageFile){
    var bucket="artist-artwork",path=selectedArtistPageId+"/edited-"+Date.now()+"-"+imageFile.name;
