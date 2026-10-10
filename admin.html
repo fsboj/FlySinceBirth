@@ -4944,8 +4944,8 @@ async function loadArtistSongsAdmin() {
             document.createElement("div");
 
 
-        row.className =
-            "admin-item";
+        row.className = "admin-item artist-single-row";
+        row.style.cssText = "display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;width:100%;max-width:none;min-width:0;padding:22px 24px;box-sizing:border-box;";
 
 
         row.innerHTML = `
@@ -6525,7 +6525,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261010-3"></script>
+<script src="admin-tabs-fix.js?v=20261010-4"></script>
 </body>
 
 </html>
