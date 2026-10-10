@@ -448,16 +448,21 @@ body {
 ===================================================== */
 
 .music-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, 260px);
-
+    display: flex;
+    flex-wrap: nowrap;
     gap: 15px;
-
     margin-top: 55px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 2px 14px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
 }
 
+.music-grid > * {
+    flex: 0 0 260px;
+    scroll-snap-align: start;
+}
 .music-card {
     height: 190px;
 
@@ -790,7 +795,7 @@ footer {
     height: 300px;
 }
 .music-grid {
-    grid-template-columns: repeat(2, 260px);
+    gap: 12px;
 }
 
  .artist-grid {
