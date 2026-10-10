@@ -24,7 +24,7 @@ const supabaseClient=supabase.createClient("https://ccvhvxugoebdqwxxankl.supabas
 function openMenu(){document.getElementById("menu").classList.add("open")}
 function closeMenu(){document.getElementById("menu").classList.remove("open")}
 document.addEventListener("keydown",function(e){if(e.key==="Escape")closeMenu()});
-async function loadSharedMenu(){try{const r=await supabaseClient.from("site_content").select("*").limit(1).single();if(r.error||!r.data)return;const pairs={menuMusic:"menu_music",menuArtists:"menu_artists",menuClothing:"menu_clothing",menuVideos:"menu_videos",menuEvents:"menu_events"};Object.keys(pairs).forEach(function(id){if(r.data[pairs[id]])document.getElementById(id).textContent=r.data[pairs[id]]})}catch(e){console.warn("Could not load shared menu labels",e)}}
+async function loadSharedMenu(){try{const r=await supabaseClient.from("site_content").select("key,value").in("key",["menu_music","menu_artists","menu_clothing","menu_videos","menu_events"]);if(r.error)throw r.error;const pairs={menu_music:"menuMusic",menu_artists:"menuArtists",menu_clothing:"menuClothing",menu_videos:"menuVideos",menu_events:"menuEvents"};(r.data||[]).forEach(function(item){const el=document.getElementById(pairs[item.key]);if(el&&item.value)el.textContent=item.value})}catch(e){console.warn("Could not load shared menu labels",e)}}
 const params=new URLSearchParams(location.search);
 const videoId=params.get("video_id");
 let currentVideo=null;
