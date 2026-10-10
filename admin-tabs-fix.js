@@ -377,7 +377,7 @@ window.addEvent = async function(){
 // focus, and show the actual database error instead of leaving a dead dropdown.
 (function(){
  function db(){if(typeof supabaseClient!=='undefined')return supabaseClient;if(window.supabaseClient)return window.supabaseClient;throw new Error('Supabase client is not ready yet.')}
- function safe(v){return esc(v==null?'':v)}
+ function safe(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;')}
  let busy=false,loaded=false;
  window.loadArtistsForUpcoming=async function(){
   const s=document.getElementById('upcomingArtist');if(!s||busy)return;
