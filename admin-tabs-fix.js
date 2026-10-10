@@ -371,3 +371,42 @@ window.addEvent = async function(){
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initForm);else initForm();
 })();
+
+
+// Hardening for the Upcoming Releases artist picker: load on tab open and on
+// focus, and show the actual database error instead of leaving a dead dropdown.
+(function(){
+ function db(){if(typeof supabaseClient!=='undefined')return supabaseClient;if(window.supabaseClient)return window.supabaseClient;throw new Error('Supabase client is not ready yet.')}
+ function safe(v){return esc(v==null?'':v)}
+ let busy=false,loaded=false;
+ window.loadArtistsForUpcoming=async function(){
+  const s=document.getElementById('upcomingArtist');if(!s||busy)return;
+  busy=true;s.disabled=true;s.innerHTML='<option value="">LOADING ARTISTS...</option>';
+  try{
+   const r=await db().from('artists').select('id,name').order('name',{ascending:true});
+   if(r.error)throw r.error;
+   const artists=r.data||[];
+   const prior=s.value;
+   s.innerHTML='<option value="">NO ARTIST SELECTED</option>'+artists.map(a=>'<option value="'+safe(String(a.id))+'">'+safe(a.name)+'</option>').join('');
+   if(prior && artists.some(a=>String(a.id)===String(prior)))s.value=prior;
+   if(!artists.length)s.innerHTML='<option value="">NO ARTISTS FOUND — ADD ONE IN ARTIST PAGES</option>';
+   s.disabled=false;loaded=true;
+   const note=s.parentElement.querySelector('.upcoming-artist-error');if(note)note.remove();
+   if(typeof window.populateUpcomingTargetOptions==='function')await window.populateUpcomingTargetOptions();
+  }catch(e){
+   console.error('Upcoming artist picker failed:',e);
+   s.disabled=false;s.innerHTML='<option value="">ARTISTS FAILED TO LOAD — CLICK TO RETRY</option>';
+   let note=s.parentElement.querySelector('.upcoming-artist-error');
+   if(!note){note=document.createElement('div');note.className='item-meta upcoming-artist-error';note.style.color='#e88';s.parentElement.appendChild(note)}
+   note.textContent='Artist list error: '+(e.message||String(e));
+  }finally{busy=false}
+ };
+ function bind(){
+  const s=document.getElementById('upcomingArtist');if(!s||s.dataset.fsbPickerBound)return;s.dataset.fsbPickerBound='1';
+  s.addEventListener('focus',function(){if(!loaded)window.loadArtistsForUpcoming()});
+  s.addEventListener('pointerdown',function(){if(!loaded)window.loadArtistsForUpcoming()});
+  s.addEventListener('change',function(){if(typeof window.populateUpcomingTargetOptions==='function')window.populateUpcomingTargetOptions()});
+  window.loadArtistsForUpcoming();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
+})();
