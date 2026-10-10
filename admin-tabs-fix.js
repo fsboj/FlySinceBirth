@@ -349,6 +349,17 @@ window.addEvent = async function(){
   el.style.display='flex';el.querySelector('#fsbEventTitle').focus();
  }
  window.addEvent=function(){openForm(null)};
+ window.removeEvent=async function(id){
+  if(!confirm('Remove this event from the website? This cannot be undone.'))return;
+  try{
+   const db=eventDb();
+   const r=await db.from('events').delete().eq('id',id).select('id');
+   if(r.error)throw r.error;
+   if(!r.data||!r.data.length)throw new Error('No event was deleted. Check Supabase permissions for the events table.');
+   await window.loadEvents();
+   if(typeof window.setStatus==='function')window.setStatus('EVENT REMOVED');
+  }catch(e){alert('Could not remove event: '+(e.message||e))}
+ };
  window.editEvent=async function(id){
   try{const r=await eventDb().from('events').select('*').eq('id',id).single();if(r.error)throw r.error;openForm(r.data)}
   catch(e){alert('Could not load event: '+(e.message||e))}
