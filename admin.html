@@ -6525,9 +6525,25 @@ document.addEventListener("DOMContentLoaded", function(){
         btn.classList.add('active');
         topIds.forEach(id=>{
           const p=document.getElementById(id);
-          if(p) p.style.display=(id===topIds[i]?'block':'none');
+          if(p){
+            const selected=(id===topIds[i]);
+            p.classList.toggle('active',selected);
+            p.style.display=selected?'block':'none';
+          }
         });
-        if(topIds[i]==='mainPage') showSub('site'); if(topIds[i]==='events' && typeof loadEvents==='function') loadEvents();
+        if(topIds[i]==='mainPage') showSub('site');
+        if(topIds[i]==='artistPages' && typeof loadArtistPageSelector==='function') loadArtistPageSelector();
+        if(topIds[i]==='events'){
+          const eventPanel=document.getElementById('events');
+          const eventList=document.getElementById('eventsList');
+          if(eventPanel){eventPanel.style.display='block';eventPanel.classList.add('active');}
+          if(eventList && !eventList.innerHTML.trim()) eventList.innerHTML='<div class="admin-item"><div class="item-name">Loading events...</div></div>';
+          if(typeof loadEvents==='function') loadEvents();
+        }
+        if(topIds[i]==='upcoming'){
+          if(typeof loadArtistsForUpcoming==='function') loadArtistsForUpcoming();
+          if(typeof loadUpcomingReleases==='function') loadUpcomingReleases();
+        }
       };
     });
 
@@ -6565,7 +6581,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261010-7"></script>
+<script src="admin-tabs-fix.js?v=20261010-8"></script>
 </body>
 
 </html>
