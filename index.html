@@ -896,6 +896,17 @@ footer {
 }
 
  .upcoming-card,.vip-empty{min-height:220px;border:1px solid #242424;background:#070707;display:flex;align-items:flex-end;padding:25px;position:relative;overflow:hidden}.upcoming-card{cursor:pointer}.upcoming-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65}.upcoming-card>div{position:relative;z-index:2}.vip-empty{opacity:.35}.custom-home-section{padding:80px 7%;border-top:1px solid #202020}.custom-home-section h2{font-size:clamp(40px,6vw,80px)}.custom-home-section p{max-width:700px;color:#999;line-height:1.7;margin-top:20px}</style>
+
+<script>
+(function(){
+  // Supabase recovery emails may still land on the configured site root.
+  // Preserve the recovery token fragment while forwarding to the password form.
+  var hash=window.location.hash||'';
+  if(hash && /(?:^|[&#])type=recovery(?:&|$)/.test(hash.slice(1))){
+    window.location.replace('/FlySinceBirth/admin.html'+hash);
+  }
+})();
+</script>
 </head>
 
 <body>
