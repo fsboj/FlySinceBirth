@@ -355,15 +355,15 @@ window.addEvent = async function(){
   form.addEventListener('submit',async function(e){
    e.preventDefault();const btn=el.querySelector('#fsbEventSave');btn.disabled=true;btn.textContent='SAVING...';
    try{
-    const db=eventDb(),title=el.querySelector('#fsbEventTitle').value.trim();if(!title)throw new Error('Enter an event name.');
+    const wasEditing=editingEventId!==null&&editingEventId!==undefined;const db=eventDb(),title=el.querySelector('#fsbEventTitle').value.trim();if(!title)throw new Error('Enter an event name.');
     let image=existingImage;const file=el.querySelector('#fsbEventImage').files[0];
     if(file){const path='events/'+Date.now()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');const up=await db.storage.from('site-images').upload(path,file,{upsert:false});if(up.error)throw up.error;image=db.storage.from('site-images').getPublicUrl(path).data.publicUrl}
     const payload={title,date:el.querySelector('#fsbEventDate').value.trim(),location:el.querySelector('#fsbEventLocation').value.trim(),link:el.querySelector('#fsbEventLink').value.trim(),video_link:el.querySelector('#fsbEventVideo').value.trim(),featured:el.querySelector('#fsbEventFeatured').checked,image:image||''};
-    if(editingEventId!==null&&editingEventId!==undefined){const up=await db.from('events').update(payload).eq('id',editingEventId);if(up.error)throw up.error}
+    if(wasEditing){const up=await db.from('events').update(payload).eq('id',editingEventId);if(up.error)throw up.error}
     else{const sr=await db.from('events').select('sort_order').order('sort_order',{ascending:false}).limit(1);if(sr.error)throw sr.error;payload.sort_order=sr.data&&sr.data.length?(Number(sr.data[0].sort_order)||0)+1:1;const ins=await db.from('events').insert(payload);if(ins.error)throw ins.error}
-    close();await window.loadEvents();if(typeof setStatus==='function')setStatus(editingEventId?'EVENT UPDATED':'EVENT ADDED');
+    close();await window.loadEvents();if(typeof setStatus==='function')setStatus(wasEditing?'EVENT UPDATED':'EVENT ADDED');
    }catch(err){alert('Could not save event: '+(err.message||err))}
-   finally{btn.disabled=false;btn.textContent=editingEventId?'SAVE CHANGES':'ADD EVENT'}
+   finally{btn.disabled=false;btn.textContent=editingEventId!==null&&editingEventId!==undefined?'SAVE CHANGES':'ADD EVENT'}
   });
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initForm);else initForm();
