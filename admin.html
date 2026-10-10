@@ -357,6 +357,62 @@ body {
 
 
 /* =====================================================
+   SIDE MENU LABELS
+===================================================== */
+const sideMenuLabelFields = {
+    menu_music: "sideMenuMusic",
+    menu_artists: "sideMenuArtists",
+    menu_clothing: "sideMenuClothing",
+    menu_videos: "sideMenuVideos",
+    menu_events: "sideMenuEvents"
+};
+
+async function loadSideMenuLabels() {
+    const status = document.getElementById("sideMenuStatus");
+    try {
+        const { data, error } = await supabaseClient
+            .from("site_content")
+            .select("key,value")
+            .in("key", Object.keys(sideMenuLabelFields));
+        if (error) throw error;
+        (data || []).forEach(function(item) {
+            const fieldId = sideMenuLabelFields[item.key];
+            const input = fieldId && document.getElementById(fieldId);
+            if (input && item.value != null) input.value = item.value;
+        });
+        if (status) status.textContent = "";
+    } catch (error) {
+        console.error("Could not load side menu labels:", error);
+        if (status) status.textContent = "LOAD FAILED";
+    }
+}
+
+async function saveSideMenuLabels() {
+    const status = document.getElementById("sideMenuStatus");
+    if (status) status.textContent = "SAVING...";
+    try {
+        for (const [key, fieldId] of Object.entries(sideMenuLabelFields)) {
+            const input = document.getElementById(fieldId);
+            const { error } = await supabaseClient
+                .from("site_content")
+                .upsert({
+                    key: key,
+                    value: input ? input.value.trim() : "",
+                    updated_at: new Date().toISOString()
+                }, { onConflict: "key" });
+            if (error) throw error;
+        }
+        if (status) status.textContent = "CHANGES SAVED";
+    } catch (error) {
+        console.error("Could not save side menu labels:", error);
+        if (status) status.textContent = "SAVE FAILED";
+        alert("Could not save side menu labels: " + (error.message || error));
+    }
+}
+
+document.addEventListener("DOMContentLoaded", loadSideMenuLabels);
+
+/* =====================================================
    IMAGE UPLOAD
 ===================================================== */
 
@@ -687,31 +743,19 @@ body {
 <section id="sideMenu" class="panel">
   <div class="panel-header">
     <div class="panel-title">SIDE MENU</div>
-    <div class="panel-description">Manage the items shown in the website side menu.</div>
+    <div class="panel-description">Edit the labels displayed in the website navigation menu.</div>
   </div>
   <div class="item-list">
-    <div class="admin-item">
-      <div><input id="menuMusic" type="text" value="Music"><div class="item-meta">#music</div></div>
-      <div class="actions"><button class="button" type="button">EDIT</button><button class="button danger" type="button">REMOVE</button></div>
-    </div>
-    <div class="admin-item">
-      <div><input id="menuArtists" type="text" value="Artists"><div class="item-meta">#artists</div></div>
-      <div class="actions"><button class="button" type="button">EDIT</button><button class="button danger" type="button">REMOVE</button></div>
-    </div>
-    <div class="admin-item">
-      <div><input id="menuClothing" type="text" value="Clothing"><div class="item-meta">#clothing</div></div>
-      <div class="actions"><button class="button" type="button">EDIT</button><button class="button danger" type="button">REMOVE</button></div>
-    </div>
-    <div class="admin-item">
-      <div><input id="menuVideos" type="text" value="Videos"><div class="item-meta">#videos</div></div>
-      <div class="actions"><button class="button" type="button">EDIT</button><button class="button danger" type="button">REMOVE</button></div>
-    </div>
-    <div class="admin-item">
-      <div><input id="menuEvents" type="text" value="Events"><div class="item-meta">#events</div></div>
-      <div class="actions"><button class="button" type="button">EDIT</button><button class="button danger" type="button">REMOVE</button></div>
-    </div>
+    <div class="admin-item"><div><label for="sideMenuMusic">MUSIC LABEL</label><input id="sideMenuMusic" type="text" value="Music"><div class="item-meta">Links to the Music section</div></div></div>
+    <div class="admin-item"><div><label for="sideMenuArtists">ARTISTS LABEL</label><input id="sideMenuArtists" type="text" value="Artists"><div class="item-meta">Links to the Artists section</div></div></div>
+    <div class="admin-item"><div><label for="sideMenuClothing">CLOTHING LABEL</label><input id="sideMenuClothing" type="text" value="Clothing"><div class="item-meta">Links to the Clothing section</div></div></div>
+    <div class="admin-item"><div><label for="sideMenuVideos">VIDEOS LABEL</label><input id="sideMenuVideos" type="text" value="Videos"><div class="item-meta">Links to the Videos section</div></div></div>
+    <div class="admin-item"><div><label for="sideMenuEvents">EVENTS LABEL</label><input id="sideMenuEvents" type="text" value="Events"><div class="item-meta">Links to the Events section</div></div></div>
   </div>
-  <div class="actions"><button class="button primary" type="button">+ ADD MENU ITEM</button></div>
+  <div class="actions" style="margin-top:20px;align-items:center">
+    <button class="button primary" type="button" onclick="saveSideMenuLabels()">SAVE SIDE MENU</button>
+    <span id="sideMenuStatus" class="admin-status" aria-live="polite"></span>
+  </div>
 </section>
 
 
