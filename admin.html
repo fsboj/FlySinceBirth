@@ -911,7 +911,7 @@ body {
      ARTIST PAGES
 ===================================================== -->
 
-<section id="upcoming" class="panel"><div class="panel-header"><div class="panel-title">UPCOMING RELEASES</div><div class="panel-description">Schedule upcoming songs, EPs, albums, events, merch and videos and link each item to its proper page.</div></div><div class="form-grid"><div class="form-group"><label>TYPE</label><select id="upcomingType"><option value="song">SONG</option><option value="ep">EP</option><option value="album">ALBUM</option><option value="event">EVENT</option><option value="merch">MERCH</option><option value="video">VIDEO</option></select></div><div class="form-group"><label>TITLE</label><input id="upcomingTitle" type="text" placeholder="Upcoming title"></div><div class="form-group"><label>DATE</label><input id="upcomingDate" type="date"></div><div class="form-group"><label>ARTWORK / IMAGE</label><input id="upcomingImage" type="file" accept="image/*"></div><div class="form-group full" id="upcomingVideoUploadGroup" style="display:none"><label>VIDEO FILE</label><input id="upcomingVideoFile" type="file" accept="video/*"></div><div class="form-group full"><label>DESCRIPTION</label><textarea id="upcomingDescription" placeholder="Optional description"></textarea></div><div class="form-group"><label>ARTIST</label><select id="upcomingArtist"><option value="">NONE</option></select></div><div class="form-group"><label>LINK TO</label><select id="upcomingTarget"><option value="">CHOOSE AUTOMATIC LINK</option></select><input id="upcomingMerchUrl" type="url" placeholder="MERCH LINK (USED FOR MERCH)" style="margin-top:10px"></div></div><div class="actions"><button class="button" type="button" onclick="prepareUpcomingVideo()">+ ADD VIDEO</button><button class="button primary" onclick="saveUpcomingRelease()">ADD UPCOMING RELEASE</button></div><div id="upcomingList" class="item-list"></div></section>
+<section id="upcoming" class="panel"><div class="panel-header"><div class="panel-title">UPCOMING RELEASES</div><div class="panel-description">Schedule upcoming songs, EPs, albums, events, merch and videos and link each item to its proper page.</div></div><div class="form-grid"><div class="form-group"><label>TYPE</label><select id="upcomingType"><option value="song">SONG</option><option value="ep">EP</option><option value="album">ALBUM</option><option value="event">EVENT</option><option value="merch">MERCH</option><option value="video">VIDEO</option></select></div><div class="form-group"><label>TITLE</label><input id="upcomingTitle" type="text" placeholder="Upcoming title"></div><div class="form-group"><label>DATE</label><input id="upcomingDate" type="date"></div><div class="form-group"><label>ARTWORK / IMAGE</label><input id="upcomingImage" type="file" accept="image/*"></div><div class="form-group full" id="upcomingVideoUploadGroup" style="display:none"><label>VIDEO FILE</label><input id="upcomingVideoFile" type="file" accept="video/*"></div><div class="form-group full"><label>DESCRIPTION</label><textarea id="upcomingDescription" placeholder="Optional description"></textarea></div><div class="form-group"><label for="upcomingArtist">ARTIST (OPTIONAL)</label><select id="upcomingArtist"><option value="">LOADING ARTISTS...</option></select><div class="item-meta" style="margin-top:7px">Choose which artist this upcoming item belongs to.</div></div><div class="form-group"><label for="upcomingTarget">LINK TO EXISTING CONTENT (OPTIONAL)</label><select id="upcomingTarget"><option value="">NO LINK — USE THE DEFAULT PAGE</option></select><div class="item-meta" style="margin-top:7px">Optional: connect this item to an existing song, EP, album, video, or event. Leave blank if you want the website to use its default destination.</div><input id="upcomingMerchUrl" type="url" placeholder="MERCH LINK (USED FOR MERCH)" style="margin-top:10px"></div><div class="actions"><button class="button" type="button" onclick="prepareUpcomingVideo()">+ ADD VIDEO</button><button class="button primary" onclick="saveUpcomingRelease()">ADD UPCOMING RELEASE</button></div><div id="upcomingList" class="item-list"></div></section>
 
 <section
     id="artistPages"
@@ -6302,15 +6302,46 @@ async function saveVipMusic(slot){
  setStatus("VIP MUSIC UPDATED");
 }
 async function loadArtistsForUpcoming(){
- var s=document.getElementById("upcomingArtist");if(!s)return;var r=await supabaseClient.from("artists").select("id,name").order("name",{ascending:true});s.innerHTML='<option value="">NONE</option>'+(r.data||[]).map(function(a){return '<option value="'+a.id+'">'+escapeHtml(a.name)+"</option>"}).join("");populateUpcomingTargetOptions();
+ var s=document.getElementById("upcomingArtist");if(!s)return;
+ s.innerHTML='<option value="">LOADING ARTISTS...</option>';
+ try{
+  var r=await supabaseClient.from("artists").select("id,name").order("name",{ascending:true});
+  if(r.error)throw r.error;
+  var artists=r.data||[];
+  s.innerHTML='<option value="">NO ARTIST SELECTED</option>'+artists.map(function(a){return '<option value="'+escapeHtml(String(a.id))+'">'+escapeHtml(a.name)+'</option>'}).join("");
+  if(!artists.length)s.innerHTML='<option value="">NO ARTISTS FOUND — ADD ONE IN ARTIST PAGES</option>';
+  s.disabled=false;
+  await populateUpcomingTargetOptions();
+ }catch(e){
+  console.error("UPCOMING ARTISTS LOAD ERROR:",e);
+  s.innerHTML='<option value="">COULD NOT LOAD ARTISTS</option>';
+  s.disabled=false;
+  var note=s.parentElement.querySelector(".upcoming-artist-error");
+  if(!note){note=document.createElement("div");note.className="item-meta upcoming-artist-error";note.style.color="#e88";s.parentElement.appendChild(note)}
+  note.textContent="Could not load artists: "+(e.message||e);
+ }
 }
 async function populateUpcomingTargetOptions(){
- var s=document.getElementById("upcomingTarget");if(!s)return;var type=document.getElementById("upcomingType").value;var html='<option value="">CHOOSE AUTOMATIC LINK</option>';var r;
- if(type==="song"){r=await supabaseClient.from("artist_songs").select("id,title").is("release_id",null).order("created_at",{ascending:false});(r.data||[]).forEach(function(x){html+='<option value="song:'+x.id+'">SONG — '+escapeHtml(x.title)+"</option>"})}
- if(type==="ep"||type==="album"){r=await supabaseClient.from("artist_releases").select("id,title,type").eq("type",type).order("created_at",{ascending:false});(r.data||[]).forEach(function(x){html+='<option value="release:'+x.id+'">'+x.type.toUpperCase()+" — "+escapeHtml(x.title)+"</option>"})}
- if(type==="video"){r=await supabaseClient.from("videos").select("id,title").order("sort_order",{ascending:true});(r.data||[]).forEach(function(x){html+='<option value="video:'+x.id+'">VIDEO — '+escapeHtml(x.title)+"</option>"})}
- if(type==="event"){r=await supabaseClient.from("events").select("id,title").order("sort_order",{ascending:true});(r.data||[]).forEach(function(x){html+='<option value="event:'+x.id+'">EVENT — '+escapeHtml(x.title)+"</option>"})}
- s.innerHTML=html;
+ var s=document.getElementById("upcomingTarget");if(!s)return;
+ var type=document.getElementById("upcomingType").value;
+ var artistSelect=document.getElementById("upcomingArtist");
+ var artistId=artistSelect&&artistSelect.value?artistSelect.value:null;
+ var html='<option value="">NO LINK — USE THE DEFAULT PAGE</option>';
+ try{
+  var r=null,rows=[];
+  if(type==="song"){r=await supabaseClient.from("artist_songs").select("id,title,artist_id").is("release_id",null).order("created_at",{ascending:false});rows=r.data||[];rows.filter(function(x){return !artistId||String(x.artist_id)===String(artistId)}).forEach(function(x){html+='<option value="song:'+x.id+'">SONG — '+escapeHtml(x.title)+'</option>'})}
+  if(type==="ep"||type==="album"){r=await supabaseClient.from("artist_releases").select("id,title,type,artist_id").eq("type",type).order("created_at",{ascending:false});rows=r.data||[];rows.filter(function(x){return !artistId||String(x.artist_id)===String(artistId)}).forEach(function(x){html+='<option value="release:'+x.id+'">'+escapeHtml(String(x.type||type).toUpperCase())+' — '+escapeHtml(x.title)+'</option>'})}
+  if(type==="video"){r=await supabaseClient.from("videos").select("id,title,artist_id").order("sort_order",{ascending:true});rows=r.data||[];rows.filter(function(x){return !artistId||!x.artist_id||String(x.artist_id)===String(artistId)}).forEach(function(x){html+='<option value="video:'+x.id+'">VIDEO — '+escapeHtml(x.title)+'</option>'})}
+  if(type==="event"){r=await supabaseClient.from("events").select("id,title").order("sort_order",{ascending:true});rows=r.data||[];rows.forEach(function(x){html+='<option value="event:'+x.id+'">EVENT — '+escapeHtml(x.title)+'</option>'})}
+  if(r&&r.error)throw r.error;
+  s.innerHTML=html;
+ }catch(e){
+  console.error("UPCOMING TARGET OPTIONS ERROR:",e);
+  s.innerHTML=html;
+  var note=s.parentElement.querySelector(".upcoming-target-error");
+  if(!note){note=document.createElement("div");note.className="item-meta upcoming-target-error";note.style.color="#e88";s.parentElement.appendChild(note)}
+  note.textContent="Could not load link options: "+(e.message||e);
+ }
 }
 function prepareUpcomingVideo(){
  var type=document.getElementById("upcomingType");if(type)type.value="video";
@@ -6318,8 +6349,9 @@ function prepareUpcomingVideo(){
  var input=document.getElementById("upcomingVideoFile");if(input)input.click();
 }
 document.addEventListener("DOMContentLoaded",function(){
- var type=document.getElementById("upcomingType"),group=document.getElementById("upcomingVideoUploadGroup");
- if(type&&group)type.addEventListener("change",function(){group.style.display=this.value==="video"?"block":"none";});
+ var type=document.getElementById("upcomingType"),group=document.getElementById("upcomingVideoUploadGroup"),artist=document.getElementById("upcomingArtist");
+ if(type&&group)type.addEventListener("change",function(){group.style.display=this.value==="video"?"block":"none";populateUpcomingTargetOptions();});
+ if(artist)artist.addEventListener("change",populateUpcomingTargetOptions);
 });
 async function saveUpcomingRelease(){
  var title=document.getElementById("upcomingTitle").value.trim();if(!title){alert("Enter a title.");return}
