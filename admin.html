@@ -466,11 +466,11 @@ body {
 
 }
 
- #artistSongsAdminList{display:flex!important;flex-direction:column!important;gap:14px!important;width:100%!important;min-width:0!important}
- #artistSongsAdminList .artist-single-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;justify-content:initial!important;gap:18px!important;width:100%!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important}
- #artistSongsAdminList .artist-single-row>div:first-child{min-width:0!important;width:auto!important}
- #artistSongsAdminList .artist-single-row>div:last-child{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;min-width:max-content!important}
- @media(max-width:600px){#artistSongsAdminList .artist-single-row{grid-template-columns:minmax(0,1fr)!important}#artistSongsAdminList .artist-single-row>div:last-child{justify-content:flex-start!important;min-width:0!important}}
+ #artistSongsAdminList{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:14px!important;width:100%!important;min-width:0!important}
+ #artistSongsAdminList .artist-single-row{display:flex!important;flex:0 1 auto!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:22px!important;width:max-content!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+ #artistSongsAdminList .artist-single-row>div:first-child{flex:0 1 auto!important;min-width:100px!important;width:auto!important}
+ #artistSongsAdminList .artist-single-row>div:last-child{display:flex!important;flex:0 0 auto!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important;min-width:max-content!important}
+ @media(max-width:600px){#artistSongsAdminList .artist-single-row{width:100%!important;flex-wrap:wrap!important}#artistSongsAdminList .artist-single-row>div:last-child{justify-content:flex-start!important;min-width:0!important}}
  .main-page-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:25px}.main-page-tabs .button{margin:0}.main-page-tabs .button.active{background:white;color:black;border-color:white}.main-page-subpanel{display:none}.main-page-subpanel.active{display:block}.release-toggle{width:100%;text-align:left;background:none;border:0;color:white;cursor:pointer}.release-tracks{display:none;margin-top:15px;padding-left:25px;border-left:1px solid #242424}.release-tracks.open{display:block}</style>
 
 </head>
@@ -6530,7 +6530,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261010-5"></script>
+<script src="admin-tabs-fix.js?v=20261010-6"></script>
 </body>
 
 </html>
