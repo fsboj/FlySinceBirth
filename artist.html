@@ -3404,75 +3404,25 @@ document.addEventListener(
     }
 );
       async function loadSharedMenu() {
-
-    const { data, error } =
-        await supabaseClient
-            .from("site_content")
-            .select("*")
-            .limit(1)
-            .single();
-
-
-    if (error || !data) {
-
-        console.error(
-            "Could not load shared menu:",
-            error
-        );
-
+    const { data, error } = await supabaseClient
+        .from("site_content")
+        .select("key,value")
+        .in("key", ["menu_music", "menu_artists", "menu_clothing", "menu_videos", "menu_events"]);
+    if (error) {
+        console.error("Could not load shared menu:", error);
         return;
     }
-
-
-    if (data.menu_music) {
-
-        document.getElementById(
-            "menuMusic"
-        ).textContent =
-            data.menu_music;
-
-    }
-
-
-    if (data.menu_artists) {
-
-        document.getElementById(
-            "menuArtists"
-        ).textContent =
-            data.menu_artists;
-
-    }
-
-
-    if (data.menu_clothing) {
-
-        document.getElementById(
-            "menuClothing"
-        ).textContent =
-            data.menu_clothing;
-
-    }
-
-
-    if (data.menu_videos) {
-
-        document.getElementById(
-            "menuVideos"
-        ).textContent =
-            data.menu_videos;
-
-    }
-
-
-    if (data.menu_events) {
-
-        document.getElementById(
-            "menuEvents"
-        ).textContent =
-            data.menu_events;
-
-    }
-
+    const ids = {
+        menu_music: "menuMusic",
+        menu_artists: "menuArtists",
+        menu_clothing: "menuClothing",
+        menu_videos: "menuVideos",
+        menu_events: "menuEvents"
+    };
+    (data || []).forEach(function(item) {
+        const element = document.getElementById(ids[item.key]);
+        if (element && item.value) element.textContent = item.value;
+    });
 }
 loadSharedMenu();
 loadArtist();
