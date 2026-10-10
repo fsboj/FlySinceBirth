@@ -3008,277 +3008,111 @@ async function removeArtist(id) {
 ===================================================== */
 
 async function loadEvents() {
-
-    const container =
-        document.getElementById("eventsList");
-
+    const container = document.getElementById("eventsList");
     if (!container) return;
-
-    const { data, error } =
-        await supabaseClient
-            .from("events")
-            .select("*")
-            .order("sort_order", {
-                ascending: true
-            });
+    const { data, error } = await supabaseClient
+        .from("events")
+        .select("*")
+        .order("sort_order", { ascending: true });
 
     if (error) {
-
-        console.error(
-            "EVENTS LOAD ERROR:",
-            error
-        );
-
-        container.innerHTML = `
-            <div class="admin-item">
-                <div class="item-name">
-                    ERROR LOADING EVENTS
-                </div>
-
-                <div class="item-meta">
-                    ${escapeHtml(error.message)}
-                </div>
-            </div>
-        `;
-
+        console.error("EVENTS LOAD ERROR:", error);
+        container.innerHTML = '<div class="admin-item"><div class="item-name">ERROR LOADING EVENTS</div><div class="item-meta">' + escapeHtml(error.message) + '</div></div>';
         return;
     }
 
     container.innerHTML = "";
-
     (data || []).forEach(function(event) {
-
-        const item =
-            document.createElement("div");
-
-        item.className =
-            "admin-item";
-
+        const item = document.createElement("div");
+        item.className = "admin-item";
+        const image = event.image
+            ? '<img src="' + escapeHtml(event.image) + '" alt="" style="width:100%;height:100%;object-fit:cover;">'
+            : "";
         item.innerHTML = `
-
             <div class="item-info">
-
-                <div class="item-image">
-                    ${
-                       event.image
-                            ? `<img
-                                event.image
-                                style="width:100%;height:100%;object-fit:cover;"
-                              >`
-                            : ""
-                    }
-                </div>
-
+                <div class="item-image">${image}</div>
                 <div>
-
-                    <div class="item-name">
-                        ${escapeHtml(
-                            event.title ||
-                            event.name ||
-                            "Untitled Event"
-                        )}
-                    </div>
-
-                    <div class="item-meta">
-                        ${escapeHtml(
-                            event.date ||
-                            event.event_date ||
-                            "DATE NOT SET"
-                        )}
-                    </div>
-
+                    <div class="item-name">${escapeHtml(event.title || event.name || "Untitled Event")}</div>
+                    <div class="item-meta">${escapeHtml(event.date || "DATE NOT SET")} · ${escapeHtml(event.location || "LOCATION NOT SET")}</div>
+                    <div class="item-meta">${event.featured ? "FEATURED EVENT · " : ""}${event.video_link ? "EVENT VIDEOS LINK ADDED" : "NO EVENT VIDEOS LINK"}</div>
                 </div>
-
             </div>
-
             <div class="actions">
-
-                <button
-                    class="button"
-                    onclick="editEvent('${event.id}')">
-                    EDIT
-                </button>
-
-                <button
-                    class="button danger"
-                    onclick="removeEvent('${event.id}')">
-                    REMOVE
-                </button>
-
+                <button class="button" onclick="editEvent('${String(event.id).replace(/'/g, "\\'")}')">EDIT</button>
+                <button class="button danger" onclick="removeEvent('${String(event.id).replace(/'/g, "\\'")}')">REMOVE</button>
             </div>
         `;
-
         container.appendChild(item);
     });
 }
 async function addEvent() {
-
-    const title =
-        prompt("Event name:");
-
+    const title = prompt("Event name:");
     if (!title) return;
+    const date = prompt("Event date (use a clear date, e.g. Oct 15, 2026):") || "";
+    const location = prompt("Venue / location:") || "";
+    const link = prompt("Ticket or event information URL (optional):") || "";
+    const imageUrl = prompt("Event flyer image URL (optional):") || "";
+    const videoLink = prompt("Link to videos from this event (optional):") || "";
+    const featured = confirm("Feature this event at the top of Upcoming Events?\n\nChoose OK for YES, Cancel for NO.");
 
-    const date =
-        prompt("Event date:");
-
-    const location =
-        prompt("Event location:") || "";
-
-    const link =
-        prompt("Event link:") || "";
-
-    const imageUrl =
-        prompt("Event image URL:") || "";
-
-
-    const { data } =
-        await supabaseClient
-            .from("events")
-            .select("sort_order")
-            .order(
-                "sort_order",
-                {
-                    ascending: false
-                }
-            )
-            .limit(1);
-
-
-    const nextOrder =
-        data && data.length
-            ? (data[0].sort_order || 0) + 1
-            : 1;
-
-
-    const { error } =
-        await supabaseClient
-            .from("events")
-            .insert({
-                title: title,
-                date: date || "",
-                location: location,
-                link: link,
-                image: imageUrl,
-                sort_order: nextOrder
-            });
-
-
+    const { data } = await supabaseClient.from("events").select("sort_order").order("sort_order", { ascending: false }).limit(1);
+    const nextOrder = data && data.length ? (data[0].sort_order || 0) + 1 : 1;
+    const { error } = await supabaseClient.from("events").insert({
+        title: title,
+        date: date,
+        location: location,
+        link: link,
+        image: imageUrl,
+        video_link: videoLink,
+        featured: featured,
+        sort_order: nextOrder
+    });
     if (error) {
-
-        alert(
-            "Could not add event:\n\n" +
-            error.message
-        );
-
+        alert("Could not add event:\n\n" + error.message);
         return;
     }
-
-
     await loadEvents();
-
     setStatus("EVENT ADDED");
 }
 
-
 async function editEvent(id) {
-
-    const { data, error } =
-        await supabaseClient
-            .from("events")
-            .select("*")
-            .eq("id", id)
-            .single();
-
-
+    const { data, error } = await supabaseClient.from("events").select("*").eq("id", id).single();
     if (error) {
-
-        alert(
-            "Could not load event:\n\n" +
-            error.message
-        );
-
+        alert("Could not load event:\n\n" + error.message);
         return;
     }
 
-
-    const title =
-        prompt(
-            "Event name:",
-            data.title ||
-            data.name ||
-            ""
-        );
-
+    const title = prompt("Event name:", data.title || data.name || "");
     if (title === null) return;
-
-
-    const date =
-        prompt(
-            "Event date:",
-            data.date ||
-            data.event_date ||
-            ""
-        );
-
+    const date = prompt("Event date:", data.date || data.event_date || "");
     if (date === null) return;
-
-
-    const location =
-        prompt(
-            "Event location:",
-            data.location || ""
-        );
-
+    const location = prompt("Venue / location:", data.location || "");
     if (location === null) return;
-
-
-    const link =
-        prompt(
-            "Event link:",
-           data.link || ""
-        );
-
+    const link = prompt("Ticket or event information URL:", data.link || "");
     if (link === null) return;
-
-
-    const imageUrl =
-        prompt(
-            "Event image URL:",
-            data.image || ""
-        );
-
+    const imageUrl = prompt("Event flyer image URL:", data.image || "");
     if (imageUrl === null) return;
+    const videoLink = prompt("Link to videos from this event:", data.video_link || "");
+    if (videoLink === null) return;
+    const featured = confirm("Feature this event at the top of Upcoming Events?\n\nCurrently: " + (data.featured ? "YES" : "NO") + "\nChoose OK for YES, Cancel for NO.");
 
-
-    const { error: updateError } =
-        await supabaseClient
-            .from("events")
-            .update({
-                title: title,
-                date: date,
-                location: location,
-               link: link,
-                image: imageUrl
-            })
-            .eq("id", id);
-
+    const { error: updateError } = await supabaseClient.from("events").update({
+        title: title,
+        date: date,
+        location: location,
+        link: link,
+        image: imageUrl,
+        video_link: videoLink,
+        featured: featured
+    }).eq("id", id);
 
     if (updateError) {
-
-        alert(
-            "Could not update event:\n\n" +
-            updateError.message
-        );
-
+        alert("Could not update event:\n\n" + updateError.message);
         return;
     }
-
-
     await loadEvents();
-
     setStatus("EVENT UPDATED");
 }
-
 
 async function removeEvent(id) {
 
