@@ -1707,45 +1707,52 @@ grid.appendChild(card);
     }
 
     grid.innerHTML = "";
-    const videos = (data || []).slice();
+    const videos = (data || []).filter(function(video) {
+        return video && video.id != null;
+    });
 
-    // Shuffle the video cards on each page load so a different scene can be featured.
+    // Randomize the homepage video selection/order on each load.
     for (let i = videos.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [videos[i], videos[j]] = [videos[j], videos[i]];
     }
 
-    const artistIds = Array.from(new Set(videos.map(v => v.artist_id).filter(Boolean)));
+    const artistIds = Array.from(new Set(videos.map(function(video) {
+        return video.artist_id;
+    }).filter(Boolean)));
     const artistNames = {};
+
     if (artistIds.length) {
-        const artistsResult = await supabaseClient
+        const artistResult = await supabaseClient
             .from("artists")
             .select("id,name")
             .in("id", artistIds);
-        (artistsResult.data || []).forEach(function(artist) {
-            artistNames[String(artist.id)] = artist.name || "";
-        });
+
+        if (artistResult.error) {
+            console.error("Could not load video artist names:", artistResult.error);
+        } else {
+            (artistResult.data || []).forEach(function(artist) {
+                artistNames[String(artist.id)] = artist.name || "";
+            });
+        }
     }
 
     videos.forEach(function(video) {
-        const card = document.createElement("div");
+        const card = document.createElement("article");
         card.className = "video-card";
+        card.tabIndex = 0;
+        card.setAttribute("role", "link");
+        card.setAttribute("aria-label", "Watch " + (video.title || "video"));
 
         const thumbnail = document.createElement("div");
         thumbnail.className = "video-thumbnail";
 
-        if (video.image) {
-            const image = document.createElement("img");
-            image.src = video.image;
-            image.alt = (video.title || "Video") + " thumbnail";
-            image.loading = "lazy";
-            thumbnail.appendChild(image);
-        } else {
-            thumbnail.textContent = "FSB VIDEO";
-            thumbnail.style.color = "#aaa";
-            thumbnail.style.letterSpacing = "3px";
-            thumbnail.style.fontSize = "11px";
-        }
+        // Use the scene/thumbnail uploaded for this video in the admin panel.
+        const image = document.createElement("img");
+        image.src = video.image || "fsblogo.PNG";
+        image.alt = (video.title || "Video") + " thumbnail";
+        image.loading = "lazy";
+        thumbnail.appendChild(image);
         card.appendChild(thumbnail);
 
         const artist = document.createElement("div");
@@ -1758,11 +1765,17 @@ grid.appendChild(card);
         title.textContent = video.title || "Untitled Video";
         card.appendChild(title);
 
-        if (video.link) {
-            card.onclick = function() {
-                window.open(video.link, "_blank", "noopener");
-            };
+        function openVideoPage() {
+            window.location.href = "video.html?video_id=" + encodeURIComponent(video.id);
         }
+        card.addEventListener("click", openVideoPage);
+        card.addEventListener("keydown", function(event) {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openVideoPage();
+            }
+        });
+
         grid.appendChild(card);
     });
 }
