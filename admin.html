@@ -4750,12 +4750,10 @@ async function loadArtistLinksAdmin() {
                 </div>
             </div>
 
-            <button
-                class="button danger"
-                onclick="deleteArtistLink(${link.id})"
-            >
-                DELETE
-            </button>
+            <div class="actions" style="margin-top:0;display:flex;gap:8px;flex-shrink:0">
+                <button class="button" type="button" onclick="editArtistLink(${link.id})">EDIT</button>
+                <button class="button danger" type="button" onclick="deleteArtistLink(${link.id})">DELETE</button>
+            </div>
         `;
 
         list.appendChild(row);
@@ -4828,6 +4826,43 @@ async function addArtistLink() {
 
     await loadArtistLinksAdmin();
 
+}
+
+
+async function editArtistLink(linkId) {
+    const { data: link, error } = await supabaseClient
+        .from("artist_links")
+        .select("*")
+        .eq("id", linkId)
+        .single();
+
+    if (error) {
+        alert("Could not load link: " + error.message);
+        return;
+    }
+
+    const title = prompt("Link name:", link.title || "");
+    if (title === null) return;
+    const url = prompt("Link URL:", link.url || "");
+    if (url === null) return;
+
+    if (!title.trim() || !url.trim()) {
+        alert("Link name and URL cannot be empty.");
+        return;
+    }
+
+    const { error: updateError } = await supabaseClient
+        .from("artist_links")
+        .update({ title: title.trim(), url: url.trim() })
+        .eq("id", linkId);
+
+    if (updateError) {
+        alert("Could not update link: " + updateError.message);
+        return;
+    }
+
+    await loadArtistLinksAdmin();
+    if (typeof setStatus === "function") setStatus("ARTIST LINK UPDATED");
 }
 
 
@@ -6530,7 +6565,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261010-6"></script>
+<script src="admin-tabs-fix.js?v=20261010-7"></script>
 </body>
 
 </html>
