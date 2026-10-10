@@ -899,11 +899,14 @@ footer {
 
 <script>
 (function(){
-  // Supabase recovery emails may still land on the configured site root.
-  // Preserve the recovery token fragment while forwarding to the password form.
+  // Forward Supabase recovery callback URLs, whether Supabase uses a hash token
+  // or a PKCE ?code= callback, to the page that contains the password form.
   var hash=window.location.hash||'';
-  if(hash && /(?:^|[&#])type=recovery(?:&|$)/.test(hash.slice(1))){
-    window.location.replace('/FlySinceBirth/admin.html'+hash);
+  var params=new URLSearchParams(window.location.search||'');
+  var recoveryHash=/(?:^|[&#])type=recovery(?:&|$)/.test(hash.slice(1));
+  var authCode=params.has('code');
+  if(recoveryHash||authCode){
+    window.location.replace('/FlySinceBirth/admin.html'+window.location.search+hash);
   }
 })();
 </script>
