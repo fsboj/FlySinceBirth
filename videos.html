@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Videos | Fly Since Birth</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#050505;color:#fff;font-family:Arial,Helvetica,sans-serif;min-height:100vh}
+a{color:inherit;text-decoration:none}.navbar{display:flex;justify-content:space-between;align-items:center;padding:20px 6%;border-bottom:1px solid #202020;background:rgba(5,5,5,.94)}
+.nav-logo img{width:52px;height:52px;object-fit:contain}.back-link{border:1px solid #444;padding:12px 18px;font-size:10px;letter-spacing:2px}
+.page{width:min(1180px,88%);margin:55px auto 80px}.heading{font-size:clamp(30px,5vw,52px);letter-spacing:5px;margin:0 0 35px;font-weight:800}
+.video-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 18px}
+.video-card{min-width:0;cursor:pointer;outline:none}.video-card:focus-visible{outline:1px solid #fff;outline-offset:5px}.video-thumbnail{width:100%;aspect-ratio:16/9;background:#111;overflow:hidden;border:1px solid #242424}.video-thumbnail img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .25s}.video-card:hover .video-thumbnail img{opacity:.75}
+.video-artist{margin-top:12px;color:#fff;font-size:13px;font-weight:800;letter-spacing:1px}.video-title{margin-top:5px;font-size:16px;font-weight:700;line-height:1.35}.status{color:#777;font-size:12px;letter-spacing:1px}
+footer{padding:35px 6%;border-top:1px solid #202020;color:#555;font-size:9px;letter-spacing:3px;display:flex;justify-content:space-between}
+@media(max-width:800px){.video-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 12px}.page{width:92%;margin-top:35px}}
+@media(max-width:520px){.video-grid{grid-template-columns:1fr}.navbar{padding:16px 4%}.heading{letter-spacing:3px}}
+</style>
+</head>
+<body>
+<header class="navbar">
+<a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="Fly Since Birth"></a>
+<a class="back-link" href="index.html">BACK TO HOME</a>
+</header>
+<main class="page">
+<h1 class="heading">VIDEOS</h1>
+<div id="videoGrid" class="video-grid"><p class="status">LOADING VIDEOS...</p></div>
+</main>
+<footer><span>© 2026 FLY SINCE BIRTH</span><span>FSB WORLDWIDE</span></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const supabaseClient = supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co","sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
+async function loadVideos(){
+ const grid=document.getElementById("videoGrid");
+ const {data,error}=await supabaseClient.from("videos").select("*").order("sort_order",{ascending:true});
+ if(error){console.error("Could not load videos:",error);grid.innerHTML='<p class="status">VIDEOS COULD NOT BE LOADED. PLEASE TRY AGAIN LATER.</p>';return;}
+ const videos=(data||[]).filter(v=>v&&v.id!=null);
+ if(!videos.length){grid.innerHTML='<p class="status">NO VIDEOS AVAILABLE YET.</p>';return;}
+ const artistIds=[...new Set(videos.map(v=>v.artist_id).filter(Boolean))],artistNames={};
+ if(artistIds.length){
+  const result=await supabaseClient.from("artists").select("id,name").in("id",artistIds);
+  if(!result.error)(result.data||[]).forEach(a=>artistNames[String(a.id)]=a.name||"");
+ }
+ grid.innerHTML="";
+ videos.forEach(video=>{
+  const card=document.createElement("article");card.className="video-card";card.tabIndex=0;card.setAttribute("role","link");card.setAttribute("aria-label","Watch "+(video.title||"video"));
+  const thumb=document.createElement("div");thumb.className="video-thumbnail";
+  const img=document.createElement("img");img.src=video.image||"fsblogo.PNG";img.alt=(video.title||"Video")+" thumbnail";img.loading="lazy";thumb.appendChild(img);card.appendChild(thumb);
+  const artist=document.createElement("div");artist.className="video-artist";artist.textContent=artistNames[String(video.artist_id)]||video.artist||"";card.appendChild(artist);
+  const title=document.createElement("div");title.className="video-title";title.textContent=video.title||"Untitled Video";card.appendChild(title);
+  const open=()=>window.location.href="video.html?video_id="+encodeURIComponent(video.id);
+  card.addEventListener("click",open);card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}});
+  grid.appendChild(card);
+ });
+}
+loadVideos();
+</script>
+</body>
+</html>
