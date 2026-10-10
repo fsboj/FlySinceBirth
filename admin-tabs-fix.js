@@ -320,3 +320,51 @@ window.addEvent = async function(){
   if(typeof window.setStatus==='function')window.setStatus('EVENT ADDED');
  }catch(e){alert('Could not add event: '+(e.message||e))}
 };
+
+
+(function(){
+ function eventDb(){if(typeof supabaseClient!=='undefined')return supabaseClient;if(window.supabaseClient)return window.supabaseClient;throw new Error('Supabase is not initialized. Refresh the admin page.')}
+ function modal(){
+  let el=document.getElementById('fsbEventModal');if(el)return el;
+  const style=document.createElement('style');style.textContent='#fsbEventModal{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;padding:18px}#fsbEventModal .fsb-event-card{width:min(720px,100%);max-height:92vh;overflow:auto;background:#090909;border:1px solid #444;padding:24px;color:#fff}#fsbEventModal .fsb-event-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:20px}#fsbEventModal label{display:block;font-size:11px;letter-spacing:1px;margin-bottom:7px;color:#aaa}#fsbEventModal input:not([type=checkbox]):not([type=file]),#fsbEventModal input[type=file],#fsbEventModal textarea{width:100%;box-sizing:border-box;background:#111;color:#fff;border:1px solid #444;padding:12px}#fsbEventModal .fsb-full{grid-column:1/-1}#fsbEventModal .fsb-feature{display:flex;align-items:center;gap:10px}#fsbEventModal .fsb-feature label{margin:0}#fsbEventModal .fsb-event-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}@media(max-width:560px){#fsbEventModal .fsb-event-grid{grid-template-columns:1fr}#fsbEventModal .fsb-full{grid-column:auto}}';document.head.appendChild(style);
+  el=document.createElement('div');el.id='fsbEventModal';el.innerHTML='<div class="fsb-event-card" role="dialog" aria-modal="true" aria-labelledby="fsbEventModalTitle"><div class="panel-title" id="fsbEventModalTitle">ADD EVENT</div><div class="panel-description">Event details shown on the FSB website.</div><form id="fsbEventForm"><div class="fsb-event-grid"><div><label for="fsbEventTitle">EVENT NAME *</label><input id="fsbEventTitle" required maxlength="180" placeholder="FSB Summer Bash"></div><div><label for="fsbEventDate">DATE AND TIME</label><input id="fsbEventDate" placeholder="Oct 15, 2026 · 7 PM"></div><div class="fsb-full"><label for="fsbEventLocation">VENUE / ADDRESS</label><input id="fsbEventLocation" placeholder="Venue name and address"></div><div class="fsb-full"><label for="fsbEventLink">TICKET / EVENT INFORMATION URL</label><input id="fsbEventLink" type="url" placeholder="https://"></div><div class="fsb-full"><label for="fsbEventVideo">EVENT VIDEO LINK</label><input id="fsbEventVideo" type="url" placeholder="https://"></div><div class="fsb-full"><label for="fsbEventImage">EVENT FLYER / IMAGE (OPTIONAL)</label><input id="fsbEventImage" type="file" accept="image/*"><div id="fsbEventImageCurrent" style="font-size:12px;color:#aaa;margin-top:8px"></div></div><div class="fsb-full fsb-feature"><input id="fsbEventFeatured" type="checkbox"><label for="fsbEventFeatured">FEATURE THIS EVENT AT THE TOP OF UPCOMING EVENTS</label></div></div><div class="fsb-event-actions"><button class="button" type="button" id="fsbEventCancel">CANCEL</button><button class="button primary" type="submit" id="fsbEventSave">ADD EVENT</button></div></form></div>';
+  document.body.appendChild(el);el.addEventListener('click',e=>{if(e.target===el)close()});el.querySelector('#fsbEventCancel').onclick=close;document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});return el;
+ }
+ let editingEventId=null,existingImage='';
+ function close(){const el=document.getElementById('fsbEventModal');if(el)el.style.display='none';editingEventId=null;existingImage=''}
+ function openForm(ev){
+  const el=modal(),form=el.querySelector('#fsbEventForm');form.reset();editingEventId=ev?ev.id:null;existingImage=ev&&ev.image||'';
+  el.querySelector('#fsbEventModalTitle').textContent=ev?'EDIT EVENT':'ADD EVENT';
+  el.querySelector('#fsbEventSave').textContent=ev?'SAVE CHANGES':'ADD EVENT';
+  el.querySelector('#fsbEventTitle').value=ev?(ev.title||ev.name||''):'';
+  el.querySelector('#fsbEventDate').value=ev?(ev.date||ev.event_date||''):'';
+  el.querySelector('#fsbEventLocation').value=ev?(ev.location||''):'';
+  el.querySelector('#fsbEventLink').value=ev?(ev.link||''):'';
+  el.querySelector('#fsbEventVideo').value=ev?(ev.video_link||''):'';
+  el.querySelector('#fsbEventFeatured').checked=!!(ev&&ev.featured);
+  el.querySelector('#fsbEventImageCurrent').textContent=existingImage?'Current flyer saved. Choose a file only to replace it.':'No flyer uploaded yet.';
+  el.style.display='flex';el.querySelector('#fsbEventTitle').focus();
+ }
+ window.addEvent=function(){openForm(null)};
+ window.editEvent=async function(id){
+  try{const r=await eventDb().from('events').select('*').eq('id',id).single();if(r.error)throw r.error;openForm(r.data)}
+  catch(e){alert('Could not load event: '+(e.message||e))}
+ };
+ const initForm=function(){
+  const el=modal(),form=el.querySelector('#fsbEventForm');if(form.dataset.ready)return;form.dataset.ready='1';
+  form.addEventListener('submit',async function(e){
+   e.preventDefault();const btn=el.querySelector('#fsbEventSave');btn.disabled=true;btn.textContent='SAVING...';
+   try{
+    const db=eventDb(),title=el.querySelector('#fsbEventTitle').value.trim();if(!title)throw new Error('Enter an event name.');
+    let image=existingImage;const file=el.querySelector('#fsbEventImage').files[0];
+    if(file){const path='events/'+Date.now()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');const up=await db.storage.from('site-images').upload(path,file,{upsert:false});if(up.error)throw up.error;image=db.storage.from('site-images').getPublicUrl(path).data.publicUrl}
+    const payload={title,date:el.querySelector('#fsbEventDate').value.trim(),location:el.querySelector('#fsbEventLocation').value.trim(),link:el.querySelector('#fsbEventLink').value.trim(),video_link:el.querySelector('#fsbEventVideo').value.trim(),featured:el.querySelector('#fsbEventFeatured').checked,image:image||''};
+    if(editingEventId!==null&&editingEventId!==undefined){const up=await db.from('events').update(payload).eq('id',editingEventId);if(up.error)throw up.error}
+    else{const sr=await db.from('events').select('sort_order').order('sort_order',{ascending:false}).limit(1);if(sr.error)throw sr.error;payload.sort_order=sr.data&&sr.data.length?(Number(sr.data[0].sort_order)||0)+1:1;const ins=await db.from('events').insert(payload);if(ins.error)throw ins.error}
+    close();await window.loadEvents();if(typeof setStatus==='function')setStatus(editingEventId?'EVENT UPDATED':'EVENT ADDED');
+   }catch(err){alert('Could not save event: '+(err.message||err))}
+   finally{btn.disabled=false;btn.textContent=editingEventId?'SAVE CHANGES':'ADD EVENT'}
+  });
+ };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initForm);else initForm();
+})();
