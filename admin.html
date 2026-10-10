@@ -1661,7 +1661,7 @@ async function saveChanges() {
 
     const status = document.getElementById("saveStatus");
 
-    status.textContent = "SAVING...";
+    if (status) status.textContent = "SAVING...";
 
     const content = [
         {
@@ -1736,26 +1736,7 @@ async function saveChanges() {
     key: "merch_button",
     value: document.getElementById("merchButton").value
 },
-{
-    key: "menu_music",
-    value: document.getElementById("menuMusic").value
-},
-{
-    key: "menu_artists",
-    value: document.getElementById("menuArtists").value
-},
-{
-    key: "menu_clothing",
-    value: document.getElementById("menuClothing").value
-},
-{
-    key: "menu_videos",
-    value: document.getElementById("menuVideos").value
-},
-{
-    key: "menu_events",
-    value: document.getElementById("menuEvents").value
-},
+
         {
             key: "videos_heading",
             value: document.getElementById("videosHeading").value
@@ -1792,13 +1773,14 @@ async function saveChanges() {
             }
         }
 
-        status.textContent = "CHANGES SAVED";
+        if (status) status.textContent = "CHANGES SAVED";
 
     } catch (error) {
 
         console.error(error);
 
-        status.textContent = "SAVE FAILED";
+        if (status) status.textContent = "SAVE FAILED";
+        alert("Could not save changes: " + (error.message || error));
     }
 }
 /* =====================================================
