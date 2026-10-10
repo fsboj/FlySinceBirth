@@ -4926,7 +4926,19 @@ async function loadArtistSongsAdmin() {
     }
 
 
-    data.forEach(function(song) {
+    // The Singles panel must only contain standalone songs explicitly assigned to Singles.
+    const singles = (data || []).filter(function(song) {
+        return !song.release_id &&
+            Array.isArray(song.sections) &&
+            song.sections.includes("singles");
+    });
+
+    if (!singles.length) {
+        list.innerHTML = '<div class="empty-state">NO STANDALONE SINGLES</div>';
+        return;
+    }
+
+    singles.forEach(function(song) {
 
         const row =
             document.createElement("div");
