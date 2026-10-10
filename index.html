@@ -632,65 +632,54 @@ body {
 
 .video-grid {
     display: grid;
-
-    grid-template-columns:
-        repeat(3, 320px);
-
-    gap: 18px;
-
+    grid-template-columns: repeat(3, minmax(0, 320px));
+    gap: 22px 18px;
     margin-top: 55px;
 }
 .video-card {
-    height: 160px;
-
-    border: 1px solid #242424;
-
-    background:
-        radial-gradient(
-            circle,
-            #2d2d2d,
-            #080808
-        );
-
     display: flex;
-
+    flex-direction: column;
+    align-items: stretch;
+    overflow: hidden;
+    cursor: pointer;
+    transition: 0.3s;
+    background: transparent;
+    min-width: 0;
+}
+.video-thumbnail {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid #242424;
+    background: #101010;
+    display: flex;
     justify-content: center;
     align-items: center;
-
     overflow: hidden;
-
-    cursor: pointer;
-
-    transition: 0.3s;
-       flex-direction: column;
 }
-
 .video-card img {
-    width: 70%;
-
-    height: 70%;
-
-    object-fit: contain;
-
-    opacity: 0.85;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
-
 .video-card:hover {
-    transform: scale(1.02);
-
-    border-color: #555;
+    transform: translateY(-3px);
 }
 .video-artist {
     margin-top: 10px;
-    color: #666;
-    font-size: 11px;
-    letter-spacing: 2px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
 }
-
 .video-title {
     margin-top: 4px;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
+    color: #ffffff;
+}
+@media (max-width: 800px) {
+    .video-grid { grid-template-columns: minmax(0, 320px); }
 }
 
 /* =====================================================
@@ -1704,109 +1693,78 @@ grid.appendChild(card);
 
 }
    async function loadVideos() {
-
-    const grid =
-        document.getElementById("videoGrid");
-
+    const grid = document.getElementById("videoGrid");
     if (!grid) return;
 
-
-    const { data, error } =
-        await supabaseClient
-            .from("videos")
-            .select("*")
-            .order("sort_order", {
-                ascending: true
-            });
-
+    const { data, error } = await supabaseClient
+        .from("videos")
+        .select("*")
+        .order("sort_order", { ascending: true });
 
     if (error) {
-
-        console.error(
-            "Could not load videos:",
-            error
-        );
-
+        console.error("Could not load videos:", error);
         return;
     }
 
-
     grid.innerHTML = "";
+    const videos = (data || []).slice();
 
+    // Shuffle the video cards on each page load so a different scene can be featured.
+    for (let i = videos.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [videos[i], videos[j]] = [videos[j], videos[i]];
+    }
 
-(data || []).forEach(async function(video) {
-        const card =
-            document.createElement("div");
-
-        card.className =
-            "video-card";
-
-
-       if (video.image) {
-
-            const image =
-                document.createElement("img");
-
-         image.src = video.image;
-           
-            image.alt =
-                video.title ||
-                "FSB Video";
-
-            card.appendChild(image);
-
-        }
-if (video.artist_id) {
-    const artist =
-        document.createElement("div");
-
-    artist.className =
-        "video-artist";
-
-    const { data: artistData } =
-        await supabaseClient
+    const artistIds = Array.from(new Set(videos.map(v => v.artist_id).filter(Boolean)));
+    const artistNames = {};
+    if (artistIds.length) {
+        const artistsResult = await supabaseClient
             .from("artists")
-            .select("name")
-            .eq("id", video.artist_id)
-            .single();
+            .select("id,name")
+            .in("id", artistIds);
+        (artistsResult.data || []).forEach(function(artist) {
+            artistNames[String(artist.id)] = artist.name || "";
+        });
+    }
 
-    artist.textContent =
-        artistData?.name || "";
+    videos.forEach(function(video) {
+        const card = document.createElement("div");
+        card.className = "video-card";
 
-    card.appendChild(artist);
-}
+        const thumbnail = document.createElement("div");
+        thumbnail.className = "video-thumbnail";
 
-if (video.title) {
-    const title =
-        document.createElement("div");
-
-    title.className =
-        "video-title";
-
-    title.textContent =
-        video.title;
-
-    card.appendChild(title);
-}
-        if (video.link) {
-
-            card.onclick =
-                function() {
-
-                    window.open(
-                        video.link,
-                        "_blank"
-                    );
-
-                };
-
+        if (video.image) {
+            const image = document.createElement("img");
+            image.src = video.image;
+            image.alt = (video.title || "Video") + " thumbnail";
+            image.loading = "lazy";
+            thumbnail.appendChild(image);
+        } else {
+            thumbnail.textContent = "FSB VIDEO";
+            thumbnail.style.color = "#aaa";
+            thumbnail.style.letterSpacing = "3px";
+            thumbnail.style.fontSize = "11px";
         }
+        card.appendChild(thumbnail);
 
+        const artist = document.createElement("div");
+        artist.className = "video-artist";
+        artist.textContent = artistNames[String(video.artist_id)] || video.artist || "";
+        card.appendChild(artist);
 
+        const title = document.createElement("div");
+        title.className = "video-title";
+        title.textContent = video.title || "Untitled Video";
+        card.appendChild(title);
+
+        if (video.link) {
+            card.onclick = function() {
+                window.open(video.link, "_blank", "noopener");
+            };
+        }
         grid.appendChild(card);
-
     });
-
 }
    async function loadEvents() {
 
