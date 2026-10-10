@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FSB Store | Fly Since Birth</title>
+<meta name="description" content="Shop Fly Since Birth clothing, limited drops, and accessories.">
+<style>
+:root{--bg:#070707;--panel:#101010;--line:#292929;--muted:#8a8a8a;--white:#f5f5f5}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--white);font-family:Arial,Helvetica,sans-serif}
+a{color:inherit;text-decoration:none}
+button,input,select{font:inherit}
+.topline{height:3px;background:#eee}
+header{height:92px;padding:0 6vw;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+.brand img{width:150px;max-height:60px;object-fit:contain}
+.nav{display:flex;align-items:center;gap:28px;text-transform:uppercase;font-size:10px;letter-spacing:2px}
+.nav a{color:#bdbdbd}.nav a:hover{color:white}
+.cart-button,.outline{background:transparent;color:white;border:1px solid #777;padding:13px 17px;text-transform:uppercase;letter-spacing:2px;font-size:10px;cursor:pointer}
+.cart-button:hover,.outline:hover{background:white;color:#050505}
+.hero{padding:90px 6vw 80px;min-height:380px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;border-bottom:1px solid var(--line);background:radial-gradient(ellipse at 80% 35%,#252525 0,transparent 40%),linear-gradient(120deg,#090909,#151515 60%,#050505)}
+.kicker{font-size:10px;letter-spacing:5px;color:#aaa;margin-bottom:24px}
+.hero h1{font-size:clamp(58px,10vw,138px);line-height:.8;letter-spacing:-.09em;max-width:900px}
+.hero p{color:#aaa;max-width:460px;font-size:14px;line-height:1.8;margin-top:30px}
+.hero .kicker span{color:#fff}
+.toolbar{padding:35px 6vw 20px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.toolbar h2{font-size:25px;letter-spacing:-1px}
+.filters{display:flex;gap:10px;flex-wrap:wrap}
+.filters button{border:1px solid var(--line);background:transparent;color:#999;padding:10px 14px;font-size:9px;letter-spacing:1.5px;cursor:pointer}
+.filters button.active,.filters button:hover{background:#fff;color:#000;border-color:#fff}
+.grid{padding:15px 6vw 100px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:38px 18px}
+.product{min-width:0;cursor:pointer}
+.product-image{position:relative;aspect-ratio:4/5;background:#111;overflow:hidden;border:1px solid #1e1e1e}
+.product-image img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s}
+.product:hover .product-image img{transform:scale(1.035)}
+.flag{position:absolute;top:12px;left:12px;background:#f5f5f5;color:#080808;padding:7px 9px;font-size:8px;letter-spacing:1.5px;text-transform:uppercase}
+.product-info{display:flex;justify-content:space-between;gap:12px;padding-top:15px}
+.product-name{font-size:13px;letter-spacing:.3px}
+.product-category{font-size:9px;letter-spacing:2px;color:#777;margin-top:7px;text-transform:uppercase}
+.price{font-size:12px;white-space:nowrap}
+.empty{grid-column:1/-1;padding:70px 20px;text-align:center;border:1px solid var(--line);color:#999;line-height:1.8}
+.empty strong{display:block;color:#fff;font-size:22px;margin-bottom:10px}
+.statement{padding:70px 6vw;border-top:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center}
+.statement p{font-size:clamp(22px,4vw,48px);letter-spacing:-2px;line-height:1.1}
+.statement small{display:block;margin-top:18px;color:#777;letter-spacing:3px;font-size:9px}
+footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;color:#666;font-size:9px;letter-spacing:2px}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:20;display:none;align-items:center;justify-content:center;padding:22px}
+.modal-backdrop.open{display:flex}
+.modal{width:min(900px,100%);max-height:90vh;overflow:auto;background:#0c0c0c;border:1px solid #333;display:grid;grid-template-columns:1fr 1fr;position:relative}
+.modal-image{background:#111;min-height:380px}.modal-image img{width:100%;height:100%;max-height:650px;object-fit:cover}
+.modal-info{padding:36px 30px}.close{position:absolute;right:14px;top:10px;border:0;background:transparent;color:#fff;font-size:28px;cursor:pointer;z-index:2}
+.modal-info .cat{color:#888;font-size:9px;letter-spacing:3px;text-transform:uppercase}
+.modal-info h2{font-size:32px;letter-spacing:-1.5px;margin:12px 0}
+.modal-price{font-size:17px;margin:15px 0 25px}
+.modal-desc{color:#aaa;font-size:13px;line-height:1.8;margin-bottom:25px;white-space:pre-wrap}
+.field-label{font-size:9px;color:#999;letter-spacing:2px;display:block;margin:18px 0 9px}
+.options{display:flex;gap:8px;flex-wrap:wrap}
+.options button{background:transparent;border:1px solid #3a3a3a;color:#ddd;padding:10px 12px;cursor:pointer;font-size:11px}
+.options button.selected{background:#fff;color:#000;border-color:#fff}
+.add{margin-top:28px;width:100%;padding:16px;background:#f5f5f5;color:#000;border:1px solid #fff;font-size:10px;letter-spacing:3px;cursor:pointer}
+.add:disabled{opacity:.35;cursor:not-allowed}
+.cart-panel{position:fixed;inset:0;z-index:30;display:none;background:rgba(0,0,0,.75);justify-content:flex-end}
+.cart-panel.open{display:flex}
+.cart-inner{height:100%;width:min(460px,100%);background:#0b0b0b;border-left:1px solid #333;padding:28px;overflow:auto}
+.cart-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;padding-bottom:20px}
+.cart-head h2{font-size:22px}
+.cart-items{padding:20px 0;display:flex;flex-direction:column;gap:16px}
+.cart-line{display:flex;gap:14px;border-bottom:1px solid #222;padding-bottom:16px}
+.cart-line img{width:70px;height:85px;object-fit:cover;background:#111}
+.cart-line-info{flex:1;font-size:12px;line-height:1.7}
+.cart-line button{border:0;background:transparent;color:#888;text-decoration:underline;cursor:pointer;font-size:10px}
+.cart-total{display:flex;justify-content:space-between;border-top:1px solid #333;padding-top:20px;margin-top:10px}
+.cart-note{color:#777;font-size:11px;line-height:1.7;margin-top:15px}
+.notice{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#f5f5f5;color:#000;padding:13px 20px;font-size:11px;z-index:40;display:none;max-width:90vw}
+@media(max-width:800px){header{height:76px;padding:0 5vw}.brand img{width:115px}.nav{gap:12px}.nav a{display:none}.hero{padding:70px 5vw;min-height:320px}.toolbar{padding:28px 5vw;align-items:flex-start;flex-direction:column}.grid{padding:10px 5vw 70px;grid-template-columns:repeat(2,minmax(0,1fr));gap:25px 12px}.product-name{font-size:12px}.modal{grid-template-columns:1fr;max-height:92vh}.modal-image{min-height:250px;height:40vh}.modal-info{padding:25px 20px}.modal-info h2{font-size:26px}footer{padding:24px 5vw;font-size:8px}}
+@media(max-width:420px){.grid{grid-template-columns:1fr 1fr}.product-info{flex-direction:column;gap:7px}.hero h1{font-size:56px}.cart-button{padding:11px}}
+</style>
+</head>
+<body>
+<div class="topline"></div>
+<header>
+  <a class="brand" href="index.html" aria-label="Fly Since Birth home"><img src="Flysincebirthwhite.png" alt="Fly Since Birth"></a>
+  <nav class="nav"><a href="index.html">Home</a><a href="#shop">Shop</a><a href="events.html">Events</a><button class="cart-button" id="openCart">Bag (<span id="cartCount">0</span>)</button></nav>
+</header>
+<section class="hero">
+  <div class="kicker">FLY SINCE BIRTH <span> / </span> OFFICIAL STORE</div>
+  <h1>BUILT TO<br>STAND OUT.</h1>
+  <p>Clothing, accessories, and limited releases from FSB. A uniform for those who move differently.</p>
+</section>
+<section id="shop">
+  <div class="toolbar"><h2>THE COLLECTION</h2><div class="filters" id="filters"><button class="active" data-category="all">ALL PIECES</button><button data-category="Apparel">APPAREL</button><button data-category="Headwear">HEADWEAR</button><button data-category="Accessories">ACCESSORIES</button></div></div>
+  <div class="grid" id="productGrid"><div class="empty"><strong>THE FIRST DROP IS COMING.</strong>FSB pieces will appear here as they are added in the store admin.</div></div>
+</section>
+<section class="statement"><p>MORE THAN CLOTHING.<br>IT'S FSB.</p><small>FLY SINCE BIRTH · FSB WORLDWIDE</small></section>
+<footer><span>© 2026 FLY SINCE BIRTH</span><span>FSB WORLDWIDE</span><a href="index.html">BACK TO HOME</a></footer>
+<div class="modal-backdrop" id="productModal" role="dialog" aria-modal="true" aria-label="Product details"><div class="modal"><button class="close" id="closeProduct" aria-label="Close">×</button><div class="modal-image"><img id="modalImage" alt=""></div><div class="modal-info"><div class="cat" id="modalCategory"></div><h2 id="modalName"></h2><div class="modal-price" id="modalPrice"></div><p class="modal-desc" id="modalDescription"></p><div id="modalOptions"></div><button class="add" id="addToBag">ADD TO BAG</button></div></div></div>
+<div class="cart-panel" id="cartPanel"><div class="cart-inner"><div class="cart-head"><h2>YOUR BAG (<span id="cartCount2">0</span>)</h2><button class="close" id="closeCart" aria-label="Close bag">×</button></div><div class="cart-items" id="cartItems"></div><div class="cart-total"><span>Subtotal</span><strong id="cartTotal">$0.00</strong></div><p class="cart-note">Shipping and taxes are calculated at checkout. Checkout will be enabled once secure payments and fulfillment integrations are connected.</p><button class="add" id="checkoutButton">CHECKOUT — COMING SOON</button></div></div>
+<div class="notice" id="notice" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://ccvhvxugoebdqwxxankl.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let products=[],activeCategory="all",selectedProduct=null,selectedSize="",selectedColor="";
+let cart=[];
+try{cart=JSON.parse(sessionStorage.getItem("fsbCart")||"[]")}catch(e){cart=[]}
+const $=id=>document.getElementById(id);
+const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=v=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(v)||0);
+function notify(message){const n=$("notice");n.textContent=message;n.style.display="block";clearTimeout(window.fsbNoticeTimer);window.fsbNoticeTimer=setTimeout(()=>n.style.display="none",2800)}
+function productImage(p){return (p.images||[]).find(Boolean)||"flysincebirthchrome.PNG"}
+async function loadProducts(){
+ const grid=$("productGrid");
+ const {data,error}=await supabaseClient.from("merch_products").select("id,name,slug,description,category,price,compare_at_price,images,sizes,colors,variants,fulfillment_method,stock_quantity,track_inventory,active,featured,sort_order").eq("active",true).order("featured",{ascending:false}).order("sort_order",{ascending:true}).order("created_at",{ascending:false});
+ if(error){console.error("Merch catalog error",error);grid.innerHTML='<div class="empty"><strong>THE COLLECTION IS LOADING.</strong>Please refresh in a moment.</div>';return}
+ products=data||[];renderProducts();
+}
+function renderProducts(){
+ const filtered=activeCategory==="all"?products:products.filter(p=>p.category===activeCategory);
+ const grid=$("productGrid");
+ if(!filtered.length){grid.innerHTML='<div class="empty"><strong>THE FIRST DROP IS COMING.</strong>New FSB pieces will be added here soon.</div>';return}
+ grid.innerHTML=filtered.map(p=>'<article class="product" tabindex="0" role="button" data-id="'+p.id+'" aria-label="View '+safe(p.name)+'"><div class="product-image"><img loading="lazy" src="'+safe(productImage(p))+'" alt="'+safe(p.name)+'">'+(p.featured?'<span class="flag">Featured</span>':'')+'</div><div class="product-info"><div><div class="product-name">'+safe(p.name)+'</div><div class="product-category">'+safe(p.category||"FSB")+'</div></div><div class="price">'+money(p.price)+'</div></div></article>').join("");
+ grid.querySelectorAll(".product").forEach(el=>{const open=()=>showProduct(Number(el.dataset.id));el.addEventListener("click",open);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}})});
+}
+$("filters").addEventListener("click",e=>{const b=e.target.closest("button[data-category]");if(!b)return;activeCategory=b.dataset.category;$("filters").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x===b));renderProducts()});
+function showProduct(id){
+ selectedProduct=products.find(p=>Number(p.id)===id);if(!selectedProduct)return;
+ selectedSize="";selectedColor="";
+ $("modalImage").src=productImage(selectedProduct);$("modalImage").alt=selectedProduct.name;
+ $("modalCategory").textContent=selectedProduct.category||"FSB";$("modalName").textContent=selectedProduct.name;$("modalPrice").textContent=money(selectedProduct.price);$("modalDescription").textContent=selectedProduct.description||"";
+ const wrap=$("modalOptions");wrap.innerHTML="";
+ const sizes=selectedProduct.sizes||[],colors=selectedProduct.colors||[];
+ if(sizes.length){const label=document.createElement("span");label.className="field-label";label.textContent="SELECT SIZE";wrap.appendChild(label);const row=document.createElement("div");row.className="options";sizes.forEach(size=>{const b=document.createElement("button");b.textContent=size;b.onclick=()=>{selectedSize=size;row.querySelectorAll("button").forEach(x=>x.classList.toggle("selected",x===b))};row.appendChild(b)});wrap.appendChild(row)}
+ if(colors.length){const label=document.createElement("span");label.className="field-label";label.textContent="SELECT COLOR";wrap.appendChild(label);const row=document.createElement("div");row.className="options";colors.forEach(color=>{const b=document.createElement("button");b.textContent=color;b.onclick=()=>{selectedColor=color;row.querySelectorAll("button").forEach(x=>x.classList.toggle("selected",x===b))};row.appendChild(b)});wrap.appendChild(row)}
+ const outOfStock=selectedProduct.track_inventory&&selectedProduct.fulfillment_method==="own_inventory"&&Number(selectedProduct.stock_quantity)<=0;
+ $("addToBag").disabled=!!outOfStock;$("addToBag").textContent=outOfStock?"SOLD OUT":"ADD TO BAG";
+ $("productModal").classList.add("open");
+}
+$("closeProduct").onclick=()=>$("productModal").classList.remove("open");
+$("productModal").addEventListener("click",e=>{if(e.target===$("productModal"))$("productModal").classList.remove("open")});
+$("addToBag").onclick=()=>{if(!selectedProduct)return;const needsSize=(selectedProduct.sizes||[]).length,needsColor=(selectedProduct.colors||[]).length;if(needsSize&&!selectedSize){notify("Choose a size first.");return}if(needsColor&&!selectedColor){notify("Choose a color first.");return}if(selectedProduct.track_inventory&&selectedProduct.fulfillment_method==="own_inventory"&&Number(selectedProduct.stock_quantity)<=0){notify("This item is sold out.");return}const key=[selectedProduct.id,selectedSize,selectedColor].join("|");const existing=cart.find(x=>x.key===key);if(existing)existing.quantity++;else cart.push({key,id:selectedProduct.id,name:selectedProduct.name,price:Number(selectedProduct.price),image:productImage(selectedProduct),size:selectedSize,color:selectedColor,quantity:1});saveCart();$("productModal").classList.remove("open");notify("Added to your bag.")};
+function saveCart(){try{sessionStorage.setItem("fsbCart",JSON.stringify(cart))}catch(e){}renderCart()}
+function renderCart(){$("cartCount").textContent=cart.reduce((n,x)=>n+x.quantity,0);$("cartCount2").textContent=$("cartCount").textContent;$("cartItems").innerHTML=cart.length?cart.map(x=>'<div class="cart-line"><img src="'+safe(x.image)+'" alt=""><div class="cart-line-info"><strong>'+safe(x.name)+'</strong><br>'+[x.size,x.color].filter(Boolean).map(safe).join(" · ")+'<br>'+money(x.price)+' × '+x.quantity+'<br><button data-remove="'+safe(x.key)+'">Remove</button></div></div>').join(""):'<div class="empty">Your bag is empty.</div>';$("cartTotal").textContent=money(cart.reduce((n,x)=>n+x.price*x.quantity,0));$("cartItems").querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{cart=cart.filter(x=>x.key!==b.dataset.remove);saveCart()})}
+$("openCart").onclick=()=>$("cartPanel").classList.add("open");$("closeCart").onclick=()=>$("cartPanel").classList.remove("open");$("cartPanel").addEventListener("click",e=>{if(e.target===$("cartPanel"))$("cartPanel").classList.remove("open")});
+$("checkoutButton").onclick=()=>notify("Secure checkout is not connected yet. No payment has been taken.");
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("productModal").classList.remove("open");$("cartPanel").classList.remove("open")}});
+renderCart();loadProducts();
+</script>
+</body>
+</html>
