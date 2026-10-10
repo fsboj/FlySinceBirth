@@ -274,10 +274,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 window.loadEvents = async function(){
  const container=document.getElementById('eventsList');
  if(!container)return;
- if(!window.supabaseClient){container.innerHTML='<div class="admin-item"><div class="item-name">Supabase is not initialized. Refresh and try again.</div></div>';return;}
+ const db=(typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient);
+ if(!db){container.innerHTML='<div class="admin-item"><div class="item-name">Supabase is not initialized. Refresh and try again.</div></div>';return;}
  container.innerHTML='<div class="admin-item"><div class="item-name">Loading events...</div></div>';
  try{
-  const r=await window.supabaseClient.from('events').select('*').order('sort_order',{ascending:true});
+  const r=await db.from('events').select('*').order('sort_order',{ascending:true});
   if(r.error)throw r.error;
   container.innerHTML='';
   (r.data||[]).forEach(function(ev){
