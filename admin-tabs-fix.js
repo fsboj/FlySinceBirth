@@ -56,7 +56,7 @@ async function renderArtistMusic(artistId){
   ]);
   if(sr.error)throw sr.error;if(rr.error)throw rr.error;
   const songs=sr.data||[],releases=rr.data||[];
-  renderSingles(songList,songs.filter(x=>!x.release_id));
+  renderSingles(songList,songs.filter(x=>!x.release_id && (!Array.isArray(x.sections) || x.sections.includes('singles'))));
   renderReleases(releaseList,releases,songs);
  }catch(e){
   console.error('Artist music manager error:',e);
