@@ -506,14 +506,14 @@ body {
      ADMIN NAVIGATION
 ===================================================== -->
 
-<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button></nav>
+<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('events', this); loadEvents(); return false;">EVENTS</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button></nav>
 
 
 <!-- =====================================================
      SITE
 ===================================================== -->
 
-<section id="mainPage" class="panel active"><div class="panel-header"><div class="panel-title">MAIN PAGE</div><div class="panel-description">Manage everything displayed on the main FSB homepage.</div></div><div class="main-page-tabs"><button type="button" class="button active" onclick="showMainSubPanel('site', this); return false;">GENERAL</button><button type="button" class="button" onclick="showMainSubPanel('photos', this); return false;">PHOTOS</button><button type="button" class="button" onclick="showMainSubPanel('events', this); return false;">EVENTS</button><button type="button" class="button" onclick="showMainSubPanel('merch', this); return false;">MERCH</button><button type="button" class="button" onclick="showMainSubPanel('sections', this); return false;">SECTIONS</button><button type="button" class="button primary" onclick="addCustomMainSection(); return false;">+ ADD SECTION</button></div><div id="mainPageSubPanels"></div></section>
+<section id="mainPage" class="panel active"><div class="panel-header"><div class="panel-title">MAIN PAGE</div><div class="panel-description">Manage everything displayed on the main FSB homepage.</div></div><div class="main-page-tabs"><button type="button" class="button active" onclick="showMainSubPanel('site', this); return false;">GENERAL</button><button type="button" class="button" onclick="showMainSubPanel('photos', this); return false;">PHOTOS</button><button type="button" class="button" onclick="showMainSubPanel('merch', this); return false;">MERCH</button><button type="button" class="button" onclick="showMainSubPanel('sections', this); return false;">SECTIONS</button><button type="button" class="button primary" onclick="addCustomMainSection(); return false;">+ ADD SECTION</button></div><div id="mainPageSubPanels"></div></section>
 <section id="site" class="panel">
   <div class="panel-header">
     <div class="panel-title">Site Settings</div>
@@ -6195,7 +6195,7 @@ document.addEventListener(
 );
 }
 
-const mainPagePanelIds=["site","photos","text","music","artists","videos","events","merch","sections"];
+const mainPagePanelIds=["site","photos","text","music","artists","videos","merch","sections"];
 function showMainSubPanel(panelId,button){
  document.querySelectorAll(".main-page-subpanel").forEach(function(p){p.classList.remove("active")});
  var target=document.getElementById(panelId); if(target) target.classList.add("active");
