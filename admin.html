@@ -1456,7 +1456,7 @@ const supabaseClient = supabase.createClient(
  const gate=document.getElementById('fsbAdminGate'),form=document.getElementById('fsbAdminLoginForm'),status=document.getElementById('fsbAdminGateStatus'),button=document.getElementById('fsbAdminLoginButton'),resetForm=document.getElementById('fsbAdminNewPasswordForm');
  const allowedEmail='fsbthelabel01@gmail.com';
  function say(message,bad=true){status.textContent=message;status.style.color=bad?'#e9b7b7':'#a9d9ad'}
- function showPasswordReset(){form.style.display='none';resetForm.style.display='block';say('Reset link verified. Choose a new password.',false)}
+ function showPasswordReset(){form.style.display='none';resetForm.style.display='block';document.body.classList.remove('fsb-admin-ready');say('Choose a new password for your FSB admin account.',false)}
  async function verifyAndEnter(session){
   if(!session||!session.user){document.body.classList.remove('fsb-admin-ready');return false}
   if(String(session.user.email||'').toLowerCase()!==allowedEmail){await supabaseClient.auth.signOut();say('This account is not authorized for FSB admin.');return false}
@@ -1464,12 +1464,27 @@ const supabaseClient = supabase.createClient(
   if(check.error||!check.data){await supabaseClient.auth.signOut();say('Admin access could not be verified.');return false}
   document.body.classList.add('fsb-admin-ready');return true;
  }
+ async function finishRecoveryUrl(){
+  const params=new URLSearchParams(location.search),hash=(location.hash||'').replace(/^#/,'');
+  const hashParams=new URLSearchParams(hash);
+  const code=params.get('code');
+  const recovery=hashParams.get('type')==='recovery'||params.get('type')==='recovery';
+  if(code){const ex=await supabaseClient.auth.exchangeCodeForSession(code);if(ex.error){say('The reset link could not be verified: '+ex.error.message);return false}showPasswordReset();return true}
+  if(recovery){
+   const access=hashParams.get('access_token'),refresh=hashParams.get('refresh_token');
+   if(access&&refresh){const sr=await supabaseClient.auth.setSession({access_token:access,refresh_token:refresh});if(sr.error){say('The reset link could not be verified: '+sr.error.message);return false}showPasswordReset();return true}
+   showPasswordReset();say('Recovery link detected. If saving fails, the link may have expired; request a new one when email limits clear.',false);return true;
+  }
+  return false;
+ }
  form.addEventListener('submit',async function(e){e.preventDefault();button.disabled=true;button.textContent='SIGNING IN…';say('');try{const result=await supabaseClient.auth.signInWithPassword({email:document.getElementById('fsbAdminEmail').value.trim(),password:document.getElementById('fsbAdminPassword').value});if(result.error)throw result.error;if(await verifyAndEnter(result.data.session)){location.reload()}}catch(err){say(err.message||'Sign in failed.')}finally{button.disabled=false;button.textContent='SIGN IN'}});
- document.getElementById('fsbAdminResetButton').addEventListener('click',async function(){const email=document.getElementById('fsbAdminEmail').value.trim();if(!email){say('Enter your account email first.');return}try{const r=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:'https://fsboj.github.io/FlySinceBirth/admin.html'});if(r.error)throw r.error;say('Reset email requested. Open the email and follow its link back to this page. If it does not arrive, check spam and Supabase Auth email settings.',false)}catch(e){say(e.message||'Could not send reset email.')}});
- resetForm.addEventListener('submit',async function(e){e.preventDefault();const a=document.getElementById('fsbAdminNewPassword').value,b=document.getElementById('fsbAdminConfirmPassword').value,save=document.getElementById('fsbAdminUpdatePasswordButton');if(a.length<8){say('Use at least 8 characters.');return}if(a!==b){say('The passwords do not match.');return}save.disabled=true;save.textContent='UPDATING…';try{const r=await supabaseClient.auth.updateUser({password:a});if(r.error)throw r.error;say('Password updated. Signing you in…',false);const s=await supabaseClient.auth.getSession();if(s.data.session&&await verifyAndEnter(s.data.session)){location.reload()}else{form.style.display='block';resetForm.style.display='none';say('Password updated. Sign in with your new password.',false)}}catch(e){say(e.message||'Could not update password. Open a fresh reset link and try again.')}finally{save.disabled=false;save.textContent='UPDATE PASSWORD'}});
- supabaseClient.auth.getSession().then(async r=>{if(r.error){say(r.error.message);return}if(r.data.session){if(location.hash.includes('type=recovery'))showPasswordReset();else await verifyAndEnter(r.data.session)}}).catch(e=>say(e.message||'Could not check your session.'));
- supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'){showPasswordReset()}if(event==='SIGNED_OUT')document.body.classList.remove('fsb-admin-ready')});
- if(location.hash.includes('type=recovery')){form.style.display='none';resetForm.style.display='block';say('Enter a new password to continue.',false)}
+ document.getElementById('fsbAdminResetButton').addEventListener('click',async function(){const email=document.getElementById('fsbAdminEmail').value.trim();if(!email){say('Enter your account email first.');return}try{const r=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:'https://fsboj.github.io/FlySinceBirth/admin.html'});if(r.error)throw r.error;say('Reset email requested. Open the email and follow its link back to this page. Check spam if needed.',false)}catch(e){say(e.message||'Could not send reset email.')}});
+ resetForm.addEventListener('submit',async function(e){e.preventDefault();const a=document.getElementById('fsbAdminNewPassword').value,b=document.getElementById('fsbAdminConfirmPassword').value,save=document.getElementById('fsbAdminUpdatePasswordButton');if(a.length<8){say('Use at least 8 characters.');return}if(a!==b){say('The passwords do not match.');return}save.disabled=true;save.textContent='UPDATING…';try{const r=await supabaseClient.auth.updateUser({password:a});if(r.error)throw r.error;say('Password updated. You can now sign in.',false);form.style.display='block';resetForm.style.display='none';document.getElementById('fsbAdminPassword').value=a}catch(e){say(e.message||'Could not update password. The recovery link may have expired or may not be valid.')}finally{save.disabled=false;save.textContent='UPDATE PASSWORD'}});
+ (async function init(){try{
+  const handled=await finishRecoveryUrl();
+  if(!handled){const r=await supabaseClient.auth.getSession();if(r.error){say(r.error.message);return}if(r.data.session)await verifyAndEnter(r.data.session)}
+ }catch(e){say(e.message||'Could not initialize password recovery.')}})();
+ supabaseClient.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY')showPasswordReset();if(event==='SIGNED_OUT')document.body.classList.remove('fsb-admin-ready')});
 })();
 </script>
 
@@ -6673,7 +6688,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261010-21"></script>
+<script src="admin-tabs-fix.js?v=20261010-22"></script>
 </body>
 
 </html>
