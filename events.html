@@ -196,6 +196,13 @@ async function loadEvents() {
         location.textContent = event.location || "";
         if (event.location) details.appendChild(location);
 
+        if (event.performers) {
+            const performers = document.createElement("div");
+            performers.className = "event-location";
+            performers.textContent = "Also performing: " + event.performers;
+            details.appendChild(performers);
+        }
+
         const actions = document.createElement("div");
         actions.className = "event-actions";
         const ticketLink = makeLink(event.link, "MORE INFO / TICKETS");
