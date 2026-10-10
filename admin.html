@@ -2976,7 +2976,7 @@ async function removeArtist(id) {
    EVENTS
 ===================================================== */
 
-function showEventsAdminPanel(button) {
+async function showEventsAdminPanel(button) {
     document.querySelectorAll(".admin-nav button").forEach(function(btn) { btn.classList.remove("active"); });
     if (button) button.classList.add("active");
     document.querySelectorAll("section.panel").forEach(function(panel) {
@@ -6634,7 +6634,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261010-18"></script>
+<script src="admin-tabs-fix.js?v=20261010-19"></script>
 </body>
 
 </html>
