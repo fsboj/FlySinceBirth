@@ -1290,54 +1290,18 @@ body {
      EVENTS
 ===================================================== -->
 
-<section
-    id="events"
-    class="panel">
-
-    <div class="panel-header">
-
-        <div class="panel-title">
-            Events
-        </div>
-
-        <div class="panel-description">
-            Add, edit and remove FSB events.
-        </div>
-
-    </div>
-
-
-   <div
-    id="eventsList"
-    class="item-list">
-
-    <div class="admin-item">
-
-        <div class="item-name">
-            Loading Events...
-        </div>
-
-        <div class="item-meta">
-            Loading from Supabase
-        </div>
-
-    </div>
-
-</div>
-
-    </div>
-
-
-    <div class="actions">
-
-        <button
-    class="button primary"
-    onclick="addEvent()">
-    + ADD EVENT
-</button>
-
-    </div>
-
+<section id="events" class="panel">
+  <div class="panel-header">
+    <div class="panel-title">EVENTS</div>
+    <div class="panel-description">Add, edit and remove FSB events.</div>
+  </div>
+  <div class="actions" style="margin-top:0;margin-bottom:20px">
+    <button class="button primary" type="button" onclick="addEvent()">+ ADD EVENT</button>
+    <button class="button" type="button" onclick="loadEvents()">REFRESH EVENTS</button>
+  </div>
+  <div id="eventsList" class="item-list">
+    <div class="admin-item"><div class="item-name">Loading events...</div></div>
+  </div>
 </section>
 
 
@@ -6515,7 +6479,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261010-1"></script>
+<script src="admin-tabs-fix.js?v=20261010-2"></script>
 </body>
 
 </html>
