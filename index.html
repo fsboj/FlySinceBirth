@@ -899,14 +899,13 @@ footer {
 
 <script>
 (function(){
-  // Forward Supabase recovery callback URLs, whether Supabase uses a hash token
-  // or a PKCE ?code= callback, to the page that contains the password form.
   var hash=window.location.hash||'';
   var params=new URLSearchParams(window.location.search||'');
-  var recoveryHash=/(?:^|[&#])type=recovery(?:&|$)/.test(hash.slice(1));
-  var authCode=params.has('code');
-  if(recoveryHash||authCode){
-    window.location.replace('/FlySinceBirth/admin.html'+window.location.search+hash);
+  var hp=new URLSearchParams(hash.replace(/^#/, ''));
+  var recovery=params.get('type')==='recovery'||hp.get('type')==='recovery';
+  var callback=params.has('code')||params.has('token_hash')||params.has('access_token')||hp.has('access_token')||hp.has('token_hash');
+  if(recovery||callback){
+    window.location.replace('/FlySinceBirth/reset-password.html'+window.location.search+hash);
   }
 })();
 </script>
