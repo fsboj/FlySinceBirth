@@ -1947,20 +1947,7 @@ async function loadSiteContent() {
         if (element) {
             const link = element.querySelector("a");
             if (link) {
-                const heading = content.artists_heading.trim();
-                const finalLetter = heading.slice(-1);
-                const leadingText = heading.slice(0, -1);
-                link.textContent = "";
-                link.appendChild(document.createTextNode(leadingText));
-                const finalSpan = document.createElement("span");
-                finalSpan.className = "artists-heading-final";
-                finalSpan.textContent = finalLetter;
-                const arrow = document.createElement("span");
-                arrow.className = "artists-heading-arrow";
-                arrow.setAttribute("aria-hidden", "true");
-                arrow.textContent = ">";
-                finalSpan.appendChild(arrow);
-                link.appendChild(finalSpan);
+                link.textContent = content.artists_heading.trim();
             } else {
                 element.textContent = content.artists_heading;
             }
