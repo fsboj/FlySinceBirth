@@ -59,7 +59,7 @@ function openArtistManager(){
  const s=document.getElementById('artistPageSelect'); if(!s)return;
  s.onchange=async function(){
   const id=this.value,manager=document.getElementById('artistPageManager');
-  if(!id){if(manager)manager.style.display='none';return}
+  if(!id){if(manager)manager.style.display='none';window.selectedArtistPageId=null;return}
   if(manager)manager.style.display='block';
   window.selectedArtistPageId=id;
   const restoreToSelector=()=>{
