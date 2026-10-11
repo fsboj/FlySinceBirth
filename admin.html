@@ -516,7 +516,7 @@ body {
      ADMIN NAVIGATION
 ===================================================== -->
 
-<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showEventsAdminPanel(this); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button></nav>
+<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showPanel('store', this); return false;">STORE</button><button type="button" onclick="showEventsAdminPanel(this); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button></nav>
 
 
 <!-- =====================================================
@@ -1172,6 +1172,9 @@ body {
     </div>
 
 </section>
+
+<section id="store" class="panel">
+  <div class="panel-header"><div class="panel-title">FSB STORE</div><div class="panel-description">Manage storefront products, prices, photos, sizes, colors, stock, suppliers, and fulfillment settings.</div></div>
     <div style="margin-top:45px;padding-top:30px;border-top:1px solid #242424;">
       <div class="panel-header">
         <div class="panel-title">STORE PRODUCTS</div>
@@ -1208,7 +1211,7 @@ body {
       <div class="panel-header" style="margin-top:35px;"><div class="panel-title">PRODUCT INVENTORY</div><div class="panel-description">Edit or remove products, change fulfillment routing, and control which products are visible in the storefront.</div></div>
       <div id="merchProductsAdminList" class="item-list"><div class="admin-item"><div class="item-name">Loading products…</div></div></div>
     </div>
-
+</section>
 
 
 <!-- =====================================================
@@ -6624,7 +6627,7 @@ document.addEventListener("DOMContentLoaded", function(){
     if(!nav || !main) return;
 
     const topButtons=Array.from(nav.querySelectorAll('button'));
-    const topIds=['mainPage','sideMenu','artistPages','events','upcoming'];
+    const topIds=['mainPage','sideMenu','artistPages','store','events','upcoming'];
     topButtons.forEach((btn,i)=>{
       btn.onclick=function(e){
         e.preventDefault();
@@ -6647,6 +6650,7 @@ document.addEventListener("DOMContentLoaded", function(){
           if(eventList && !eventList.innerHTML.trim()) eventList.innerHTML='<div class="admin-item"><div class="item-name">Loading events...</div></div>';
           if(typeof loadEvents==='function') loadEvents();
         }
+        if(topIds[i]==='store' && typeof loadMerchProductsAdmin==='function') loadMerchProductsAdmin();
         if(topIds[i]==='upcoming'){
           if(typeof loadArtistsForUpcoming==='function') loadArtistsForUpcoming();
           if(typeof loadUpcomingReleases==='function') loadUpcomingReleases();
