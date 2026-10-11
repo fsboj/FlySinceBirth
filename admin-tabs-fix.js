@@ -57,12 +57,30 @@ async function addArtist(){
 }
 function openArtistManager(){
  const s=document.getElementById('artistPageSelect'); if(!s)return;
- let scrollBeforeSelect=0;
- const rememberScroll=()=>{scrollBeforeSelect=window.scrollY||document.documentElement.scrollTop||0};
- s.addEventListener('pointerdown',rememberScroll,true);
- s.addEventListener('keydown',rememberScroll,true);
- const restoreScroll=()=>{const y=scrollBeforeSelect;document.documentElement.style.scrollBehavior='auto';document.body.style.scrollBehavior='auto';window.scrollTo(0,y);requestAnimationFrame(()=>{window.scrollTo(0,y);setTimeout(()=>window.scrollTo(0,y),180)})};
- s.onchange=function(){const id=this.value,manager=document.getElementById('artistPageManager');if(!id){if(manager)manager.style.display='none';restoreScroll();return}if(manager)manager.style.display='block';window.selectedArtistPageId=id;Promise.allSettled([loadArtistProfile(id),renderArtistMusic(id),typeof loadArtistLinksAdmin==='function'?loadArtistLinksAdmin():Promise.resolve()]).finally(restoreScroll)};
+ s.onchange=async function(){
+  const id=this.value,manager=document.getElementById('artistPageManager');
+  if(!id){if(manager)manager.style.display='none';return}
+  if(manager)manager.style.display='block';
+  window.selectedArtistPageId=id;
+  const restoreToSelector=()=>{
+   const y=s.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop)-120;
+   document.documentElement.style.scrollBehavior='auto';
+   window.scrollTo(0,Math.max(0,y));
+   s.blur();
+  };
+  restoreToSelector();
+  try{
+   await Promise.allSettled([
+    loadArtistProfile(id),
+    renderArtistMusic(id),
+    typeof loadArtistLinksAdmin==='function'?loadArtistLinksAdmin():Promise.resolve()
+   ]);
+  }finally{
+   restoreToSelector();
+   requestAnimationFrame(restoreToSelector);
+   setTimeout(restoreToSelector,250);
+  }
+ };
 }
 async function loadArtistProfile(id){
  try{
