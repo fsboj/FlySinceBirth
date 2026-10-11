@@ -273,6 +273,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 // Events fallback: define these in this file so the Events panel works even if
 // another legacy inline admin script fails to initialize.
 window.loadEvents = async function(){
+  const escapeHtml=function(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')};
  const container=document.getElementById('eventsList');
  if(!container)return;
  const db=(typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient);
