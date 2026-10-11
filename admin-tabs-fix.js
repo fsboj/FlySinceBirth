@@ -57,7 +57,7 @@ async function addArtist(){
 }
 function openArtistManager(){
  const s=document.getElementById('artistPageSelect'); if(!s)return;
- s.onchange=function(){const id=this.value,manager=document.getElementById('artistPageManager');if(!id){if(manager)manager.style.display='none';return}if(manager)manager.style.display='block';window.selectedArtistPageId=id;loadArtistProfile(id);renderArtistMusic(id);if(typeof loadArtistLinksAdmin==='function')loadArtistLinksAdmin()};
+ s.onchange=function(){const id=this.value,manager=document.getElementById('artistPageManager');if(!id){if(manager)manager.style.display='none';return}const savedScroll=window.scrollY||document.documentElement.scrollTop||0;if(manager)manager.style.display='block';window.selectedArtistPageId=id;Promise.allSettled([loadArtistProfile(id),renderArtistMusic(id),typeof loadArtistLinksAdmin==='function'?loadArtistLinksAdmin():Promise.resolve()]).finally(()=>{requestAnimationFrame(()=>{window.scrollTo({top:savedScroll,left:0,behavior:'instant'});requestAnimationFrame(()=>window.scrollTo({top:savedScroll,left:0,behavior:'instant'}))})})};
 }
 async function loadArtistProfile(id){
  try{
