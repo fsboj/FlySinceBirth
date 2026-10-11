@@ -516,7 +516,7 @@ body {
      ADMIN NAVIGATION
 ===================================================== -->
 
-<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showPanel('store', this); return false;">STORE</button><button type="button" onclick="showEventsAdminPanel(this); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button></nav>
+<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showEventsAdminPanel(this); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button><button type="button" onclick="showPanel('store', this); return false;">STORE</button></nav>
 
 
 <!-- =====================================================
@@ -6627,7 +6627,7 @@ document.addEventListener("DOMContentLoaded", function(){
     if(!nav || !main) return;
 
     const topButtons=Array.from(nav.querySelectorAll('button'));
-    const topIds=['mainPage','sideMenu','artistPages','store','events','upcoming'];
+    const topIds=['mainPage','sideMenu','artistPages','events','upcoming','store'];
     topButtons.forEach((btn,i)=>{
       btn.onclick=function(e){
         e.preventDefault();
