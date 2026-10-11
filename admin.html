@@ -6692,7 +6692,41 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261010-23"></script>
+<script src="admin-tabs-fix.js?v=20261010-24"></script>
+
+<script>
+/* STORE TAB DISPLAY FIX */
+(function(){
+  function bindFsbStoreTab(){
+    var nav=document.querySelector('.admin-nav');
+    var buttons=nav?Array.from(nav.querySelectorAll('button')):[];
+    var storeButton=buttons.find(function(b){return (b.textContent||'').trim().toUpperCase()==='STORE';});
+    var storePanel=document.getElementById('store');
+    if(!storeButton||!storePanel)return;
+    storeButton.onclick=function(e){
+      if(e)e.preventDefault();
+      buttons.forEach(function(b){b.classList.toggle('active',b===storeButton);});
+      document.querySelectorAll('section.panel').forEach(function(p){
+        p.classList.remove('active');
+        p.style.setProperty('display','none','important');
+      });
+      storePanel.classList.add('active');
+      storePanel.style.setProperty('display','block','important');
+      storePanel.style.setProperty('visibility','visible','important');
+      var form=document.getElementById('merchProductName');
+      if(!form){
+        storePanel.innerHTML='<div class="panel-header"><div class="panel-title">FSB STORE</div><div class="panel-description">The product editor did not load correctly. Refresh this page; if it persists, the admin HTML deployment needs to be checked.</div></div>';
+        return false;
+      }
+      if(typeof window.loadMerchProductsAdmin==='function')window.loadMerchProductsAdmin();
+      return false;
+    };
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindFsbStoreTab);
+  else bindFsbStoreTab();
+})();
+</script>
+
 </body>
 
 </html>
