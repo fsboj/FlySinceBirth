@@ -106,20 +106,36 @@ async function renderArtistMusic(artistId){
 function renderSingles(list,songs){
  if(!list)return;
  list.innerHTML='';
- list.style.display='grid';list.style.gridTemplateColumns='repeat(5,minmax(0,1fr))';list.style.gap='12px';
- const style=document.createElement('style');style.textContent='@media(max-width:900px){#artistSongsAdminList{grid-template-columns:repeat(3,minmax(0,1fr))!important}}@media(max-width:600px){#artistSongsAdminList{grid-template-columns:repeat(2,minmax(0,1fr))!important}}';document.head.appendChild(style);
- if(!songs.length){list.style.display='block';list.innerHTML='<div class="admin-item"><div class="item-name">NO STANDALONE SINGLES</div></div>';return}
+ list.style.setProperty('display','flex','important');
+ list.style.setProperty('flex-direction','column','important');
+ list.style.setProperty('align-items','stretch','important');
+ list.style.setProperty('gap','12px','important');
+ list.style.setProperty('width','100%','important');
+ if(!songs.length){list.innerHTML='<div class="admin-item"><div class="item-name">NO STANDALONE SINGLES</div></div>';return}
  songs.forEach(song=>{
-  const card=document.createElement('div');card.className='admin-item';card.style.cssText='display:block;cursor:pointer;min-height:95px;padding:14px';
-  const img=song.image_url?'<img src="'+esc(song.image_url)+'" style="width:54px;height:54px;object-fit:cover;border:1px solid #242424;margin-bottom:10px">':'<div style="width:54px;height:54px;border:1px solid #242424;margin-bottom:10px;display:flex;align-items:center;justify-content:center;color:#555;font-size:10px">SINGLE</div>';
-  card.innerHTML=img+'<div class="item-name" style="font-size:12px;line-height:1.25">'+esc(song.title)+'</div><div class="item-meta">EDIT</div>';
-  const editor=document.createElement('div');editor.style.cssText='display:none;grid-column:1/-1;border:1px solid #242424;background:#090909;padding:20px';
-  editor.innerHTML=inlineSongEditorHtml(song);
-  card.addEventListener('click',e=>{if(e.target.closest('button,input,label,select'))return;const open=editor.style.display!=='none';document.querySelectorAll('#artistSongsAdminList .inline-song-editor').forEach(x=>x.style.display='none');editor.style.display=open?'none':'block'});
+  const card=document.createElement('div');
+  card.className='admin-item artist-single-editor-card';
+  card.style.cssText='display:block;width:100%;box-sizing:border-box;padding:14px;overflow:visible';
+  const summary=document.createElement('div');
+  summary.className='artist-single-summary';
+  summary.style.cssText='display:flex;align-items:center;gap:14px;cursor:pointer;min-height:65px';
+  const img=song.image_url?'<img src="'+esc(song.image_url)+'" alt="" style="width:54px;height:54px;object-fit:cover;border:1px solid #242424;flex:0 0 auto">':'<div style="width:54px;height:54px;border:1px solid #242424;display:flex;align-items:center;justify-content:center;color:#555;font-size:10px;flex:0 0 auto">SINGLE</div>';
+  summary.innerHTML=img+'<div><div class="item-name" style="font-size:12px;line-height:1.25">'+esc(song.title)+'</div><div class="item-meta">CLICK TO EDIT</div></div>';
+  const editor=document.createElement('div');
   editor.className='inline-song-editor';
+  editor.style.cssText='display:none;position:static;clear:both;width:100%;box-sizing:border-box;margin-top:16px;padding:20px;border:1px solid #242424;background:#090909';
+  editor.innerHTML=inlineSongEditorHtml(song);
+  summary.addEventListener('click',()=>{
+   const open=editor.style.display!=='none';
+   document.querySelectorAll('#artistSongsAdminList .inline-song-editor').forEach(x=>{x.style.display='none'});
+   document.querySelectorAll('#artistSongsAdminList .artist-single-summary .item-meta').forEach(x=>{x.textContent='CLICK TO EDIT'});
+   if(!open){editor.style.display='block';summary.querySelector('.item-meta').textContent='CLICK TO CLOSE'}
+  });
   editor.querySelector('.inline-song-save').onclick=()=>saveInlineSong(song.id,editor);
   editor.querySelector('.inline-song-delete').onclick=()=>deleteArtistSong(song.id).then(()=>renderArtistMusic(selectedArtistPageId));
-  list.appendChild(card);list.appendChild(editor);
+  card.appendChild(summary);
+  card.appendChild(editor);
+  list.appendChild(card);
  });
 }
 function inlineSongEditorHtml(song){
