@@ -1439,6 +1439,7 @@ body {
 
         <button
             class="button primary"
+            type="button"
             onclick="saveChanges()">
 
             SAVE CHANGES
@@ -1539,24 +1540,24 @@ async function loadSideMenuLabels() {
 
 async function saveSideMenuLabels() {
     const status = document.getElementById("sideMenuStatus");
+    const button = document.querySelector('#sideMenu button[onclick="saveSideMenuLabels()"]');
     if (status) status.textContent = "SAVING...";
+    if (button) { button.disabled = true; button.textContent = "SAVING..."; }
     try {
-        for (const [key, fieldId] of Object.entries(sideMenuLabelFields)) {
+        const rows = Object.entries(sideMenuLabelFields).map(([key, fieldId]) => {
             const input = document.getElementById(fieldId);
-            const { error } = await supabaseClient
-                .from("site_content")
-                .upsert({
-                    key: key,
-                    value: input ? input.value.trim() : "",
-                    updated_at: new Date().toISOString()
-                }, { onConflict: "key" });
-            if (error) throw error;
-        }
+            if (!input) throw new Error("Missing side-menu field: " + fieldId);
+            return { key, value: input.value.trim(), updated_at: new Date().toISOString() };
+        });
+        const { error } = await supabaseClient.from("site_content").upsert(rows, { onConflict: "key" });
+        if (error) throw error;
         if (status) status.textContent = "CHANGES SAVED";
     } catch (error) {
         console.error("Could not save side menu labels:", error);
         if (status) status.textContent = "SAVE FAILED";
-        alert("Could not save side menu labels: " + (error.message || error));
+        alert("Could not save side menu labels: " + (error.message || String(error)));
+    } finally {
+        if (button) { button.disabled = false; button.textContent = "SAVE SIDE MENU"; }
     }
 }
 
@@ -1813,36 +1814,28 @@ async function saveChanges() {
         }
     ];
 
+    const button = document.querySelector('.save-bar button[onclick="saveChanges()"]');
+    if (button) { button.disabled = true; button.textContent = "SAVING..."; }
+
     try {
+        const rows = content.map(function(item) {
+            if (!item || !item.key) throw new Error("A homepage content item is missing its key.");
+            if (typeof item.value !== "string") throw new Error("Homepage content field is missing for key: " + item.key);
+            return { key: item.key, value: item.value, updated_at: new Date().toISOString() };
+        });
 
-        for (const item of content) {
+        const { error } = await supabaseClient
+            .from("site_content")
+            .upsert(rows, { onConflict: "key" });
 
-            const { error } = await supabaseClient
-                .from("site_content")
-                .upsert(
-                    {
-                        key: item.key,
-                        value: item.value,
-                        updated_at: new Date().toISOString()
-                    },
-                    {
-                        onConflict: "key"
-                    }
-                );
-
-            if (error) {
-                throw error;
-            }
-        }
-
+        if (error) throw error;
         if (status) status.textContent = "CHANGES SAVED";
-
     } catch (error) {
-
-        console.error(error);
-
+        console.error("Could not save homepage content:", error);
         if (status) status.textContent = "SAVE FAILED";
-        alert("Could not save changes: " + (error.message || error));
+        alert("Could not save changes: " + (error.message || String(error)));
+    } finally {
+        if (button) { button.disabled = false; button.textContent = "SAVE CHANGES"; }
     }
 }
 /* =====================================================
