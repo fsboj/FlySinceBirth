@@ -143,6 +143,8 @@ body {
     display: block;
 }
 
+.store-merch-controls{display:block!important;margin-top:48px;padding-top:30px;border-top:1px solid #242424}.store-merch-controls .panel{display:block!important}
+
 .panel-header {
     margin-bottom: 30px;
 }
@@ -523,7 +525,7 @@ body {
      SITE
 ===================================================== -->
 
-<section id="mainPage" class="panel active"><div class="panel-header"><div class="panel-title">MAIN PAGE</div><div class="panel-description">Manage everything displayed on the main FSB homepage.</div></div><div class="main-page-tabs"><button type="button" class="button active" onclick="showMainSubPanel('site', this); return false;">GENERAL</button><button type="button" class="button" onclick="showMainSubPanel('photos', this); return false;">PHOTOS</button><button type="button" class="button" onclick="showMainSubPanel('merch', this); return false;">MERCH</button><button type="button" class="button" onclick="showMainSubPanel('sections', this); return false;">SECTIONS</button><button type="button" class="button primary" onclick="addCustomMainSection(); return false;">+ ADD SECTION</button></div><div id="mainPageSubPanels"></div></section>
+<section id="mainPage" class="panel active"><div class="panel-header"><div class="panel-title">MAIN PAGE</div><div class="panel-description">Manage everything displayed on the main FSB homepage.</div></div><div class="main-page-tabs"><button type="button" class="button active" onclick="showMainSubPanel('site', this); return false;">GENERAL</button><button type="button" class="button" onclick="showMainSubPanel('photos', this); return false;">PHOTOS</button><button type="button" class="button" onclick="showMainSubPanel('sections', this); return false;">SECTIONS</button><button type="button" class="button primary" onclick="addCustomMainSection(); return false;">+ ADD SECTION</button></div><div id="mainPageSubPanels"></div></section>
 <section id="site" class="panel">
   <div class="panel-header">
     <div class="panel-title">Site Settings</div>
@@ -956,9 +958,9 @@ body {
       <div class="panel-header" style="margin-top:35px;"><div class="panel-title">PRODUCT INVENTORY</div><div class="panel-description">Edit or remove products, change fulfillment routing, and control which products are visible in the storefront.</div></div>
       <div id="merchProductsAdminList" class="item-list"><div class="admin-item"><div class="item-name">Loading products…</div></div></div>
     </div>
-</section>
 
-<section id="merch" class="panel">
+
+<div id="merch" class="store-merch-controls">
 
     <div class="panel-header">
 
@@ -1102,7 +1104,10 @@ body {
 
     </div>
 
+</div>
 </section>
+
+
 
 
 
@@ -6698,7 +6703,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261010-30"></script>
+<script src="admin-tabs-fix.js?v=20261010-31"></script>
 
 <script>
 /* STORE TAB DISPLAY FIX */
