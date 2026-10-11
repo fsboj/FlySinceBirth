@@ -6618,7 +6618,7 @@ document.addEventListener("DOMContentLoaded", function(){
           }
         });
         if(topIds[i]==='mainPage') showSub('site');
-        if(topIds[i]==='artistPages' && typeof loadArtistPageSelector==='function') loadArtistPageSelector();
+        if(topIds[i]==='artistPages'){window.scrollTo({top:0,left:0,behavior:'instant'});if(typeof loadArtistPageSelector==='function') loadArtistPageSelector();}
         if(topIds[i]==='events'){
           const eventPanel=document.getElementById('events');
           const eventList=document.getElementById('eventsList');
