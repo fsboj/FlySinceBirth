@@ -3917,42 +3917,7 @@ document.addEventListener(
     }
 );
 
-/* =====================================================
-   SELECT ARTIST
-===================================================== */
-
-document.addEventListener(
-    "change",
-    function(event) {
-
-        if (
-            event.target.id !==
-            "artistPageSelect"
-        ) {
-            return;
-        }
-
-
-        const artistId =
-            event.target.value;
-
-
-        if (!artistId) {
-
-            document.getElementById(
-                "artistPageManager"
-            ).style.display = "none";
-
-            selectedArtistPageId = null;
-
-            return;
-        }
-
-
-        loadSelectedArtistPage(artistId);
-
-    }
-);
+/* Artist selection is handled once by admin-tabs-fix.js to avoid duplicate async loads. */
 
 
 /* =====================================================
