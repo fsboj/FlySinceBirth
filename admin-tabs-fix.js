@@ -62,23 +62,14 @@ function openArtistManager(){
   if(!id){if(manager)manager.style.display='none';window.selectedArtistPageId=null;return}
   if(manager)manager.style.display='block';
   window.selectedArtistPageId=id;
-  const restoreToSelector=()=>{
-   const y=s.getBoundingClientRect().top+(window.pageYOffset||document.documentElement.scrollTop)-120;
-   document.documentElement.style.scrollBehavior='auto';
-   window.scrollTo(0,Math.max(0,y));
-   s.blur();
-  };
-  restoreToSelector();
   try{
    await Promise.allSettled([
     loadArtistProfile(id),
     renderArtistMusic(id),
     typeof loadArtistLinksAdmin==='function'?loadArtistLinksAdmin():Promise.resolve()
    ]);
-  }finally{
-   restoreToSelector();
-   requestAnimationFrame(restoreToSelector);
-   setTimeout(restoreToSelector,250);
+  }catch(e){
+   console.error('Could not load selected artist editor:',e);
   }
  };
 }
