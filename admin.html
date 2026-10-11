@@ -6599,6 +6599,17 @@ document.addEventListener("DOMContentLoaded", function(){
 
     const topButtons=Array.from(nav.querySelectorAll('button'));
     const topIds=['mainPage','sideMenu','artistPages','events','upcoming','store'];
+    // Keep the Artist Pages panel physically next to the navigation in the DOM.
+    // Legacy merch/admin markup above it can otherwise leave a large blank region before the panel.
+    const artistPanel=document.getElementById('artistPages');
+    if(artistPanel && nav.parentElement && artistPanel.previousElementSibling!==nav){
+      nav.insertAdjacentElement('afterend',artistPanel);
+    }
+    if(artistPanel){
+      artistPanel.style.setProperty('margin-top','0','important');
+      artistPanel.style.setProperty('position','relative','important');
+      artistPanel.style.setProperty('top','0','important');
+    }
     topButtons.forEach((btn,i)=>{
       btn.onclick=function(e){
         e.preventDefault();
