@@ -1145,7 +1145,7 @@ body {
     </div>
 
 
-    <div id="artistPageManager" style="margin-top:30px;display:none;max-height:calc(100vh - 220px);overflow-y:auto;overscroll-behavior:contain;overflow-anchor:none;scrollbar-gutter:stable;">
+    <div id="artistPageManager" style="margin-top:30px;display:none;max-height:none;overflow:visible;overscroll-behavior:auto;overflow-anchor:none;">
   <div class="admin-item" style="display:block;"><div class="item-name" id="selectedArtistName">ARTIST</div><div class="item-meta" style="margin-top:8px;">Manage this artist's page</div></div>
   <div class="form-grid" style="margin-top:25px;">
     <div class="form-group"><label>ARTIST NAME</label><input type="text" id="artistPageName" placeholder="Artist name"></div>
@@ -6578,23 +6578,35 @@ document.addEventListener("DOMContentLoaded", function(){
 </script>
 
 <script>
-/* Keep Artist Pages at the top even if another legacy tab handler changes scroll. */
+/* Single authoritative Artist Pages tab handler.
+   Capture the click before legacy inline/onClick handlers can override panel visibility or scroll. */
 (function(){
-  function resetArtistViewport(){
-    var root=document.scrollingElement||document.documentElement;
-    root.scrollTop=0;
-    document.documentElement.scrollTop=0;
-    document.body.scrollTop=0;
-    window.scrollTo(0,0);
-  }
-  document.addEventListener('click',function(event){
+  function openArtistPages(event){
     var button=event.target.closest('.admin-nav button');
     if(!button || (button.textContent||'').trim().toUpperCase()!=='ARTIST PAGES') return;
-    resetArtistViewport();
-    requestAnimationFrame(resetArtistViewport);
-    setTimeout(resetArtistViewport,80);
-    setTimeout(resetArtistViewport,300);
-  },true);
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    document.querySelectorAll('.admin-nav button').forEach(function(b){b.classList.toggle('active',b===button);});
+    document.querySelectorAll('section.panel').forEach(function(panel){
+      panel.classList.remove('active');
+      panel.style.setProperty('display','none','important');
+    });
+    var panel=document.getElementById('artistPages');
+    if(!panel) return;
+    panel.classList.add('active');
+    panel.style.setProperty('display','block','important');
+    panel.style.setProperty('visibility','visible','important');
+    panel.style.marginTop='0';
+    var root=document.scrollingElement||document.documentElement;
+    root.scrollTop=0;
+    window.scrollTo({top:0,left:0,behavior:'auto'});
+    if(typeof loadArtistPageSelector==='function') loadArtistPageSelector();
+    requestAnimationFrame(function(){
+      root.scrollTop=0;
+      window.scrollTo({top:0,left:0,behavior:'auto'});
+    });
+  }
+  document.addEventListener('click',openArtistPages,true);
 })();
 </script>
 
