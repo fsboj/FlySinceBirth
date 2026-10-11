@@ -6584,6 +6584,27 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 </script>
 
+<script>
+/* Keep Artist Pages at the top even if another legacy tab handler changes scroll. */
+(function(){
+  function resetArtistViewport(){
+    var root=document.scrollingElement||document.documentElement;
+    root.scrollTop=0;
+    document.documentElement.scrollTop=0;
+    document.body.scrollTop=0;
+    window.scrollTo(0,0);
+  }
+  document.addEventListener('click',function(event){
+    var button=event.target.closest('.admin-nav button');
+    if(!button || (button.textContent||'').trim().toUpperCase()!=='ARTIST PAGES') return;
+    resetArtistViewport();
+    requestAnimationFrame(resetArtistViewport);
+    setTimeout(resetArtistViewport,80);
+    setTimeout(resetArtistViewport,300);
+  },true);
+})();
+</script>
+
 <!-- ADMIN TAB EMERGENCY FIX -->
 <script>
 document.addEventListener("DOMContentLoaded", function(){
