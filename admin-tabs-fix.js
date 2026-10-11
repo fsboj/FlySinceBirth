@@ -85,7 +85,7 @@ async function renderArtistMusic(artistId){
   renderReleases(releaseList,releases,songs);
  }catch(e){
   console.error('Artist music manager error:',e);
-  if(songList)songList.innerHTML='<div class="admin-item"><div class="item-name">COULD NOT LOAD SINGLES</div><div class="item-meta">'+esc(e.message||e)+'</div></div>';
+  if(songList)songList.innerHTML='<div class="admin-item"><div class="item-name">COULD NOT LOAD SINGLES</div><div class="item-meta">'+escapeHtml(e.message||e)+'</div></div>';
   if(releaseList)releaseList.innerHTML='<div class="admin-item"><div class="item-name">COULD NOT LOAD ALBUMS / EPS</div><div class="item-meta">'+esc(e.message||e)+'</div></div>';
  }
 }
@@ -284,7 +284,7 @@ window.loadEvents = async function(){
   container.innerHTML='';
   (r.data||[]).forEach(function(ev){
    const item=document.createElement('div');item.className='admin-item';
-   const safe=function(v){return esc(v||'')};
+   const safe=function(v){return escapeHtml(v||'')};
    item.innerHTML='<div class="item-info"><div class="item-image">'+(ev.image?'<img src="'+safe(ev.image)+'" alt="" style="width:100%;height:100%;object-fit:cover">':'')+'</div><div><div class="item-name">'+safe(ev.title||ev.name||'Untitled Event')+'</div><div class="item-meta">'+safe(ev.date||'DATE NOT SET')+' · '+safe(ev.location||'LOCATION NOT SET')+'</div><div class="item-meta">'+(ev.contact_name?'CONTACT: '+safe(ev.contact_name)+' · ':'')+(ev.contact_email?safe(ev.contact_email)+' · ':'')+(ev.contact_phone?safe(ev.contact_phone):'')+'</div><div class="item-meta">'+(ev.featured?'FEATURED EVENT · ':'')+(ev.video_link?'EVENT VIDEOS LINK ADDED':'NO EVENT VIDEOS LINK')+'</div></div></div><div class="actions"><button class="button event-edit" type="button">EDIT</button><button class="button danger event-remove" type="button">REMOVE</button></div>';
    item.querySelector('.event-edit').onclick=function(){window.editEvent(ev.id)};
    item.querySelector('.event-remove').onclick=function(){window.removeEvent(ev.id)};
