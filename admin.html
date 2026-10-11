@@ -6618,7 +6618,7 @@ document.addEventListener("DOMContentLoaded", function(){
           }
         });
         if(topIds[i]==='mainPage') showSub('site');
-        if(topIds[i]==='artistPages'){if(typeof loadArtistPageSelector==='function') loadArtistPageSelector();var artistPanel=document.getElementById('artistPages');if(artistPanel){artistPanel.style.marginTop='0';artistPanel.style.position='relative';artistPanel.style.top='0';artistPanel.scrollIntoView({block:'start',behavior:'auto'});window.scrollTo(0,Math.max(0,artistPanel.getBoundingClientRect().top+window.pageYOffset-12));requestAnimationFrame(function(){window.scrollTo(0,Math.max(0,artistPanel.getBoundingClientRect().top+window.pageYOffset-12));});}
+        if(topIds[i]==='artistPages'){if(typeof loadArtistPageSelector==='function') loadArtistPageSelector();var artistPanel=document.getElementById('artistPages');if(artistPanel){artistPanel.style.marginTop='0';artistPanel.style.position='relative';artistPanel.style.top='0';artistPanel.scrollIntoView({block:'start',behavior:'auto'});window.scrollTo(0,Math.max(0,artistPanel.getBoundingClientRect().top+window.pageYOffset-12));requestAnimationFrame(function(){window.scrollTo(0,Math.max(0,artistPanel.getBoundingClientRect().top+window.pageYOffset-12));});}}
         if(topIds[i]==='events'){
           const eventPanel=document.getElementById('events');
           const eventList=document.getElementById('eventsList');
