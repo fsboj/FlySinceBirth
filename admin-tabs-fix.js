@@ -6,7 +6,7 @@ function init(){
  if(eventsPanel && m.parentElement && eventsPanel.previousElementSibling!==m){
   m.parentElement.insertBefore(eventsPanel,m.nextElementSibling);
  }
- const bs=[...n.querySelectorAll('button')],ids=['mainPage','sideMenu','artistPages','events','upcoming'];
+ const bs=[...n.querySelectorAll('button')],ids=['mainPage','sideMenu','artistPages','events','upcoming','store'];
  bs.forEach((b,i)=>b.onclick=async e=>{
   e.preventDefault();
   const selectedId=ids[i];
@@ -27,6 +27,7 @@ function init(){
     else if(list)list.innerHTML='<div class="admin-item"><div class="item-name">Event loader is unavailable. Refresh the page and try again.</div></div>';
   }
   if(selectedId==='upcoming'){if(typeof loadArtistsForUpcoming==='function')loadArtistsForUpcoming();if(typeof loadUpcomingReleases==='function')loadUpcomingReleases()}
+  if(selectedId==='store' && typeof window.loadMerchProductsAdmin==='function') await window.loadMerchProductsAdmin();
  });
  const ids2=['site','photos','music','artists','videos','merch','sections'],ts=[...document.querySelectorAll('.main-page-tabs button')],h=document.getElementById('mainPageSubPanels');
  ids2.forEach(id=>{const p=document.getElementById(id);if(p&&h&&p.parentElement!==h){p.classList.remove('panel','active');p.classList.add('main-page-subpanel');p.style.display='none';h.appendChild(p)}});
