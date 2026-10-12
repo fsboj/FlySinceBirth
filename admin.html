@@ -1720,6 +1720,11 @@ async function loadSiteImages() {
 }
 
     
+function setStatus(message) {
+    const status = document.getElementById("saveStatus");
+    if (status) status.textContent = message;
+}
+
 async function saveChanges() {
 
     const status = document.getElementById("saveStatus");
@@ -6673,7 +6678,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261012-33"></script>
+<script src="admin-tabs-fix.js?v=20261012-34"></script>
 
 <script>
 /* STORE TAB DISPLAY FIX */
