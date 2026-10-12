@@ -55,10 +55,20 @@ async function addArtist(){
   alert(cleanName+' added successfully.');
  }catch(e){alert('Could not add artist: '+(e.message||e));}
 }
+function syncReleaseArtistSelector(selectedId){
+ const pageSelect=document.getElementById('artistPageSelect'),releaseSelect=document.getElementById('artistReleaseArtist');
+ if(!pageSelect||!releaseSelect)return;
+ const keep=selectedId||releaseSelect.value||pageSelect.value||'';
+ releaseSelect.innerHTML='<option value="">SELECT AN ARTIST</option>';
+ [...pageSelect.options].filter(o=>o.value).forEach(o=>{const n=document.createElement('option');n.value=o.value;n.textContent=o.textContent;releaseSelect.appendChild(n)});
+ if([...releaseSelect.options].some(o=>o.value===String(keep)))releaseSelect.value=String(keep);
+}
 function openArtistManager(){
  const s=document.getElementById('artistPageSelect'); if(!s)return;
+ syncReleaseArtistSelector(s.value);
  s.onchange=async function(){
   const id=this.value,manager=document.getElementById('artistPageManager');
+  syncReleaseArtistSelector(id);
   if(!id){if(manager)manager.style.display='none';window.selectedArtistPageId=null;return}
   if(manager)manager.style.display='block';
   window.selectedArtistPageId=id;
