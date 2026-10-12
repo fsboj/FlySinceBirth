@@ -1723,9 +1723,12 @@ async function loadSiteImages() {
 async function saveChanges() {
 
     const status = document.getElementById("saveStatus");
+    const button = document.querySelector('.save-bar button[onclick="saveChanges()"]');
 
     if (status) status.textContent = "SAVING...";
+    if (button) { button.disabled = true; button.textContent = "SAVING..."; }
 
+    try {
     const content = [
         {
             key: "hero_tagline",
@@ -1814,10 +1817,6 @@ async function saveChanges() {
         }
     ];
 
-    const button = document.querySelector('.save-bar button[onclick="saveChanges()"]');
-    if (button) { button.disabled = true; button.textContent = "SAVING..."; }
-
-    try {
         const rows = content.map(function(item) {
             if (!item || !item.key) throw new Error("A homepage content item is missing its key.");
             if (typeof item.value !== "string") throw new Error("Homepage content field is missing for key: " + item.key);
