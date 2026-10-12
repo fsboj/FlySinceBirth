@@ -1190,6 +1190,7 @@ body {
   <div style="margin-top:45px;padding-top:30px;border-top:1px solid #242424;">
     <div class="panel-title">UPCOMING RELEASE</div><div class="panel-description">Upload an album or EP now and keep it hidden until the selected release date.</div>
     <div class="form-grid" style="margin-top:25px;">
+      <div class="form-group"><label>ARTIST</label><select id="artistReleaseArtist" required><option value="">SELECT AN ARTIST</option><option value="3">FSB CHNXX</option></select></div>
       <div class="form-group"><label>RELEASE TYPE</label><select id="artistReleaseType"><option value="album">ALBUM</option><option value="ep">EP</option></select></div>
       <div class="form-group"><label>PROJECT TITLE</label><input type="text" id="artistReleaseTitle" placeholder="Project title"></div>
       <div class="form-group"><label>PROJECT ARTWORK</label><input type="file" id="artistReleaseArtwork" accept="image/*"></div>
@@ -5579,6 +5580,14 @@ function renumberArtistReleaseTracks() {
 async function saveArtistRelease() {
 
     try {
+
+        const releaseArtistSelect = document.getElementById("artistReleaseArtist");
+        const releaseArtistId = releaseArtistSelect ? releaseArtistSelect.value : "";
+        if (!releaseArtistId) {
+            alert("Please select an artist for this release.");
+            return;
+        }
+        selectedArtistPageId = releaseArtistId;
 
         if (!selectedArtistPageId) {
 
