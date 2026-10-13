@@ -797,6 +797,16 @@ body {
 .event-detail-title { font-size: clamp(28px,5vw,48px); letter-spacing: -1.5px; margin: 6px 36px 12px 0; }
 .event-detail-copy { color: #aaa; line-height: 1.6; margin: 9px 0; white-space: pre-wrap; }
 .event-detail-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; }
+.fsb-ticket-host { flex:1 1 100%; width:100%; }
+.fsb-ticket-panel { box-sizing:border-box; width:100%; border:1px solid #333; padding:18px; margin-top:8px; background:#111; }
+.fsb-ticket-price { color:#fff; font-size:22px; font-weight:700; }
+.fsb-ticket-form { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-top:16px; }
+.fsb-ticket-label { display:grid; gap:7px; color:#aaa; font-size:11px; letter-spacing:1px; }
+.fsb-ticket-input { box-sizing:border-box; width:100%; min-height:44px; padding:10px; border:1px solid #444; background:#080808; color:#fff; font:inherit; }
+.fsb-ticket-methods { display:flex; flex-wrap:wrap; gap:14px; }
+.fsb-ticket-method { display:flex; align-items:center; gap:7px; color:#fff; font-size:13px; letter-spacing:0; }
+.fsb-ticket-message { grid-column:1/-1; margin:0; }
+.fsb-ticket-submit { justify-self:start; grid-column:1/-1; }
 .event-empty {
     color: #666;
     font-size: 12px;
@@ -1753,6 +1763,7 @@ grid.appendChild(card);
         grid.appendChild(card);
     });
 }
+</script><script src="event-ticketing.js"></script><script>
    async function loadEvents() {
     const upcomingContainer = document.getElementById("events-list");
     const pastContainer = document.getElementById("past-events-list");
@@ -1838,9 +1849,18 @@ grid.appendChild(card);
             const p = document.createElement("p"); p.className = "event-detail-copy"; p.textContent = row[1] + row[0]; dialog.appendChild(p);
         });
         const actions = document.createElement("div"); actions.className = "event-detail-actions";
-        const ticketUrl = safeEventUrl(event.link);
-        if (ticketUrl) { const ticket = document.createElement("a"); ticket.className = "event-action"; ticket.textContent = "BUY TICKETS / EVENT INFO"; ticket.href = ticketUrl; ticket.target = "_blank"; ticket.rel = "noopener noreferrer"; actions.appendChild(ticket); }
-        else { const note = document.createElement("p"); note.className = "event-detail-copy"; note.textContent = "Ticket sales are not available for this event yet."; actions.appendChild(note); }
+        if (event.ticket_sales_mode === "on_site") {
+            const ticketPanel = document.createElement("div"); ticketPanel.className = "fsb-ticket-host"; actions.appendChild(ticketPanel);
+            window.FSBTicketing.mount(event, ticketPanel).catch(function(error) {
+                ticketPanel.replaceChildren();
+                const note = document.createElement("p"); note.className = "event-detail-copy";
+                note.textContent = error.message || "Ticket availability could not be checked."; ticketPanel.appendChild(note);
+            });
+        } else {
+            const ticketUrl = safeEventUrl(event.link);
+            if (ticketUrl) { const ticket = document.createElement("a"); ticket.className = "event-action"; ticket.textContent = "BUY TICKETS / EVENT INFO"; ticket.href = ticketUrl; ticket.target = "_blank"; ticket.rel = "noopener noreferrer"; actions.appendChild(ticket); }
+            else { const note = document.createElement("p"); note.className = "event-detail-copy"; note.textContent = "Ticket sales are not available for this event yet."; actions.appendChild(note); }
+        }
         const videoUrl = safeEventUrl(event.video_link);
         if (videoUrl) { const video = document.createElement("a"); video.className = "event-action"; video.textContent = "WATCH EVENT VIDEOS"; video.href = videoUrl; video.target = "_blank"; video.rel = "noopener noreferrer"; actions.appendChild(video); }
         dialog.appendChild(actions); overlay.appendChild(dialog); document.body.appendChild(overlay);
@@ -1905,7 +1925,7 @@ grid.appendChild(card);
         detailsButton.textContent = "VIEW EVENT DETAILS";
         detailsButton.addEventListener("click", function() { showEventDetails(event); });
         actions.appendChild(detailsButton);
-        const ticketLink = makeLink(event.link, "MORE INFO / TICKETS");
+        const ticketLink = event.ticket_sales_mode === "on_site" ? null : makeLink(event.link, "MORE INFO / TICKETS");
         const videoLink = makeLink(event.video_link, "WATCH EVENT VIDEOS");
         if (ticketLink) actions.appendChild(ticketLink);
         if (videoLink) actions.appendChild(videoLink);
@@ -2244,10 +2264,10 @@ loadUpcomingHome();
 loadCustomHomeSections();
 loadArtists();
 loadVideos();
-loadEvents();
 </script>
 
 </body>
 </html>
+
 
 
