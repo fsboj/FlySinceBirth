@@ -55,11 +55,6 @@ async function rest(path: string, init: RequestInit = {}) {
   return data;
 }
 
-function isEmail(value: unknown): value is string {
-  return typeof value === "string" && value.length <= 320 &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
-
 function configuredProviders() {
   const providers: string[] = [];
   if (Deno.env.get("STRIPE_SECRET_KEY") && Deno.env.get("STRIPE_WEBHOOK_SECRET")) providers.push("stripe");
@@ -76,9 +71,25 @@ async function loadEvent(eventId: number) {
 
 async function loadOrder(orderId: string) {
   const rows = await rest(
-    `event_ticket_orders?id=eq.${encodeURIComponent(orderId)}&select=id,event_id,buyer_email,quantity,unit_price,provider,provider_reference,status,ticket_code,expires_at`,
+    `event_ticket_orders?id=eq.${encodeURIComponent(orderId)}&select=id,event_id,user_id,buyer_email,quantity,unit_price,provider,provider_reference,status,ticket_code,expires_at`,
   ) as Record<string, unknown>[];
   return rows[0] || null;
+}
+
+async function authenticatedCustomer(request: Request) {
+  const authorization = request.headers.get("authorization") || "";
+  const token = authorization.match(/^Bearer\s+(.+)$/i)?.[1];
+  const publishableKey = request.headers.get("apikey");
+  if (!token || !publishableKey || !supabaseUrl) throw new Error("Sign in to your FSB account before checkout.");
+  const result = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: { apikey: publishableKey, Authorization: `Bearer ${token}` },
+  });
+  if (!result.ok) throw new Error("Your sign-in expired. Sign in again before checkout.");
+  const user = await result.json();
+  if (!user.id || !user.email || user.email_confirmed_at == null) {
+    throw new Error("Confirm your email address before checkout.");
+  }
+  return { id: String(user.id), email: String(user.email) };
 }
 
 async function updateOrder(orderId: string, patch: Record<string, unknown>, providerReference?: string) {
@@ -215,12 +226,12 @@ Deno.serve(async (request: Request) => {
     }
 
     if (body.action === "start") {
+      const customer = await authenticatedCustomer(request);
       const eventId = Number(body.eventId);
       const quantity = Number(body.quantity);
-      const email = isEmail(body.email) ? body.email.trim() : "";
       const provider = body.provider === "stripe" || body.provider === "paypal" ? body.provider : "";
-      if (!Number.isSafeInteger(eventId) || eventId < 1 || !Number.isInteger(quantity) || quantity < 1 || quantity > 10 || !email || !provider) {
-        return response({ error: "Check your email, ticket quantity, and payment method." }, 400);
+      if (!Number.isSafeInteger(eventId) || eventId < 1 || !Number.isInteger(quantity) || quantity < 1 || quantity > 10 || !provider) {
+        return response({ error: "Check your ticket quantity and payment method." }, 400);
       }
       if (!configuredProviders().includes(provider)) return response({ error: `${provider} checkout is not configured yet.` }, 503);
       const event = await loadEvent(eventId);
@@ -229,7 +240,7 @@ Deno.serve(async (request: Request) => {
       }
       const created = await rest("rpc/reserve_event_ticket_order", {
         method: "POST",
-        body: JSON.stringify({ p_event_id: eventId, p_quantity: quantity, p_buyer_email: email, p_provider: provider }),
+        body: JSON.stringify({ p_event_id: eventId, p_quantity: quantity, p_buyer_email: customer.email, p_provider: provider, p_user_id: customer.id }),
       }) as Record<string, unknown>[];
       const order = Array.isArray(created) ? created[0] : created;
       if (!order?.id) throw new Error("Could not reserve tickets for checkout.");
@@ -244,7 +255,7 @@ Deno.serve(async (request: Request) => {
           form.set("mode", "payment");
           form.set("success_url", `${returnUrl}?ticket_order=${order.id}&stripe_session={CHECKOUT_SESSION_ID}`);
           form.set("cancel_url", `${returnUrl}?ticket_cancelled=${order.id}`);
-          form.set("customer_email", email);
+          form.set("customer_email", customer.email);
           // Keep the provider checkout just ahead of the one-hour inventory reservation.
           form.set("expires_at", String(Math.floor(Date.now() / 1000) + 3480));
           form.set("client_reference_id", String(order.id));
@@ -299,10 +310,12 @@ Deno.serve(async (request: Request) => {
     }
 
     if (body.action === "confirm") {
+      const customer = await authenticatedCustomer(request);
       const orderId = typeof body.orderId === "string" ? body.orderId : "";
       if (!/^[0-9a-f-]{36}$/i.test(orderId)) return response({ error: "Invalid ticket order." }, 400);
       const order = await loadOrder(orderId);
       if (!order) return response({ error: "Ticket order not found." }, 404);
+      if (order.user_id !== customer.id) return response({ error: "This ticket order belongs to another account." }, 403);
       if (order.status === "paid") return response({ order: safeTicketOrder(order) });
       if (new Date(String(order.expires_at)).getTime() < Date.now()) {
         await updateOrder(orderId, { status: "expired" });
