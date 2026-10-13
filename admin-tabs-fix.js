@@ -175,7 +175,7 @@ async function saveInlineSong(id,editor){
   const video=await uploadInlineFile('videos',selectedArtistPageId,editor.querySelector('.inline-video').files[0],'artist-videos');
   if(image)data.image_url=image;if(audio)data.audio_url=audio;if(video)data.video_url=video;
   const r=await supabaseClient.from('artist_songs').update(data).eq('id',id);if(r.error)throw r.error;
-  await renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('SONG UPDATED');
+  await window.renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('SONG UPDATED');
  }catch(e){alert('Could not update song: '+(e.message||e))}
 }
 function renderReleases(list,releases,songs){
@@ -197,6 +197,7 @@ function renderReleases(list,releases,songs){
   row.appendChild(head);row.appendChild(body);list.appendChild(row);
  });
 }
+window.renderArtistMusic=renderArtistMusic;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 async function artistUploadFile(bucket,artistId,file,folder){
