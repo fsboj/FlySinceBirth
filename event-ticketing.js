@@ -43,10 +43,10 @@
     }
 
     const form = element("form", "fsb-ticket-form");
-    const emailLabel = element("label", "fsb-ticket-label", "Email for your ticket");
-    const email = element("input", "fsb-ticket-input");
-    email.type = "email"; email.autocomplete = "email"; email.required = true; email.maxLength = 320;
-    emailLabel.appendChild(email); form.appendChild(emailLabel);
+    const accountNotice = element("p", "event-detail-copy", "Sign in to your FSB account before buying tickets. Your tickets will be saved to your profile.");
+    const accountLink = element("a", "event-action", "SIGN IN / CREATE ACCOUNT");
+    accountLink.href = "account.html?return=" + encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
+    form.append(accountNotice, accountLink);
 
     const quantityLabel = element("label", "fsb-ticket-label", "Quantity");
     const quantity = element("select", "fsb-ticket-input");
@@ -74,11 +74,13 @@
     form.addEventListener("submit", async function (submitEvent) {
       submitEvent.preventDefault();
       submit.disabled = true; message.textContent = "Starting secure checkout…";
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session?.user) { message.textContent = "Sign in or create an account before checkout."; submit.disabled = false; return; }
       const provider = form.querySelector("input[name='ticket-provider']:checked")?.value;
       let started;
       try {
         started = await invoke({
-          action: "start", eventId: event.id, quantity: Number(quantity.value), email: email.value.trim(), provider: provider,
+          action: "start", eventId: event.id, quantity: Number(quantity.value), provider: provider,
         });
       } catch (error) {
         started = { error: error };
