@@ -154,10 +154,33 @@ main.page:has(#artistGrid) .artist-name {
 }
 .section-label::before { content: ""; width: 38px; height: 1px; background: #dedede; }
 .section .section-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 17px;
   font-size: clamp(44px, 7vw, 88px);
   line-height: .9;
   letter-spacing: -.065em;
 }
+.section .section-heading::after {
+  content: "";
+  width: clamp(48px, 7vw, 82px);
+  height: 3px;
+  background: linear-gradient(90deg, #f5f5f5, rgba(245,245,245,.12));
+}
+#project .project {
+  border: 1px solid #2b2b2b;
+  background: radial-gradient(ellipse at 22% 48%, rgba(255,255,255,.105), transparent 34%), linear-gradient(120deg, #111, #080808 72%);
+}
+#music, #artists, #videos, #clothing, #events, #upcoming {
+  background-image: linear-gradient(180deg, rgba(255,255,255,.018), transparent 54%);
+}
+#music .music-card, #upcoming .upcoming-card, #upcoming .vip-empty {
+  min-height: 245px;
+  border: 1px solid #303030;
+  background-color: #0a0a0a;
+}
+#music .music-card:hover, #upcoming .upcoming-card:hover { border-color: #777; }
 .music-card, .upcoming-card, .vip-empty { border-color: #303030; background-color: #0b0b0b; }
 .music-card { height: 225px; flex-basis: 285px; padding: 24px; }
 .music-card:hover, .upcoming-card:hover { border-color: #666; }
