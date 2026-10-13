@@ -1,3 +1,63 @@
+/* Horizontal public navigation */
+.public-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 0 var(--fsb-gutter);
+  background: rgba(7,7,7,.94);
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.public-nav + main:not(.page) { padding-top: 64px; }
+main.page:has(#artistGrid) { padding-top: 0; }
+.public-nav .nav-logo { display: flex; flex: 0 0 auto; align-items: center; }
+.public-nav .nav-logo img { display: block; width: 60px; height: 60px; object-fit: contain; }
+.public-nav-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(16px, 2.6vw, 34px);
+  min-width: 0;
+  margin-left: auto;
+}
+.public-nav-links a {
+  flex: 0 0 auto;
+  color: #bdbdbd;
+  font-size: 10px;
+  letter-spacing: 2px;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: color .2s ease, opacity .2s ease;
+}
+.public-nav-links a:hover,
+.public-nav-links a[aria-current="page"] { color: #fff; }
+.public-nav-links a:hover { opacity: .72; }
+.public-nav-links .public-nav-context {
+  padding: 12px 14px;
+  border: 1px solid rgba(255,255,255,.26);
+}
+@media (max-width: 760px) {
+  .public-nav { height: 76px; gap: 16px; padding: 0 18px; }
+  .public-nav + main:not(.page) { padding-top: 42px; }
+  .public-nav .nav-logo img { width: 44px; height: 44px; }
+  .public-nav-links {
+    justify-content: flex-start;
+    gap: clamp(12px, 3vw, 18px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .public-nav-links::-webkit-scrollbar { display: none; }
+  .public-nav-links a { font-size: 8px; letter-spacing: 1px; }
+  .public-nav-links .public-nav-context { padding: 10px 11px; }
+}
 /* Shared visual finish for the public FSB pages. Admin and Store stay isolated. */
 :root {
   color-scheme: dark;

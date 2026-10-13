@@ -909,128 +909,16 @@ footer {
   }
 })();
 </script>
-<link rel="stylesheet" href="public-polish.css?v=4">
+<link rel="stylesheet" href="public-polish.css?v=5">
 </head>
 
 <body>
 
-<!-- =====================================================
-     NAVIGATION
-===================================================== -->
-
-<nav class="navbar">
-
-    <div class="nav-logo">
-        <img src="fsblogo.PNG" alt="FSB">
-    </div>
-
-    <button
-        class="menu-button"
-        onclick="openMenu()">
-
-        <span class="menu-lines">
-
-            <span></span>
-            <span></span>
-            <span></span>
-
-        </span>
-
-        MENU
-
-    </button>
-
-</nav>
-
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html" aria-current="page">Home</a><a id="menuMusic" href="#music">Music</a><a id="menuArtists" href="artists.html">Artists</a><a id="menuClothing" href="merch.html">Clothing</a><a id="menuVideos" href="videos.html">Videos</a><a id="menuEvents" href="events.html">Events</a></nav></header>
 
 <!-- =====================================================
-     MENU
-===================================================== -->
-
-<div
-    id="menu"
-    class="menu">
-
-    <div class="menu-header">
-
-        <div class="menu-small">
-            <img src="FlySinceBirthgd.PNG" alt="Fly Since Birth">
-        </div>
-
-        <button
-            class="close-menu"
-            onclick="closeMenu()">
-
-            ×
-
-        </button>
-
-    </div>
-
-
-    <ul>
-
-        <li>
-            <a
-                href="#music"
-                onclick="closeMenu()">
-
-                Music
-
-            </a>
-        </li>
-
-
-        <li>
-            <a
-                href="artists.html"
-                onclick="closeMenu()">
-
-                Artists
-
-            </a>
-        </li>
-
-
-        <li>
-            <a
-                id="menuClothing"
-                href="merch.html"
-                onclick="closeMenu()">
-
-                Clothing
-
-            </a>
-        </li>
-
-
-        <li>
-            <a
-                href="videos.html"
-                onclick="closeMenu()">
-
-                Videos
-
-            </a>
-        </li>
-
-
-        <li>
-            <a
-                href="events.html"
-                onclick="closeMenu()">
-
-                Events
-
-            </a>
-        </li>
-
-    </ul>
-
-</div>
-
-
-<!-- =====================================================
+     HERO
+===================================================== --><!-- =====================================================
      HERO
 ===================================================== -->
 
@@ -2135,7 +2023,7 @@ async function loadSiteContent() {
     ===================================================== */
 
     if (content.menu_music) {
-        const element = document.querySelector('.menu a[href="#music"]');
+        const element = document.getElementById("menuMusic");
 
         if (element) {
             element.textContent = content.menu_music;
@@ -2143,7 +2031,7 @@ async function loadSiteContent() {
     }
 
     if (content.menu_artists) {
-        const element = document.querySelector('.menu a[href="artists.html"], .menu a[href="#artists"]');
+        const element = document.getElementById("menuArtists");
 
         if (element) {
             element.textContent = content.menu_artists;
@@ -2151,7 +2039,7 @@ async function loadSiteContent() {
     }
 
     if (content.menu_clothing) {
-        const element = document.querySelector('.menu a#menuClothing');
+        const element = document.getElementById("menuClothing");
 
         if (element) {
             element.textContent = content.menu_clothing;
@@ -2159,7 +2047,7 @@ async function loadSiteContent() {
     }
 
     if (content.menu_videos) {
-        const element = document.querySelector('.menu a[href="#videos"]');
+        const element = document.getElementById("menuVideos");
 
         if (element) {
             element.textContent = content.menu_videos;
@@ -2167,7 +2055,7 @@ async function loadSiteContent() {
     }
 
     if (content.menu_events) {
-        const element = document.querySelector('.menu a[href="events.html"]');
+        const element = document.getElementById("menuEvents");
 
         if (element) {
             element.textContent = content.menu_events;
@@ -2191,40 +2079,6 @@ loadEvents();
    
 </script>   
 <script>
-
-function openMenu() {
-
-    document
-        .getElementById("menu")
-        .classList
-        .add("open");
-
-}
-
-
-function closeMenu() {
-
-    document
-        .getElementById("menu")
-        .classList
-        .remove("open");
-
-}
-
-
-document.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (event.key === "Escape") {
-
-            closeMenu();
-
-        }
-
-    }
-);
-
 
 async function loadVipMusic() {
     const grid = document.getElementById("vipMusicGrid");

@@ -1260,7 +1260,7 @@ footer {
 }
 </style>
 
-<link rel="stylesheet" href="public-polish.css?v=4">
+<link rel="stylesheet" href="public-polish.css?v=5">
 </head>
 
 
@@ -1271,134 +1271,7 @@ footer {
      NAVIGATION
 ===================================================== -->
 
-<nav class="navbar">
-
-    <a
-        href="index.html#artists"
-        class="nav-logo"
-    >
-
-        <img
-            src="fsblogo.PNG"
-            alt="FSB"
-        >
-
-    </a>
-
-
-    <a
-       href="artists.html"
-        class="back-button"
-    >
-        BACK TO ARTISTS
-    </a>
-
-      <button
-    class="menu-button"
-    onclick="openMenu()"
-    aria-label="Open menu"
->
-    <span class="menu-lines">
-        <span></span>
-        <span></span>
-        <span></span>
-    </span>
-</button>
-</nav>
-<!-- =====================================================
-     FSB SIDE MENU
-===================================================== -->
-
-<div
-    id="menu"
-    class="menu"
->
-
-    <div class="menu-header">
-
-        <div class="menu-small">
-
-            <img
-                src="FlySinceBirthgd.PNG"
-                alt="Fly Since Birth"
-            >
-
-        </div>
-
-
-        <button
-            class="close-menu"
-            onclick="closeMenu()"
-        >
-            ×
-        </button>
-
-    </div>
-
-
-    <ul>
-
-        <li>
-            <a
-                id="menuMusic"
-                href="index.html#music"
-                onclick="closeMenu()"
-            >
-                Music
-            </a>
-        </li>
-
-
-        <li>
-            <a
-                id="menuArtists"
-                href="index.html#artists"
-                onclick="closeMenu()"
-            >
-                Artists
-            </a>
-        </li>
-
-
-        <li>
-            <a
-                id="menuClothing"
-                href="merch.html"
-                onclick="closeMenu()"
-            >
-                Clothing
-            </a>
-        </li>
-
-
-        <li>
-            <a
-                id="menuVideos"
-                href="index.html#videos"
-                onclick="closeMenu()"
-            >
-                Videos
-            </a>
-        </li>
-
-
-        <li>
-            <a
-                id="menuEvents"
-                href="index.html#events"
-                onclick="closeMenu()"
-            >
-                Events
-            </a>
-        </li>
-
-    </ul>
-
-</div>
-
-<!-- =====================================================
-     ARTIST HERO
-===================================================== -->
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a id="menuMusic" href="index.html#music">Music</a><a id="menuArtists" href="artists.html" aria-current="page">Artists</a><a id="menuClothing" href="merch.html">Clothing</a><a id="menuVideos" href="videos.html">Videos</a><a id="menuEvents" href="events.html">Events</a></nav></header>
 
 <header class="artist-hero">
 
@@ -3372,39 +3245,7 @@ async function loadArtistLinks() {
 /* =====================================================
    START
 ===================================================== */
-function openMenu() {
-
-    document
-        .getElementById("menu")
-        .classList
-        .add("open");
-
-}
-
-
-function closeMenu() {
-
-    document
-        .getElementById("menu")
-        .classList
-        .remove("open");
-
-}
-
-
-document.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (event.key === "Escape") {
-
-            closeMenu();
-
-        }
-
-    }
-);
-      async function loadSharedMenu() {
+async function loadSharedMenu() {
     const { data, error } = await supabaseClient
         .from("site_content")
         .select("key,value")
