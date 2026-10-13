@@ -81,10 +81,13 @@
     display: inline-block;
     border: 1px solid #444;
     padding: 10px 13px;
+    background: transparent;
     color: #fff;
     font-size: 9px;
     letter-spacing: 1.5px;
     text-decoration: none;
+    font-family: inherit;
+    cursor: pointer;
 }
 .event-action:hover { background: #fff; color: #000; }
 .event-details-trigger { cursor: pointer; }
@@ -257,6 +260,12 @@ async function loadEvents() {
 
         const actions = document.createElement("div");
         actions.className = "event-actions";
+        const detailsButton = document.createElement("button");
+        detailsButton.className = "event-action";
+        detailsButton.type = "button";
+        detailsButton.textContent = "VIEW EVENT DETAILS";
+        detailsButton.addEventListener("click", function() { showEventDetails(event); });
+        actions.appendChild(detailsButton);
         const ticketLink = makeLink(event.link, "MORE INFO / TICKETS");
         const videoLink = makeLink(event.video_link, "WATCH EVENT VIDEOS");
         if (ticketLink) actions.appendChild(ticketLink);
