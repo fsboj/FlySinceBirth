@@ -909,7 +909,7 @@ footer {
   }
 })();
 </script>
-<link rel="stylesheet" href="public-polish.css?v=3">
+<link rel="stylesheet" href="public-polish.css?v=4">
 </head>
 
 <body>
@@ -994,7 +994,8 @@ footer {
 
         <li>
             <a
-                href="#clothing"
+                id="menuClothing"
+                href="merch.html"
                 onclick="closeMenu()">
 
                 Clothing
@@ -1189,8 +1190,7 @@ footer {
         <div class="clothing-text">
 
             <h2 class="section-heading">
-                FSB<br>
-                MERCH
+                <a href="merch.html">FSB<br>MERCH</a>
             </h2>
 
 
@@ -2072,7 +2072,7 @@ async function loadSiteContent() {
     ===================================================== */
 
     if (content.merch_heading) {
-        const element = document.querySelector(".clothing-text .section-heading");
+        const element = document.querySelector(".clothing-text .section-heading a");
 
         if (element) {
             element.innerHTML = content.merch_heading;
@@ -2151,7 +2151,7 @@ async function loadSiteContent() {
     }
 
     if (content.menu_clothing) {
-        const element = document.querySelector('.menu a[href="#clothing"]');
+        const element = document.querySelector('.menu a#menuClothing');
 
         if (element) {
             element.textContent = content.menu_clothing;
