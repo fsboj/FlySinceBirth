@@ -269,6 +269,10 @@ window.uploadArtistMusic=async function(){
 };
 window.saveArtistRelease=async function(){
  try{
+  const artistSelect=document.getElementById('artistReleaseArtist');
+  const artistId=artistSelect&&artistSelect.value;
+  if(!artistId)throw new Error('Please select an artist for this release.');
+  selectedArtistPageId=artistId;
   const type=document.getElementById('artistReleaseType').value;
   const title=document.getElementById('artistReleaseTitle').value.trim();
   const date=document.getElementById('artistReleaseDate').value;
