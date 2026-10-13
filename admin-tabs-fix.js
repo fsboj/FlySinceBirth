@@ -221,6 +221,15 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
  if(!date)throw new Error('Select a release date.');
  if(!artworkFile)throw new Error('Select project artwork.');
  if(!rows.length)throw new Error('Add at least one song.');
+ const tracks=rows.map((row,i)=>{
+  const titleEl=row.querySelector('.artist-upload-track-title,.artist-release-track-title');
+  const audioEl=row.querySelector('.artist-upload-track-file,.artist-release-track-file');
+  const videoEl=row.querySelector('.artist-upload-track-video,.artist-release-track-video');
+  const trackTitle=titleEl&&titleEl.value.trim(),audio=audioEl&&audioEl.files[0],video=videoEl&&videoEl.files[0];
+  if(!trackTitle)throw new Error('Enter a title for track '+(i+1)+'.');
+  if(!audio)throw new Error('Select an audio file for track '+(i+1)+'.');
+  return {title:trackTitle,audio,video};
+ });
  const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
  const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,release_date:date||null,sort_order:0}).select().single();
  if(ins.error)throw ins.error;
@@ -233,13 +242,8 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
   const vr=await supabaseClient.from('videos').insert({title:v.title||('Video '+(i+1)),link,image:thumb,sort_order:i+1,artist_id:selectedArtistPageId,release_id:ins.data.id});
   if(vr.error)throw vr.error;
  }
- for(let i=0;i<rows.length;i++){
-  const titleEl=rows[i].querySelector('.artist-upload-track-title,.artist-release-track-title');
-  const audioEl=rows[i].querySelector('.artist-upload-track-file,.artist-release-track-file');
-  const videoEl=rows[i].querySelector('.artist-upload-track-video,.artist-release-track-video');
-  const trackTitle=titleEl&&titleEl.value.trim(),audio=audioEl&&audioEl.files[0],video=videoEl&&videoEl.files[0];
-  if(!trackTitle)throw new Error('Enter a title for track '+(i+1)+'.');
-  if(!audio)throw new Error('Select an audio file for track '+(i+1)+'.');
+ for(let i=0;i<tracks.length;i++){
+  const {title:trackTitle,audio,video}=tracks[i];
   const audioUrl=await artistUploadFile('artist-music',selectedArtistPageId,audio,'releases/'+ins.data.id);
   const videoUrl=await artistUploadFile('videos',selectedArtistPageId,video,'artist-videos/'+ins.data.id);
   const song=await supabaseClient.from('artist_songs').insert({artist_id:selectedArtistPageId,title:trackTitle,audio_url:audioUrl,image_url:artwork,video_url:videoUrl,sort_order:i+1,plays:0,is_top_song:false,sections:[type==='album'?'albums':'eps'],release_id:ins.data.id,track_number:i+1});
