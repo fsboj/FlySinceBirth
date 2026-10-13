@@ -31,33 +31,72 @@ a:focus-visible, button:focus-visible, [role="link"]:focus-visible, [tabindex]:f
 }
 .nav-logo img { filter: drop-shadow(0 2px 8px rgba(0,0,0,.35)); }
 .menu-button, .back-button, .back-link, .close-menu, .event-action,
-#releaseBackButton, .outline-button { transition: color .2s ease, background-color .2s ease, border-color .2s ease, opacity .2s ease; }
+#releaseBackButton, .outline-button { transition: color .2s ease, background-color .2s ease, border-color .2s ease, opacity .2s ease, transform .2s ease; }
+.menu-button {
+  padding: 12px 15px;
+  border: 1px solid rgba(255,255,255,.26);
+  background: rgba(255,255,255,.035);
+}
+.menu-button:hover, .back-button:hover, .back-link:hover, .outline-button:hover { border-color: #fff; transform: translateY(-1px); }
 .menu { background: rgba(9,9,9,.98); }
 
 /* Give content pages the same centered, editorial rhythm as the Store. */
 .page, #releasePage { width: min(1200px, calc(100% - 2 * var(--fsb-gutter))); }
 .page { margin-top: clamp(44px, 6vw, 78px); margin-bottom: clamp(64px, 8vw, 110px); }
 .page-heading, .heading, .section-heading { text-wrap: balance; }
+.page-heading, .heading, main > .section-heading:first-of-type {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  font-size: clamp(58px, 9vw, 112px);
+  line-height: .82;
+  letter-spacing: -.065em;
+}
+.page-heading::after, .heading::after, main > .section-heading:first-of-type::after {
+  content: "";
+  display: block;
+  width: clamp(56px, 8vw, 96px);
+  height: 3px;
+  background: linear-gradient(90deg, #f5f5f5, rgba(245,245,245,.12));
+}
 .page-label, .page-kicker { color: #a2a2a2; }
 
 /* Artists directory */
 main.page:has(#artistGrid) .artist-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr));
   gap: clamp(12px, 1.6vw, 20px);
   overflow: visible;
 }
 main.page:has(#artistGrid) .artist-card {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  aspect-ratio: .82;
   border-color: var(--fsb-line);
   background: var(--fsb-panel);
   box-shadow: 0 12px 35px rgba(0,0,0,.18);
   transition: transform .28s ease, border-color .28s ease, box-shadow .28s ease;
 }
+main.page:has(#artistGrid) .artist-card::after {
+  content: "";
+  position: absolute;
+  inset: 28% 0 0;
+  background: linear-gradient(transparent, rgba(0,0,0,.9));
+  pointer-events: none;
+}
 main.page:has(#artistGrid) .artist-card:hover {
   border-color: #555;
   box-shadow: 0 22px 50px rgba(0,0,0,.36);
 }
-main.page:has(#artistGrid) .artist-image { transition: transform .55s cubic-bezier(.2,.7,.2,1), filter .35s ease; }
+main.page:has(#artistGrid) .artist-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform .55s cubic-bezier(.2,.7,.2,1), filter .35s ease;
+}
 main.page:has(#artistGrid) .artist-card:hover .artist-image { transform: scale(1.035); filter: saturate(.88); }
 main.page:has(#artistGrid) .artist-name {
   position: relative;
@@ -65,6 +104,7 @@ main.page:has(#artistGrid) .artist-name {
   font-size: clamp(13px, 1.25vw, 17px);
   letter-spacing: 1.5px;
   text-transform: uppercase;
+  z-index: 1;
 }
 
 /* Video lists and related video cards */
@@ -73,6 +113,13 @@ main.page:has(#artistGrid) .artist-name {
   gap: clamp(18px, 2.2vw, 30px);
 }
 .video-card, .next-card { min-width: 0; }
+#videoGrid .video-card, #nextVideos .next-card {
+  padding: 10px;
+  border: 1px solid #292929;
+  background: linear-gradient(145deg, #121212, #090909 72%);
+  transition: transform .25s ease, border-color .25s ease, background-color .25s ease;
+}
+#videoGrid .video-card:hover, #nextVideos .next-card:hover { transform: translateY(-4px); border-color: #626262; }
 .video-thumbnail, .next-card img {
   border-color: var(--fsb-line);
   background: linear-gradient(135deg, #151515, #090909);
@@ -98,10 +145,24 @@ main.page:has(#artistGrid) .artist-name {
 
 /* Home page sections */
 .section { border-color: rgba(255,255,255,.09); }
-.section-label { color: #a0a0a0; }
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #b0b0b0;
+  margin-bottom: 30px;
+}
+.section-label::before { content: ""; width: 38px; height: 1px; background: #dedede; }
+.section .section-heading {
+  font-size: clamp(44px, 7vw, 88px);
+  line-height: .9;
+  letter-spacing: -.065em;
+}
 .music-card, .upcoming-card, .vip-empty { border-color: #303030; background-color: #0b0b0b; }
+.music-card { height: 225px; flex-basis: 285px; padding: 24px; }
 .music-card:hover, .upcoming-card:hover { border-color: #666; }
 .section .artist-card { box-shadow: 0 12px 35px rgba(0,0,0,.2); }
+.section .artist-card { flex-basis: clamp(255px, 28vw, 340px); aspect-ratio: .88; }
 .section .artist-card::after, .upcoming-card::after {
   content: "";
   position: absolute;
@@ -122,7 +183,7 @@ footer {
 ::selection { background: #f5f5f5; color: #080808; }
 
 @media (max-width: 900px) {
-  main.page:has(#artistGrid) .artist-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  main.page:has(#artistGrid) .artist-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
   .video-grid, .next-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {
@@ -131,10 +192,13 @@ footer {
   main.page:has(#artistGrid) .artist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
   main.page:has(#artistGrid) .artist-name { padding: 12px; letter-spacing: 1px; }
   .video-grid, .next-grid { grid-template-columns: 1fr; }
+  #videoGrid .video-card, #nextVideos .next-card { padding: 8px; }
+  .menu-button { padding: 10px 12px; }
   .page { width: calc(100% - 40px); }
   .events-featured { margin-left: 0; margin-right: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
 
