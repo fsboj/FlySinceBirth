@@ -1,0 +1,7 @@
+project_id = "flysincebirth"
+
+[functions.event-ticket-checkout]
+verify_jwt = false
+
+[functions.event-ticket-stripe-webhook]
+verify_jwt = false
