@@ -1,0 +1,140 @@
+/* Shared visual finish for the public FSB pages. Admin and Store stay isolated. */
+:root {
+  color-scheme: dark;
+  --fsb-bg: #070707;
+  --fsb-panel: #0e0e0e;
+  --fsb-line: #272727;
+  --fsb-muted: #969696;
+  --fsb-gutter: clamp(22px, 6.5vw, 100px);
+}
+
+html { scroll-padding-top: 88px; }
+body {
+  background-color: var(--fsb-bg);
+  background-image: radial-gradient(ellipse at 50% -24%, rgba(255,255,255,.065), transparent 54%);
+  color: #f5f5f5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+a, button { -webkit-tap-highlight-color: transparent; }
+a:focus-visible, button:focus-visible, [role="link"]:focus-visible, [tabindex]:focus-visible {
+  outline: 1px solid #f5f5f5;
+  outline-offset: 4px;
+}
+
+.navbar {
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background-color: rgba(7,7,7,.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.nav-logo img { filter: drop-shadow(0 2px 8px rgba(0,0,0,.35)); }
+.menu-button, .back-button, .back-link, .close-menu, .event-action,
+#releaseBackButton, .outline-button { transition: color .2s ease, background-color .2s ease, border-color .2s ease, opacity .2s ease; }
+.menu { background: rgba(9,9,9,.98); }
+
+/* Give content pages the same centered, editorial rhythm as the Store. */
+.page, #releasePage { width: min(1200px, calc(100% - 2 * var(--fsb-gutter))); }
+.page { margin-top: clamp(44px, 6vw, 78px); margin-bottom: clamp(64px, 8vw, 110px); }
+.page-heading, .heading, .section-heading { text-wrap: balance; }
+.page-label, .page-kicker { color: #a2a2a2; }
+
+/* Artists directory */
+main.page:has(#artistGrid) .artist-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(12px, 1.6vw, 20px);
+  overflow: visible;
+}
+main.page:has(#artistGrid) .artist-card {
+  border-color: var(--fsb-line);
+  background: var(--fsb-panel);
+  box-shadow: 0 12px 35px rgba(0,0,0,.18);
+  transition: transform .28s ease, border-color .28s ease, box-shadow .28s ease;
+}
+main.page:has(#artistGrid) .artist-card:hover {
+  border-color: #555;
+  box-shadow: 0 22px 50px rgba(0,0,0,.36);
+}
+main.page:has(#artistGrid) .artist-image { transition: transform .55s cubic-bezier(.2,.7,.2,1), filter .35s ease; }
+main.page:has(#artistGrid) .artist-card:hover .artist-image { transform: scale(1.035); filter: saturate(.88); }
+main.page:has(#artistGrid) .artist-name {
+  position: relative;
+  padding: 18px 17px;
+  font-size: clamp(13px, 1.25vw, 17px);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* Video lists and related video cards */
+.video-grid, .next-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(18px, 2.2vw, 30px);
+}
+.video-card, .next-card { min-width: 0; }
+.video-thumbnail, .next-card img {
+  border-color: var(--fsb-line);
+  background: linear-gradient(135deg, #151515, #090909);
+}
+.video-thumbnail img, .next-card img {
+  transition: transform .55s cubic-bezier(.2,.7,.2,1), opacity .25s ease;
+}
+.video-card:hover .video-thumbnail img, .next-card:hover img { transform: scale(1.025); opacity: .84; }
+.video-artist, .next-artist { color: #aaa; letter-spacing: 1.6px; text-transform: uppercase; }
+.video-title, .next-title { line-height: 1.4; }
+.status, .empty, .empty-state, .event-empty { color: #929292; }
+
+/* Event cards: clear hierarchy while retaining the existing data and behavior. */
+.events-featured {
+  border-color: #343434;
+  background: radial-gradient(ellipse at 95% 10%, #1b1b1b, transparent 48%), linear-gradient(120deg, #111, #080808);
+}
+.events-featured-image, .event-card-image { border: 1px solid rgba(255,255,255,.08); }
+.event-card { border-color: #2c2c2c; }
+.event-title { letter-spacing: -.35px; }
+.event-action { border-color: #555; }
+.event-action:hover { border-color: #fff; }
+
+/* Home page sections */
+.section { border-color: rgba(255,255,255,.09); }
+.section-label { color: #a0a0a0; }
+.music-card, .upcoming-card, .vip-empty { border-color: #303030; background-color: #0b0b0b; }
+.music-card:hover, .upcoming-card:hover { border-color: #666; }
+.section .artist-card { box-shadow: 0 12px 35px rgba(0,0,0,.2); }
+.section .artist-card::after, .upcoming-card::after {
+  content: "";
+  position: absolute;
+  inset: 35% 0 0;
+  background: linear-gradient(transparent, rgba(0,0,0,.76));
+  pointer-events: none;
+}
+.section .artist-info, .upcoming-card > div { z-index: 2; }
+.video-card { transition: transform .25s ease; }
+.video-card:hover { transform: translateY(-3px); }
+.clothing-box img { transition: transform .55s ease; }
+.clothing-box:hover img { transform: scale(1.035); }
+
+footer {
+  border-color: rgba(255,255,255,.09) !important;
+  color: #858585 !important;
+}
+::selection { background: #f5f5f5; color: #080808; }
+
+@media (max-width: 900px) {
+  main.page:has(#artistGrid) .artist-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .video-grid, .next-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  html { scroll-padding-top: 72px; }
+  .navbar { padding-left: 22px; padding-right: 22px; }
+  main.page:has(#artistGrid) .artist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+  main.page:has(#artistGrid) .artist-name { padding: 12px; letter-spacing: 1px; }
+  .video-grid, .next-grid { grid-template-columns: 1fr; }
+  .page { width: calc(100% - 40px); }
+  .events-featured { margin-left: 0; margin-right: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+
