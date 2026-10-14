@@ -5,3 +5,7 @@ verify_jwt = false
 
 [functions.event-ticket-stripe-webhook]
 verify_jwt = false
+
+[functions.customer-support-email]
+verify_jwt = true
+
