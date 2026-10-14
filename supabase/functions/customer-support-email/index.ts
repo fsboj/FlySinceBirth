@@ -191,6 +191,7 @@ async function sendSupportEmail(item: SupportRequest) {
     const headers = [
       `From: Fly Since Birth Support <${from}>`,
       `To: ${SUPPORT_ADDRESS}`,
+      `Reply-To: ${item.customer_email}`,
       "Subject: [FSB Website] New support request",
       "MIME-Version: 1.0",
       "Content-Type: text/plain; charset=UTF-8",
