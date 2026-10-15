@@ -12,6 +12,8 @@ function startSong(song, queue = [song]) {
   playIndex = Math.max(0, playQueue.findIndex((item) => String(item.id) === String(song.id)));
   const selected = playQueue[playIndex] || song;
   const audio = document.getElementById("audioPlayer");
+  document.getElementById("miniPlayer").hidden = false;
+  document.body.classList.add("mini-player-open");
   document.getElementById("nowTitle").textContent = selected.title || "Untitled";
   document.getElementById("nowArtist").textContent = selected.artist_name || "FLY SINCE BIRTH";
   audio.src = selected.audio_url;
@@ -22,6 +24,14 @@ function startSong(song, queue = [song]) {
 document.getElementById("audioPlayer").addEventListener("ended", () => {
   if (playIndex >= 0 && playIndex + 1 < playQueue.length) startSong(playQueue[playIndex + 1], playQueue);
 });
+document.getElementById("closeMiniPlayer").addEventListener("click", () => {
+  const audio = document.getElementById("audioPlayer");
+  audio.pause();
+  audio.removeAttribute("src");
+  audio.load();
+  document.getElementById("miniPlayer").hidden = true;
+  document.body.classList.remove("mini-player-open");
+});
 
 function playVideo(video) {
   const host = document.getElementById("videoPlayerHost");
@@ -30,6 +40,8 @@ function playVideo(video) {
   try { url = new URL(raw, location.href); } catch (_) { host.innerHTML = '<p class="empty">VIDEO LINK IS UNAVAILABLE.</p>'; return; }
   if (!/^https?:$/.test(url.protocol)) { host.innerHTML = '<p class="empty">VIDEO LINK IS UNAVAILABLE.</p>'; return; }
   document.getElementById("audioPlayer").pause();
+  document.getElementById("miniPlayer").hidden = true;
+  document.body.classList.remove("mini-player-open");
   if (/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url.href)) {
     host.innerHTML = "";
     const videoElement = document.createElement("video");
