@@ -34,9 +34,16 @@ async function loadVideos(){
  if(error){console.error("Could not load videos:",error);grid.innerHTML='<p class="status">VIDEOS COULD NOT BE LOADED. PLEASE TRY AGAIN LATER.</p>';return;}
  const videos=(data||[]).filter(v=>v&&v.id!=null);
  if(!videos.length){grid.innerHTML='<p class="status">NO VIDEOS AVAILABLE YET.</p>';return;}
- const artistIds=[...new Set(videos.map(v=>v.artist_id).filter(Boolean))],artistNames={};
- if(artistIds.length){
-  const result=await supabaseClient.from("artists").select("id,name").in("id",artistIds);
+ const [featureResult,artistIds]=await Promise.all([
+  supabaseClient.from("video_artist_features").select("video_id,artist_id,sort_order").in("video_id",videos.map(v=>v.id)).order("sort_order"),
+  Promise.resolve([...new Set(videos.map(v=>v.artist_id).filter(Boolean))])
+ ]);
+ const features=featureResult.error?[]:(featureResult.data||[]);
+ const creditsByVideo=new Map();
+ features.forEach(row=>{const key=String(row.video_id);if(!creditsByVideo.has(key))creditsByVideo.set(key,[]);creditsByVideo.get(key).push(String(row.artist_id))});
+ const allArtistIds=[...new Set([...artistIds,...features.map(row=>row.artist_id)].filter(Boolean).map(String))],artistNames={};
+ if(allArtistIds.length){
+  const result=await supabaseClient.from("artists").select("id,name").in("id",allArtistIds);
   if(!result.error)(result.data||[]).forEach(a=>artistNames[String(a.id)]=a.name||"");
  }
  grid.innerHTML="";
@@ -44,10 +51,20 @@ async function loadVideos(){
   const card=document.createElement("article");card.className="video-card";card.tabIndex=0;card.setAttribute("role","link");card.setAttribute("aria-label","Watch "+(video.title||"video"));
   const thumb=document.createElement("div");thumb.className="video-thumbnail";
   const img=document.createElement("img");img.src=video.image||"fsblogo.PNG";img.alt=(video.title||"Video")+" thumbnail";img.loading="lazy";thumb.appendChild(img);card.appendChild(thumb);
-  const artist=document.createElement("div");artist.className="video-artist";artist.textContent=artistNames[String(video.artist_id)]||video.artist||"";card.appendChild(artist);
+  const artist=document.createElement("div");artist.className="video-artist";
+  const artistCredits=[...new Set([video.artist_id,...(creditsByVideo.get(String(video.id))||[])].filter(Boolean).map(String))];
+  artistCredits.forEach((artistId,index)=>{
+   const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(artistId);link.textContent=artistNames[artistId]||"Artist";
+   link.addEventListener("click",event=>event.stopPropagation());
+   if(index===1)artist.appendChild(document.createTextNode(" feat. "));else if(index>1)artist.appendChild(document.createTextNode(", "));
+   artist.appendChild(link);
+  });
+  if(!artistCredits.length)artist.textContent=video.artist||"";
+  card.appendChild(artist);
   const title=document.createElement("div");title.className="video-title";title.textContent=video.title||"Untitled Video";card.appendChild(title);
   const open=()=>window.location.href="music.html?video_id="+encodeURIComponent(video.id);
-  card.addEventListener("click",open);card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}});
+  card.addEventListener("click",e=>{if(e.target.closest(".video-artist a"))return;open();});
+  card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){if(e.target.closest(".video-artist a"))return;e.preventDefault();open();}});
   grid.appendChild(card);
  });
 }
