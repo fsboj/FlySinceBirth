@@ -377,9 +377,14 @@ async function loadMusicHub() {
     }
     return shuffled;
   };
-  const tasteArtists = taste?.artistIds || new Set();
+  const tasteArtists = new Set(taste?.artistIds || []);
   const librarySongIds = taste?.songIds || new Set();
   const artistNetwork = song => [song.artist_id, ...(song.feature_artist_ids || [])].filter(Boolean).map(String);
+  const initialTasteArtists = new Set(tasteArtists);
+  catalog.forEach(song => {
+    const credits = artistNetwork(song);
+    if (credits.some(id => initialTasteArtists.has(id))) credits.forEach(id => tasteArtists.add(id));
+  });
   const matching = [], other = [];
   catalog.forEach(song => {
     const overlapsTaste = artistNetwork(song).some(id => tasteArtists.has(id));
@@ -387,6 +392,7 @@ async function loadMusicHub() {
     else if (!librarySongIds.has(String(song.id))) other.push(song);
   });
   const recommendedOrder = [...shuffle(matching), ...shuffle(other)];
+  if (!recommendedOrder.length && catalog.length) recommendedOrder.push(...shuffle(catalog));
   const renderCatalog = () => {
     const term = document.getElementById("songSearch").value.trim().toLowerCase();
     const filtered = recommendedOrder.filter(song => {
