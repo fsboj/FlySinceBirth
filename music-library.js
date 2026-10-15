@@ -128,10 +128,6 @@
     const songMap = new Map(allSongs.map((song) => [String(song.id), song]));
     const favoriteSongs = [...favoriteIds].map((id) => songMap.get(id)).filter(Boolean);
     $("favoriteSongs").innerHTML = favoriteSongs.length ? favoriteSongs.map((song) => `<div class="music-library-song"><a href="artist.html?id=${encodeURIComponent(song.artist_id)}">${esc(songTitle(song))}</a><button class="secondary music-library-remove" type="button" data-remove-favorite="${esc(song.id)}">REMOVE</button></div>`).join("") : '<p class="empty">Favorite a song on an artist page and it will show up here.</p>';
-    const selection = $("playlistSelect");
-    selection.innerHTML = '<option value="">Choose a playlist</option>' + playlistCache.map((p) => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
-    const songSelect = $("librarySongSelect");
-    songSelect.innerHTML = '<option value="">Choose a song</option>' + allSongs.map((song) => `<option value="${esc(song.id)}">${esc(songTitle(song))}</option>`).join("");
     if (!playlistCache.length) $("playlistCards").innerHTML = '<p class="empty">Create your first playlist above.</p>';
     else {
       const { data: items, error } = await supabaseClient.from("customer_playlist_songs").select("playlist_id,song_id").in("playlist_id", playlistCache.map((p) => p.id));
@@ -154,11 +150,6 @@
       event.preventDefault(); const input = $("newPlaylistName"), button = event.currentTarget.querySelector("button[type=submit]"); button.disabled = true; status.textContent = "Creating playlist…";
       try { const user = currentUser || await signedInUser(); const { error } = await supabaseClient.from("customer_playlists").insert({ user_id: user.id, name: input.value.trim() }); if (error) throw error; input.value = ""; status.textContent = "Playlist created."; await renderLibrary(); }
       catch (error) { status.textContent = error.message || "Could not create playlist."; } finally { button.disabled = false; }
-    });
-    $("addLibrarySongForm").addEventListener("submit", async (event) => {
-      event.preventDefault(); const button = event.currentTarget.querySelector("button[type=submit]"); button.disabled = true;
-      try { const { error } = await supabaseClient.from("customer_playlist_songs").insert({ playlist_id: $("playlistSelect").value, song_id: Number($("librarySongSelect").value) }); if (error?.code === "23505") throw new Error("That song is already in this playlist."); if (error) throw error; status.textContent = "Song added to playlist."; await renderLibrary(); }
-      catch (error) { status.textContent = error.message || "Could not add song."; } finally { button.disabled = false; }
     });
     document.addEventListener("click", async (event) => {
       const removeFavorite = event.target.closest("[data-remove-favorite]"), removeSong = event.target.closest("[data-remove-song]"), deletePlaylist = event.target.closest("[data-delete-playlist]");
