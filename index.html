@@ -1152,8 +1152,6 @@ footer {
     <h3 class="events-subheading">UPCOMING EVENTS</h3>
     <div id="events-list" class="events-list"></div>
 
-    <h3 class="events-subheading">PAST EVENTS</h3>
-    <div id="past-events-list" class="events-list"></div>
 
 </section>
 
@@ -1777,9 +1775,8 @@ grid.appendChild(card);
 </script><script src="event-ticketing.js"></script><script>
    async function loadEvents() {
     const upcomingContainer = document.getElementById("events-list");
-    const pastContainer = document.getElementById("past-events-list");
     const featuredContainer = document.getElementById("events-featured");
-    if (!upcomingContainer || !pastContainer || !featuredContainer) return;
+    if (!upcomingContainer || !featuredContainer) return;
 
     const { data, error } = await supabaseClient
         .from("events")
@@ -1794,7 +1791,6 @@ grid.appendChild(card);
 
     featuredContainer.innerHTML = "";
     upcomingContainer.innerHTML = "";
-    pastContainer.innerHTML = "";
 
     try {
 
@@ -1808,7 +1804,6 @@ grid.appendChild(card);
     });
 
     const upcoming = allEvents.filter(event => !event._isPast);
-    const past = allEvents.filter(event => event._isPast);
 
     upcoming.sort((a,b) => {
         if (a.featured && !b.featured) return -1;
@@ -1817,10 +1812,6 @@ grid.appendChild(card);
         if (a._parsedDate) return -1;
         if (b._parsedDate) return 1;
         return (a.sort_order || 0) - (b.sort_order || 0);
-    });
-    past.sort((a,b) => {
-        if (a._parsedDate && b._parsedDate) return b._parsedDate - a._parsedDate;
-        return (b.sort_order || 0) - (a.sort_order || 0);
     });
 
     function safeEventUrl(url) {
@@ -1982,15 +1973,12 @@ grid.appendChild(card);
         if (featured && String(event.id) === String(featured.id)) return;
         appendEventCardSafely(upcomingContainer, event, false);
     });
-    past.forEach(event => appendEventCardSafely(pastContainer, event, false));
 
     if (!upcoming.length) upcomingContainer.innerHTML = '<p class="event-empty">NO UPCOMING EVENTS RIGHT NOW.</p>';
-    if (!past.length) pastContainer.innerHTML = '<p class="event-empty">NO PAST EVENTS YET.</p>';
 
     } catch (renderError) {
         console.error("Could not render homepage events:", renderError);
         featuredContainer.replaceChildren();
-        pastContainer.replaceChildren();
         upcomingContainer.replaceChildren();
         (Array.isArray(data) ? data : []).forEach(function(event) {
             const card = document.createElement("article");
