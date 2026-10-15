@@ -1647,6 +1647,7 @@ footer {
 ===================================================== -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="music-library.js?v=1"></script>
 
 
 <script>
@@ -2193,7 +2194,7 @@ image.className = "video-thumbnail";
     row.appendChild(duration);
 
 
-    return row;
+    return window.decorateSongControls ? window.decorateSongControls(row, song) : row;
 }
       function createSongRow(song) {
     const row = document.createElement("div");
@@ -2214,7 +2215,7 @@ image.className = "video-thumbnail";
         if (index !== -1) playSong(index);
     });
 
-    return row;
+    return window.decorateSongControls ? window.decorateSongControls(row, song) : row;
 }
 function createNewestReleaseButton(release) {
 
@@ -2491,7 +2492,7 @@ function createTopSongButton(song) {
     button.appendChild(play);
 
 
-    return button;
+    return window.decorateSongControls ? window.decorateSongControls(button, song) : button;
 }
 function createCompactSongButton(song) {
 
@@ -2588,7 +2589,7 @@ function createCompactSongButton(song) {
     button.appendChild(play);
 
 
-    return button;
+    return window.decorateSongControls ? window.decorateSongControls(button, song) : button;
 }
     /* =================================================
        NEWEST MUSIC
@@ -3275,5 +3276,6 @@ loadArtist();
 </body>
 
 </html>
+
 
 
