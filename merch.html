@@ -79,7 +79,7 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
 <link rel="stylesheet" href="public-polish.css?v=5">\n</head>
 <body>
 <div class="topline"></div>
-<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a id="menuMusic" href="music.html">Music</a><a id="menuArtists" href="artists.html">Artist</a><a id="menuClothing" href="merch.html" aria-current="page">Shop</a><a id="menuVideos" href="videos.html">Videos</a><a id="menuEvents" href="events.html">Events</a><a href="account.html">Account</a></nav><button class="cart-button" id="openCart">Bag (<span id="cartCount">0</span>)</button></header>
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="music.html">Music</a><a id="topnavArtist" href="artists.html">Artist</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav><button class="cart-button" id="openCart">Bag (<span id="cartCount">0</span>)</button></header>
 <section class="hero">
   <div class="kicker">FLY SINCE BIRTH <span> / </span> OFFICIAL STORE</div>
   <h1>BUILT TO<br>STAND OUT.</h1>
@@ -147,5 +147,6 @@ $("checkoutButton").onclick=()=>notify("Secure checkout is not connected yet. No
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("productModal").classList.remove("open");$("cartPanel").classList.remove("open")}});
 renderCart();loadProducts();
 </script>
+<script src="shared-nav.js?v=1"></script>
 </body>
 </html>

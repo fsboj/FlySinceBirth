@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="public-polish.css?v=5">
 </head>
 <body>
-<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a id="menuMusic" href="music.html">Music</a><a id="menuArtists" href="artists.html">Artist</a><a id="menuClothing" href="merch.html">Shop</a><a id="menuVideos" href="videos.html" aria-current="page">Videos</a><a id="menuEvents" href="events.html">Events</a><a href="account.html">Account</a></nav></header><main class="page">
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="music.html">Music</a><a id="topnavArtist" href="artists.html">Artist</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav></header><main class="page">
 <div id="playerHost"><div class="empty">LOADING VIDEO...</div></div>
 <h1 class="video-title" id="videoTitle"></h1>
 <div class="video-byline" id="videoByline"></div>
@@ -86,6 +86,7 @@ async function loadNextVideos(){
 
 loadPage().catch(function(error){console.error(error);document.getElementById("playerHost").innerHTML='<div class="empty">COULD NOT LOAD VIDEO</div>'});
 </script>
+<script src="shared-nav.js?v=1"></script>
 </body>
 </html>
 

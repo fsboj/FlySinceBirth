@@ -518,7 +518,7 @@ body {
      ADMIN NAVIGATION
 ===================================================== -->
 
-<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">SIDE MENU</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showEventsAdminPanel(this); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button><button type="button" onclick="document.querySelectorAll('section.panel').forEach(function(p){p.classList.remove('active');p.style.setProperty('display','none','important')});document.querySelectorAll('.admin-nav button').forEach(function(b){b.classList.remove('active')});var p=document.getElementById('store');p.classList.add('active');p.style.setProperty('display','block','important');p.style.setProperty('visibility','visible','important');this.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});if(window.loadMerchProductsAdmin)window.loadMerchProductsAdmin();return false;">STORE</button></nav>
+<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">TOP NAVIGATION</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="showEventsAdminPanel(this); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button><button type="button" onclick="document.querySelectorAll('section.panel').forEach(function(p){p.classList.remove('active');p.style.setProperty('display','none','important')});document.querySelectorAll('.admin-nav button').forEach(function(b){b.classList.remove('active')});var p=document.getElementById('store');p.classList.add('active');p.style.setProperty('display','block','important');p.style.setProperty('visibility','visible','important');this.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});if(window.loadMerchProductsAdmin)window.loadMerchProductsAdmin();return false;">STORE</button></nav>
 
 
 <!-- =====================================================
@@ -700,18 +700,20 @@ body {
 
 <section id="sideMenu" class="panel">
   <div class="panel-header">
-    <div class="panel-title">SIDE MENU</div>
-    <div class="panel-description">Edit the labels displayed in the website navigation menu.</div>
+    <div class="panel-title">TOP NAVIGATION</div>
+    <div class="panel-description">Set the labels shown in the horizontal navigation across the site. Links keep their standard page destinations.</div>
   </div>
   <div class="item-list">
-    <div class="admin-item"><div><label for="sideMenuMusic">MUSIC LABEL</label><input id="sideMenuMusic" type="text" value="Music"><div class="item-meta">Links to the Music section</div></div></div>
-    <div class="admin-item"><div><label for="sideMenuArtists">ARTISTS LABEL</label><input id="sideMenuArtists" type="text" value="Artists"><div class="item-meta">Links to the Artists section</div></div></div>
-    <div class="admin-item"><div><label for="sideMenuClothing">CLOTHING LABEL</label><input id="sideMenuClothing" type="text" value="Clothing"><div class="item-meta">Links to the Clothing section</div></div></div>
-    <div class="admin-item"><div><label for="sideMenuVideos">VIDEOS LABEL</label><input id="sideMenuVideos" type="text" value="Videos"><div class="item-meta">Links to the Videos section</div></div></div>
-    <div class="admin-item"><div><label for="sideMenuEvents">EVENTS LABEL</label><input id="sideMenuEvents" type="text" value="Events"><div class="item-meta">Links to the Events section</div></div></div>
+    <div class="admin-item"><div><label for="sideMenuHome">HOME LABEL</label><input id="sideMenuHome" type="text" value="Home" maxlength="40"></div></div>
+    <div class="admin-item"><div><label for="sideMenuMusic">MUSIC LABEL</label><input id="sideMenuMusic" type="text" value="Music" maxlength="40"></div></div>
+    <div class="admin-item"><div><label for="sideMenuArtists">ARTIST LABEL</label><input id="sideMenuArtists" type="text" value="Artist" maxlength="40"></div></div>
+    <div class="admin-item"><div><label for="sideMenuClothing">SHOP LABEL</label><input id="sideMenuClothing" type="text" value="Shop" maxlength="40"></div></div>
+    <div class="admin-item"><div><label for="sideMenuVideos">VIDEOS LABEL</label><input id="sideMenuVideos" type="text" value="Videos" maxlength="40"></div></div>
+    <div class="admin-item"><div><label for="sideMenuEvents">EVENTS LABEL</label><input id="sideMenuEvents" type="text" value="Events" maxlength="40"></div></div>
+    <div class="admin-item"><div><label for="sideMenuAccount">ACCOUNT LABEL</label><input id="sideMenuAccount" type="text" value="Account" maxlength="40"></div></div>
   </div>
   <div class="actions" style="margin-top:20px;align-items:center">
-    <button class="button primary" type="button" onclick="saveSideMenuLabels()">SAVE SIDE MENU</button>
+    <button class="button primary" type="button" onclick="saveSideMenuLabels()">SAVE NAVIGATION</button>
     <span id="sideMenuStatus" class="admin-status" aria-live="polite"></span>
   </div>
 </section>
@@ -1521,14 +1523,16 @@ const supabaseClient = supabase.createClient(
 
 
 /* =====================================================
-   SIDE MENU LABELS
+   TOP NAVIGATION LABELS
 ===================================================== */
 const sideMenuLabelFields = {
-    menu_music: "sideMenuMusic",
-    menu_artists: "sideMenuArtists",
-    menu_clothing: "sideMenuClothing",
-    menu_videos: "sideMenuVideos",
-    menu_events: "sideMenuEvents"
+    topnav_home: "sideMenuHome",
+    topnav_music: "sideMenuMusic",
+    topnav_artist: "sideMenuArtists",
+    topnav_shop: "sideMenuClothing",
+    topnav_videos: "sideMenuVideos",
+    topnav_events: "sideMenuEvents",
+    topnav_account: "sideMenuAccount"
 };
 
 async function loadSideMenuLabels() {
@@ -1546,7 +1550,7 @@ async function loadSideMenuLabels() {
         });
         if (status) status.textContent = "";
     } catch (error) {
-        console.error("Could not load side menu labels:", error);
+        console.error("Could not load navigation labels:", error);
         if (status) status.textContent = "LOAD FAILED";
     }
 }
@@ -1559,18 +1563,18 @@ async function saveSideMenuLabels() {
     try {
         const rows = Object.entries(sideMenuLabelFields).map(([key, fieldId]) => {
             const input = document.getElementById(fieldId);
-            if (!input) throw new Error("Missing side-menu field: " + fieldId);
+            if (!input) throw new Error("Missing navigation field: " + fieldId);
             return { key, value: input.value.trim(), updated_at: new Date().toISOString() };
         });
         const { error } = await supabaseClient.from("site_content").upsert(rows, { onConflict: "key" });
         if (error) throw error;
         if (status) status.textContent = "CHANGES SAVED";
     } catch (error) {
-        console.error("Could not save side menu labels:", error);
+        console.error("Could not save navigation labels:", error);
         if (status) status.textContent = "SAVE FAILED";
-        alert("Could not save side menu labels: " + (error.message || String(error)));
+        alert("Could not save navigation labels: " + (error.message || String(error)));
     } finally {
-        if (button) { button.disabled = false; button.textContent = "SAVE SIDE MENU"; }
+        if (button) { button.disabled = false; button.textContent = "SAVE NAVIGATION"; }
     }
 }
 
