@@ -1796,6 +1796,8 @@ grid.appendChild(card);
     upcomingContainer.innerHTML = "";
     pastContainer.innerHTML = "";
 
+    try {
+
     const allEvents = (data || []).map(function(event) {
         const parsedDate = event.date ? new Date(event.date) : null;
         const hasValidDate = parsedDate && !Number.isNaN(parsedDate.getTime());
@@ -1984,6 +1986,34 @@ grid.appendChild(card);
 
     if (!upcoming.length) upcomingContainer.innerHTML = '<p class="event-empty">NO UPCOMING EVENTS RIGHT NOW.</p>';
     if (!past.length) pastContainer.innerHTML = '<p class="event-empty">NO PAST EVENTS YET.</p>';
+
+    } catch (renderError) {
+        console.error("Could not render homepage events:", renderError);
+        featuredContainer.replaceChildren();
+        pastContainer.replaceChildren();
+        upcomingContainer.replaceChildren();
+        (Array.isArray(data) ? data : []).forEach(function(event) {
+            const card = document.createElement("article");
+            card.className = "event-card";
+            const details = document.createElement("div");
+            const date = document.createElement("div");
+            date.className = "event-date";
+            date.textContent = event && event.date ? String(event.date) : "";
+            const title = document.createElement("div");
+            title.className = "event-title";
+            title.textContent = event && (event.title || event.name) ? String(event.title || event.name) : "Event";
+            details.appendChild(date);
+            details.appendChild(title);
+            if (event && event.location) {
+                const location = document.createElement("div");
+                location.className = "event-location";
+                location.textContent = String(event.location);
+                details.appendChild(location);
+            }
+            card.appendChild(details);
+            upcomingContainer.appendChild(card);
+        });
+    }
 }
 async function loadSiteContent() {
 
