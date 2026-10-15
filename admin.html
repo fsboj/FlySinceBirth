@@ -1164,6 +1164,7 @@ body {
     <div class="form-grid" style="margin-top:25px;">
       <div class="form-group"><label>UPLOAD TYPE</label><select id="artistMusicUploadType"><option value="single">SINGLE</option><option value="album">ALBUM</option><option value="ep">EP</option></select></div>
       <div class="form-group" id="artistSingleTitleGroup"><label>SONG TITLE</label><input type="text" id="artistSongTitle" placeholder="Song title"></div>
+      <div class="form-group full" id="artistSingleFeaturesGroup"><label for="artistSongFeatureArtists">FEATURE ARTISTS</label><select id="artistSongFeatureArtists" multiple size="5" aria-describedby="artistSongFeatureHelp"></select><small id="artistSongFeatureHelp">Select one or more artist accounts credited on this song. The main artist is stored separately.</small></div>
       <div class="form-group" id="artistSingleArtworkGroup"><label>SONG ARTWORK</label><input type="file" id="artistSongImageFile" accept="image/*"><div id="artistSongImagePreview" style="margin-top:12px;"></div></div>
       <div class="form-group full" id="artistSingleAudioGroup"><label>AUDIO FILE</label><input type="file" id="artistSongFile" accept="audio/*"><label style="display:block;margin-top:15px;">OPTIONAL VIDEO</label><input type="file" id="artistSongVideoFile" accept="video/*"></div>
       <div class="form-group" id="artistSingleSectionsGroup"><label>MUSIC SECTIONS</label><div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:18px;margin-top:10px;">
@@ -1332,6 +1333,8 @@ body {
             SELECT ALBUM / EP (OPTIONAL)
         </option>
     </select>
+    <label for="videoFeatureArtistSelect" style="display:block;margin:12px 0 6px;">FEATURE ARTISTS (OPTIONAL)</label>
+    <select id="videoFeatureArtistSelect" class="admin-input" multiple size="5" aria-label="Featured artists for video"></select>
 
 </div>
 
@@ -3404,6 +3407,7 @@ const releaseId =
     document.getElementById(
         "videoReleaseSelect"
     ).value || null;
+const featureSelect = document.getElementById("videoFeatureArtistSelect");
 
 const videoPath =
     "videos/" +
@@ -3510,7 +3514,7 @@ if (!artistId) {
             : 1;
 
 
-    const { error } =
+    const { data: insertedVideo, error } =
         await supabaseClient
             .from("videos")
            .insert({
@@ -3520,7 +3524,7 @@ if (!artistId) {
     sort_order: nextOrder,
     artist_id: artistId,
     release_id: releaseId
-});
+}).select("id").single();
 
 
     if (error) {
@@ -3533,6 +3537,12 @@ if (!artistId) {
         return;
     }
 
+
+    await window.saveArtistFeatureLinks("video_artist_features", "video_id", insertedVideo.id, featureSelect, artistId);
+    featureSelect.replaceChildren();
+    document.getElementById("videoTitleInput").value = "";
+    document.getElementById("videoUrlInput").value = "";
+    document.getElementById("videoImageInput").value = "";
 
     await loadVideos();
 
@@ -4523,6 +4533,7 @@ async function uploadArtistSong() {
                 throw updateError;
             }
 
+            await window.saveArtistFeatureLinks("artist_song_features", "song_id", editingArtistSongId, document.getElementById("artistSongFeatureArtists"), selectedArtistPageId);
             editingArtistSongId = null;
 
             const submitButton =
@@ -4545,6 +4556,8 @@ async function uploadArtistSong() {
             ).forEach(function (checkbox) {
                 checkbox.checked = false;
             });
+            const featureSelect = document.getElementById("artistSongFeatureArtists");
+            if (featureSelect) [...featureSelect.options].forEach(option => { option.selected = false; });
 
             const preview =
                 document.getElementById(
@@ -4686,6 +4699,7 @@ async function uploadArtistSong() {
         /* SAVE SONG */
 
         const {
+            data: songInsert,
             error: insertError
         } =
             await supabaseClient
@@ -4717,11 +4731,12 @@ async function uploadArtistSong() {
 
                     sections:
                         sections
-                });
+                }).select("id").single();
 
         if (insertError) {
             throw insertError;
         }
+        await window.saveArtistFeatureLinks("artist_song_features", "song_id", songInsert.id, document.getElementById("artistSongFeatureArtists"), selectedArtistPageId);
 
         /* CLEAR FORM */
 
@@ -4734,6 +4749,8 @@ async function uploadArtistSong() {
         ).forEach(function (checkbox) {
             checkbox.checked = false;
         });
+        const featureSelect = document.getElementById("artistSongFeatureArtists");
+        if (featureSelect) [...featureSelect.options].forEach(option => { option.selected = false; });
 
         const preview =
             document.getElementById(
@@ -5190,6 +5207,9 @@ async function editArtistSong(songId) {
     }
 
     editingArtistSongId = song.id;
+    const featureRows = await supabaseClient.from("artist_song_features").select("artist_id").eq("song_id", song.id);
+    if (featureRows.error) { alert("Could not load featured artists: " + featureRows.error.message); return; }
+    await window.populateArtistFeatureSelect(document.getElementById("artistSongFeatureArtists"), (featureRows.data || []).map(row => row.artist_id));
 
     document.getElementById(
         "artistSongTitle"
@@ -6696,7 +6716,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261012-38"></script>
+<script src="admin-tabs-fix.js?v=20261015-features1"></script>
 
 <script>
 /* STORE TAB DISPLAY FIX */
