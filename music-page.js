@@ -203,14 +203,24 @@ async function loadMerchRecommendations(user) {
 }
 const merchEsc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+function artistCreditLinks(primaryId, primaryName, featuredIds, artistNames) {
+  const ids = [...new Set([primaryId, ...(featuredIds || [])].filter(Boolean).map(String))];
+  return ids.map((id, index) => {
+    const name = artistNames.get(id) || (id === String(primaryId) ? primaryName : "");
+    if (!name) return "";
+    const link = '<a href="artist.html?id=' + encodeURIComponent(id) + '" style="color:inherit;text-decoration:underline;text-underline-offset:3px">' + musicEsc(name) + '</a>';
+    return (index === 0 ? "" : (index === 1 ? " feat. " : ", ")) + link;
+  }).join("");
+}
 function songCard(song) {
   const card = document.createElement("article");
   card.className = "hub-song";
-  card.innerHTML = `<img src="${musicEsc(song.image_url || "fsblogo.PNG")}" alt=""><div class="hub-song-info"><strong>${musicEsc(song.title || "Untitled")}</strong><small>${musicEsc(song.artist_name || "FLY SINCE BIRTH")}</small></div><button class="hub-play" type="button" data-hub-play-song="${musicEsc(song.id)}">${song.audio_url ? "PLAY" : "UNAVAILABLE"}</button>`;
+  const credits = artistCreditLinks(song.artist_id, song.artist_name || "FLY SINCE BIRTH", song.feature_artist_ids, song.artistNames || new Map());
+  card.innerHTML = `<img src="${musicEsc(song.image_url || "fsblogo.PNG")}" alt=""><div class="hub-song-info"><strong>${musicEsc(song.title || "Untitled")}</strong><small>${credits || "FLY SINCE BIRTH"}</small></div><button class="hub-play" type="button" data-hub-play-song="${musicEsc(song.id)}">${song.audio_url ? "PLAY" : "UNAVAILABLE"}</button>`;
   if (window.decorateSongControls) window.decorateSongControls(card, song);
   return card;
 }
-function renderVideo(video, artistName) {
+function renderVideo(video, artistName, featuredIds, artistNames) {
   const card = document.createElement("article");
   card.className = "hub-video";
   const image = document.createElement("img");
@@ -220,7 +230,8 @@ function renderVideo(video, artistName) {
   card.appendChild(image);
   const info = document.createElement("div");
   info.className = "hub-video-info";
-  info.innerHTML = `<strong>${musicEsc(video.title || "Untitled video")}</strong><small>${musicEsc(artistName || "FLY SINCE BIRTH")}</small><button class="hub-video-play" type="button" data-hub-play-video="${musicEsc(video.id)}">WATCH HERE</button>`;
+  const credits = artistCreditLinks(video.artist_id, artistName || "FLY SINCE BIRTH", featuredIds, artistNames || new Map());
+  info.innerHTML = `<strong>${musicEsc(video.title || "Untitled video")}</strong><small>${credits || "FLY SINCE BIRTH"}</small><button class="hub-video-play" type="button" data-hub-play-video="${musicEsc(video.id)}">WATCH HERE</button>`;
   card.appendChild(info);
   return card;
 }
@@ -232,7 +243,7 @@ async function loadHubLibrary(user) {
     document.getElementById("libraryLogin").hidden = false;
     favoritesNode.innerHTML = '<p class="empty">Sign in to load your favorites.</p>';
     playlistsNode.innerHTML = '<p class="empty">Sign in to load your playlists.</p>';
-    return;
+    return { songIds: new Set(), artistIds: new Set() };
   }
   const [fav, lists] = await Promise.all([
     musicSupabase.from("customer_favorite_songs").select("song_id").eq("user_id", user.id),
@@ -292,12 +303,19 @@ async function loadHubLibrary(user) {
     });
     playlistsNode.appendChild(article);
   }
+  const tasteSongIds = new Set([...(fav.data || []).map(row => String(row.song_id)), ...items.map(item => String(item.song_id))]);
+  const tasteArtistIds = new Set();
+  tasteSongIds.forEach(id => {
+    const song = musicById.get(id);
+    if (song) [song.artist_id, ...(song.feature_artist_ids || [])].filter(Boolean).forEach(artistId => tasteArtistIds.add(String(artistId)));
+  });
   const requestedPlaylist = musicParams.get("playlist");
   if (requestedPlaylist) {
     const playlist = (lists.data || []).find((p) => String(p.id) === requestedPlaylist);
     const tracks = items.filter((item) => item.playlist_id === requestedPlaylist).map((item) => musicById.get(String(item.song_id))).filter((song) => song?.audio_url);
     if (playlist && tracks.length) { setPlayerStatus(`Playlist “${playlist.name}” is ready. Press PLAY ALL to start.`); const buttons = [...playlistsNode.querySelectorAll(".hub-playlist")]; const index = (lists.data || []).indexOf(playlist); buttons[index]?.scrollIntoView({ behavior: "smooth", block: "center" }); }
   }
+  return { songIds: tasteSongIds, artistIds: tasteArtistIds };
 }
 
 async function loadMusicHub() {
@@ -308,40 +326,91 @@ async function loadMusicHub() {
   ]);
   if (songError) throw songError;
   if (videoError) throw videoError;
-  const artistIds = [...new Set((songs || []).map((song) => song.artist_id).filter(Boolean))];
+  const [songFeatureResult, videoFeatureResult] = await Promise.all([
+    (songs || []).length ? musicSupabase.from("artist_song_features").select("song_id,artist_id,sort_order").in("song_id", songs.map(song => song.id)).order("sort_order") : Promise.resolve({data:[],error:null}),
+    (videos || []).length ? musicSupabase.from("video_artist_features").select("video_id,artist_id,sort_order").in("video_id", videos.map(video => video.id)).order("sort_order") : Promise.resolve({data:[],error:null})
+  ]);
+  if (songFeatureResult.error) console.warn("Featured song credits could not be loaded:", songFeatureResult.error);
+  if (videoFeatureResult.error) console.warn("Featured video credits could not be loaded:", videoFeatureResult.error);
+  const featureArtistsBySong = new Map();
+  (songFeatureResult.data || []).forEach(row => {
+    const key = String(row.song_id);
+    if (!featureArtistsBySong.has(key)) featureArtistsBySong.set(key, []);
+    featureArtistsBySong.get(key).push(String(row.artist_id));
+  });
+  const featureArtistsByVideo = new Map();
+  (videoFeatureResult.data || []).forEach(row => {
+    const key = String(row.video_id);
+    if (!featureArtistsByVideo.has(key)) featureArtistsByVideo.set(key, []);
+    featureArtistsByVideo.get(key).push(String(row.artist_id));
+  });
+  const allArtistIds = [...new Set([
+    ...(songs || []).map(song => song.artist_id),
+    ...(videos || []).map(video => video.artist_id),
+    ...(songFeatureResult.data || []).map(row => row.artist_id),
+    ...(videoFeatureResult.data || []).map(row => row.artist_id)
+  ].filter(Boolean).map(String))];
   const names = new Map();
-  if (artistIds.length) {
-    const result = await musicSupabase.from("artists").select("id,name").in("id", artistIds);
-    if (!result.error) (result.data || []).forEach((artist) => names.set(String(artist.id), artist.name || ""));
+  if (allArtistIds.length) {
+    const result = await musicSupabase.from("artists").select("id,name").in("id", allArtistIds);
+    if (result.error) console.warn("Artist names could not be loaded:", result.error);
+    (result.data || []).forEach(artist => names.set(String(artist.id), artist.name || ""));
   }
-  const catalog = (songs || []).map((song) => ({ ...song, artist_name: names.get(String(song.artist_id)) || "" }));
-  catalog.forEach((song) => musicById.set(String(song.id), song));
+  const catalog = (songs || []).map(song => ({
+    ...song,
+    artist_name: names.get(String(song.artist_id)) || "",
+    feature_artist_ids: featureArtistsBySong.get(String(song.id)) || [],
+    artistNames: names
+  }));
+  catalog.forEach(song => musicById.set(String(song.id), song));
   const catalogNode = document.getElementById("songCatalog");
+  const videoNode = document.getElementById("videoCatalog");
+  const byVideoId = new Map((videos || []).map(video => [String(video.id), video]));
+  const bySongId = new Map(catalog.map(song => [String(song.id), song]));
+  const user = sessionData?.session?.user || null;
+  const taste = await loadHubLibrary(user);
+  const shuffle = items => {
+    const shuffled = [...items];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+  const tasteArtists = taste?.artistIds || new Set();
+  const librarySongIds = taste?.songIds || new Set();
+  const artistNetwork = song => [song.artist_id, ...(song.feature_artist_ids || [])].filter(Boolean).map(String);
+  const matching = [], other = [];
+  catalog.forEach(song => {
+    const overlapsTaste = artistNetwork(song).some(id => tasteArtists.has(id));
+    if (tasteArtists.size && overlapsTaste && !librarySongIds.has(String(song.id))) matching.push(song);
+    else if (!librarySongIds.has(String(song.id))) other.push(song);
+  });
+  const recommendedOrder = [...shuffle(matching), ...shuffle(other)];
   const renderCatalog = () => {
     const term = document.getElementById("songSearch").value.trim().toLowerCase();
-    const matching = catalog.filter((song) => `${song.title || ""} ${song.artist_name}`.toLowerCase().includes(term));
+    const filtered = recommendedOrder.filter(song => {
+      const credits = [song.artist_name, ...(song.feature_artist_ids || []).map(id => names.get(id) || "")].join(" ");
+      return `${song.title || ""} ${credits}`.toLowerCase().includes(term);
+    });
     catalogNode.innerHTML = "";
-    if (!matching.length) catalogNode.innerHTML = '<p class="empty">No matching songs found.</p>';
-    matching.forEach((song) => catalogNode.appendChild(songCard(song)));
+    if (!filtered.length) catalogNode.innerHTML = '<p class="empty">No recommended songs match your search yet.</p>';
+    filtered.forEach(song => catalogNode.appendChild(songCard(song)));
   };
   renderCatalog();
   document.getElementById("songSearch").addEventListener("input", renderCatalog);
-  const videoNode = document.getElementById("videoCatalog");
   videoNode.innerHTML = "";
   if (!videos?.length) videoNode.innerHTML = '<p class="empty">No videos available yet.</p>';
-  (videos || []).forEach((video) => videoNode.appendChild(renderVideo(video, names.get(String(video.artist_id)) || video.artist || "")));
-  const byVideoId = new Map((videos || []).map((video) => [String(video.id), video]));
-  videoNode.addEventListener("click", (event) => {
+  (videos || []).forEach(video => videoNode.appendChild(renderVideo(video, names.get(String(video.artist_id)) || video.artist || "", featureArtistsByVideo.get(String(video.id)) || [], names)));
+  videoNode.addEventListener("click", event => {
     const button = event.target.closest("[data-hub-play-video]");
     if (button) playVideo(byVideoId.get(button.dataset.hubPlayVideo));
   });
-  const bySongId = new Map(catalog.map((song) => [String(song.id), song]));
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", event => {
     const button = event.target.closest("[data-hub-play-song]");
     if (button) startSong(bySongId.get(button.dataset.hubPlaySong));
   });
-  await loadHubLibrary(sessionData?.session?.user || null);
-  await loadMerchRecommendations(sessionData?.session?.user || null);
+  await loadMerchRecommendations(user);
   const requestedSong = musicParams.get("song_id");
   if (requestedSong && bySongId.has(requestedSong)) { startSong(bySongId.get(requestedSong)); window.scrollTo({ top: 0, behavior: "smooth" }); }
   const requestedVideo = musicParams.get("video_id");
