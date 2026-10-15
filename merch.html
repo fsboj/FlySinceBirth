@@ -112,6 +112,8 @@ async function loadProducts(){
  const {data,error}=await supabaseClient.from("merch_products").select("id,name,slug,description,category,price,compare_at_price,images,sizes,colors,variants,fulfillment_method,stock_quantity,track_inventory,active,featured,sort_order").eq("active",true).order("featured",{ascending:false}).order("sort_order",{ascending:true}).order("created_at",{ascending:false});
  if(error){console.error("Merch catalog error",error);grid.innerHTML='<div class="empty"><strong>THE COLLECTION IS LOADING.</strong>Please refresh in a moment.</div>';return}
  products=data||[];renderProducts();
+ const requestedProduct=new URLSearchParams(location.search).get("product");
+ if(requestedProduct && products.some(p=>String(p.id)===requestedProduct))showProduct(Number(requestedProduct));
 }
 function renderProducts(){
  const filtered=activeCategory==="all"?products:products.filter(p=>p.category===activeCategory);
@@ -123,6 +125,7 @@ function renderProducts(){
 $("filters").addEventListener("click",e=>{const b=e.target.closest("button[data-category]");if(!b)return;activeCategory=b.dataset.category;$("filters").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x===b));renderProducts()});
 function showProduct(id){
  selectedProduct=products.find(p=>Number(p.id)===id);if(!selectedProduct)return;
+ try{const key="fsbRecentlyViewedProducts",ids=JSON.parse(localStorage.getItem(key)||"[]"),idText=String(selectedProduct.id);localStorage.setItem(key,JSON.stringify([idText,...ids.map(String).filter(x=>x!==idText)].slice(0,20)))}catch(e){}
  selectedSize="";selectedColor="";
  $("modalImage").src=productImage(selectedProduct);$("modalImage").alt=selectedProduct.name;
  $("modalCategory").textContent=selectedProduct.category||"FSB";$("modalName").textContent=selectedProduct.name;$("modalPrice").textContent=money(selectedProduct.price);$("modalDescription").textContent=selectedProduct.description||"";
