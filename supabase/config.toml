@@ -9,3 +9,6 @@ verify_jwt = false
 [functions.customer-support-email]
 verify_jwt = true
 
+[functions.customer-payment-portal]
+verify_jwt = true
+
