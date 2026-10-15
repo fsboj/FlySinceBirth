@@ -76,13 +76,10 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
 @media(max-width:800px){header{height:76px;padding:0 5vw}.brand img{width:115px}.nav{gap:12px}.nav a{display:none}.hero{padding:70px 5vw;min-height:320px}.toolbar{padding:28px 5vw;align-items:flex-start;flex-direction:column}.grid{padding:10px 5vw 70px;grid-template-columns:repeat(2,minmax(0,1fr));gap:25px 12px}.product-name{font-size:12px}.modal{grid-template-columns:1fr;max-height:92vh}.modal-image{min-height:250px;height:40vh}.modal-info{padding:25px 20px}.modal-info h2{font-size:26px}footer{padding:24px 5vw;font-size:8px}}
 @media(max-width:420px){.grid{grid-template-columns:1fr 1fr}.product-info{flex-direction:column;gap:7px}.hero h1{font-size:56px}.cart-button{padding:11px}}
 </style>
-</head>
+<link rel="stylesheet" href="public-polish.css?v=5">\n</head>
 <body>
 <div class="topline"></div>
-<header>
-  <a class="brand" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="Fly Since Birth"></a>
-  <nav class="nav"><a href="index.html">Home</a><a href="#shop">Shop</a><a href="events.html">Events</a><a href="account.html">Account</a><button class="cart-button" id="openCart">Bag (<span id="cartCount">0</span>)</button></nav>
-</header>
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a id="menuMusic" href="music.html">Music</a><a id="menuArtists" href="artists.html">Artist</a><a id="menuClothing" href="merch.html" aria-current="page">Shop</a><a id="menuVideos" href="videos.html">Videos</a><a id="menuEvents" href="events.html">Events</a><a href="account.html">Account</a></nav><button class="cart-button" id="openCart">Bag (<span id="cartCount">0</span>)</button></header>
 <section class="hero">
   <div class="kicker">FLY SINCE BIRTH <span> / </span> OFFICIAL STORE</div>
   <h1>BUILT TO<br>STAND OUT.</h1>

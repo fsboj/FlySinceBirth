@@ -127,14 +127,14 @@
     playlistCache = playlistsResult.data || [];
     const songMap = new Map(allSongs.map((song) => [String(song.id), song]));
     const favoriteSongs = [...favoriteIds].map((id) => songMap.get(id)).filter(Boolean);
-    $("favoriteSongs").innerHTML = favoriteSongs.length ? favoriteSongs.map((song) => `<div class="music-library-song"><a href="artist.html?id=${encodeURIComponent(song.artist_id)}">${esc(songTitle(song))}</a><button class="secondary music-library-remove" type="button" data-remove-favorite="${esc(song.id)}">REMOVE</button></div>`).join("") : '<p class="empty">Favorite a song on an artist page and it will show up here.</p>';
+    $("favoriteSongs").innerHTML = favoriteSongs.length ? favoriteSongs.map((song) => `<div class="music-library-song"><a href="music.html?song_id=${encodeURIComponent(song.id)}">${esc(songTitle(song))}</a><button class="secondary music-library-remove" type="button" data-remove-favorite="${esc(song.id)}">REMOVE</button></div>`).join("") : '<p class="empty">Favorite a song on an artist page and it will show up here.</p>';
     if (!playlistCache.length) $("playlistCards").innerHTML = '<p class="empty">Create your first playlist above.</p>';
     else {
       const { data: items, error } = await supabaseClient.from("customer_playlist_songs").select("playlist_id,song_id").in("playlist_id", playlistCache.map((p) => p.id));
       if (error) throw error;
       const byPlaylist = new Map(playlistCache.map((p) => [p.id, []]));
       (items || []).forEach((item) => { const song = songMap.get(String(item.song_id)); if (song) byPlaylist.get(item.playlist_id)?.push(song); });
-      $("playlistCards").innerHTML = playlistCache.map((p) => `<article class="music-library-playlist"><div class="music-library-playlist-head"><h3>${esc(p.name)}</h3><button class="secondary music-library-remove" type="button" data-delete-playlist="${esc(p.id)}">DELETE</button></div>${byPlaylist.get(p.id).length ? byPlaylist.get(p.id).map((song) => `<div class="music-library-song"><a href="artist.html?id=${encodeURIComponent(song.artist_id)}">${esc(songTitle(song))}</a><button class="secondary music-library-remove" type="button" data-remove-song="${esc(p.id)}:${esc(song.id)}">REMOVE</button></div>`).join("") : '<p class="empty">No songs in this playlist yet.</p>'}</article>`).join("");
+      $("playlistCards").innerHTML = playlistCache.map((p) => `<article class="music-library-playlist"><div class="music-library-playlist-head"><h3>${esc(p.name)}</h3><a class="secondary music-library-remove" href="music.html?playlist=${encodeURIComponent(p.id)}">PLAY</a><button class="secondary music-library-remove" type="button" data-delete-playlist="${esc(p.id)}">DELETE</button></div>${byPlaylist.get(p.id).length ? byPlaylist.get(p.id).map((song) => `<div class="music-library-song"><a href="music.html?song_id=${encodeURIComponent(song.id)}">${esc(songTitle(song))}</a><button class="secondary music-library-remove" type="button" data-remove-song="${esc(p.id)}:${esc(song.id)}">REMOVE</button></div>`).join("") : '<p class="empty">No songs in this playlist yet.</p>'}</article>`).join("");
     }
     document.querySelectorAll("[data-fsb-favorite]").forEach((button) => updateFavoriteButtons(button.dataset.fsbFavorite));
   }

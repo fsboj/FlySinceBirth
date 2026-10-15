@@ -935,7 +935,7 @@ footer {
 
 <body>
 
-<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html" aria-current="page">Home</a><a id="menuMusic" href="#music">Music</a><a id="menuArtists" href="artists.html">Artists</a><a id="menuClothing" href="merch.html">Clothing</a><a id="menuVideos" href="videos.html">Videos</a><a id="menuEvents" href="events.html">Events</a><a href="account.html">Account</a></nav></header>
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html" aria-current="page">Home</a><a id="menuMusic" href="music.html">Music</a><a id="menuArtists" href="artists.html">Artist</a><a id="menuClothing" href="merch.html">Shop</a><a id="menuVideos" href="videos.html">Videos</a><a id="menuEvents" href="events.html">Events</a><a href="account.html">Account</a></nav></header>
 
 <!-- =====================================================
      HERO
@@ -2103,45 +2103,10 @@ async function loadSiteContent() {
        MENU
     ===================================================== */
 
-    if (content.menu_music) {
-        const element = document.getElementById("menuMusic");
 
-        if (element) {
-            element.textContent = content.menu_music;
-        }
-    }
 
-    if (content.menu_artists) {
-        const element = document.getElementById("menuArtists");
 
-        if (element) {
-            element.textContent = content.menu_artists;
-        }
-    }
 
-    if (content.menu_clothing) {
-        const element = document.getElementById("menuClothing");
-
-        if (element) {
-            element.textContent = content.menu_clothing;
-        }
-    }
-
-    if (content.menu_videos) {
-        const element = document.getElementById("menuVideos");
-
-        if (element) {
-            element.textContent = content.menu_videos;
-        }
-    }
-
-    if (content.menu_events) {
-        const element = document.getElementById("menuEvents");
-
-        if (element) {
-            element.textContent = content.menu_events;
-        }
-    }
 
   
 }

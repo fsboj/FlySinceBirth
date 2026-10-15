@@ -19,7 +19,7 @@ footer{padding:35px 6%;border-top:1px solid #202020;color:#555;font-size:9px;let
 <link rel="stylesheet" href="public-polish.css?v=5">
 </head>
 <body>
-<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a id="menuMusic" href="index.html#music">Music</a><a id="menuArtists" href="artists.html">Artists</a><a id="menuClothing" href="merch.html">Clothing</a><a id="menuVideos" href="videos.html" aria-current="page">Videos</a><a id="menuEvents" href="events.html">Events</a><a href="account.html">Account</a></nav></header>
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a id="menuMusic" href="music.html">Music</a><a id="menuArtists" href="artists.html">Artist</a><a id="menuClothing" href="merch.html">Shop</a><a id="menuVideos" href="videos.html" aria-current="page">Videos</a><a id="menuEvents" href="events.html">Events</a><a href="account.html">Account</a></nav></header>
 <main class="page">
 <h1 class="heading">VIDEOS</h1>
 <div id="videoGrid" class="video-grid"><p class="status">LOADING VIDEOS...</p></div>
@@ -46,7 +46,7 @@ async function loadVideos(){
   const img=document.createElement("img");img.src=video.image||"fsblogo.PNG";img.alt=(video.title||"Video")+" thumbnail";img.loading="lazy";thumb.appendChild(img);card.appendChild(thumb);
   const artist=document.createElement("div");artist.className="video-artist";artist.textContent=artistNames[String(video.artist_id)]||video.artist||"";card.appendChild(artist);
   const title=document.createElement("div");title.className="video-title";title.textContent=video.title||"Untitled Video";card.appendChild(title);
-  const open=()=>window.location.href="video.html?video_id="+encodeURIComponent(video.id);
+  const open=()=>window.location.href="music.html?video_id="+encodeURIComponent(video.id);
   card.addEventListener("click",open);card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}});
   grid.appendChild(card);
  });

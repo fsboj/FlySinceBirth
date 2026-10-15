@@ -1271,7 +1271,7 @@ footer {
      NAVIGATION
 ===================================================== -->
 
-<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a id="menuMusic" href="index.html#music">Music</a><a id="menuArtists" href="artists.html" aria-current="page">Artists</a><a id="menuClothing" href="merch.html">Clothing</a><a id="menuVideos" href="videos.html">Videos</a><a id="menuEvents" href="events.html">Events</a></nav></header>
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a id="menuMusic" href="music.html">Music</a><a id="menuArtists" href="artists.html" aria-current="page">Artist</a><a id="menuClothing" href="merch.html">Shop</a><a id="menuVideos" href="videos.html">Videos</a><a id="menuEvents" href="events.html">Events</a><a href="account.html">Account</a></nav></header>
 
 <header class="artist-hero">
 
@@ -3169,7 +3169,7 @@ async function loadArtistVideos() {
         }
 
         card.onclick = function() {
-            window.location.href = "video.html?video_id=" + encodeURIComponent(video.id);
+            window.location.href = "music.html?video_id=" + encodeURIComponent(video.id);
         };
 
         videoSection.appendChild(card);
@@ -3246,28 +3246,6 @@ async function loadArtistLinks() {
 /* =====================================================
    START
 ===================================================== */
-async function loadSharedMenu() {
-    const { data, error } = await supabaseClient
-        .from("site_content")
-        .select("key,value")
-        .in("key", ["menu_music", "menu_artists", "menu_clothing", "menu_videos", "menu_events"]);
-    if (error) {
-        console.error("Could not load shared menu:", error);
-        return;
-    }
-    const ids = {
-        menu_music: "menuMusic",
-        menu_artists: "menuArtists",
-        menu_clothing: "menuClothing",
-        menu_videos: "menuVideos",
-        menu_events: "menuEvents"
-    };
-    (data || []).forEach(function(item) {
-        const element = document.getElementById(ids[item.key]);
-        if (element && item.value) element.textContent = item.value;
-    });
-}
-loadSharedMenu();
 loadArtist();
 
 </script>

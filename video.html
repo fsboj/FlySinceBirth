@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="public-polish.css?v=5">
 </head>
 <body>
-<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a id="menuMusic" href="index.html#music">Music</a><a id="menuArtists" href="artists.html">Artists</a><a id="menuClothing" href="merch.html">Clothing</a><a id="menuVideos" href="videos.html" aria-current="page">Videos</a><a id="menuEvents" href="events.html">Events</a><a id="backArtist" class="public-nav-context" href="artists.html">Back to artist</a><a href="account.html">Account</a></nav></header><main class="page">
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a href="index.html">Home</a><a id="menuMusic" href="music.html">Music</a><a id="menuArtists" href="artists.html">Artist</a><a id="menuClothing" href="merch.html">Shop</a><a id="menuVideos" href="videos.html" aria-current="page">Videos</a><a id="menuEvents" href="events.html">Events</a><a href="account.html">Account</a></nav></header><main class="page">
 <div id="playerHost"><div class="empty">LOADING VIDEO...</div></div>
 <h1 class="video-title" id="videoTitle"></h1>
 <div class="video-byline" id="videoByline"></div>
@@ -20,7 +20,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseClient=supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co","sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
-async function loadSharedMenu(){try{const r=await supabaseClient.from("site_content").select("key,value").in("key",["menu_music","menu_artists","menu_clothing","menu_videos","menu_events"]);if(r.error)throw r.error;const pairs={menu_music:"menuMusic",menu_artists:"menuArtists",menu_clothing:"menuClothing",menu_videos:"menuVideos",menu_events:"menuEvents"};(r.data||[]).forEach(function(item){const el=document.getElementById(pairs[item.key]);if(el&&item.value)el.textContent=item.value})}catch(e){console.warn("Could not load shared menu labels",e)}}
 const params=new URLSearchParams(location.search);
 const videoId=params.get("video_id");
 let currentVideo=null;
@@ -79,12 +78,12 @@ async function loadNextVideos(){
   const image=document.createElement("img");image.src=video.image||"fsblogo.PNG";image.alt=video.title||"Video thumbnail";image.loading="lazy";card.appendChild(image);
   const title=document.createElement("div");title.className="next-title";title.textContent=video.title||"Untitled Video";card.appendChild(title);
   const artist=document.createElement("div");artist.className="next-artist";artist.textContent="PLAY NEXT";card.appendChild(artist);
-  function open(){location.href="video.html?video_id="+encodeURIComponent(video.id)}
+  function open(){location.href="music.html?video_id="+encodeURIComponent(video.id)}
   card.addEventListener("click",open);card.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}});
   host.appendChild(card);
  });
 }
-loadSharedMenu();
+
 loadPage().catch(function(error){console.error(error);document.getElementById("playerHost").innerHTML='<div class="empty">COULD NOT LOAD VIDEO</div>'});
 </script>
 </body>
