@@ -1946,14 +1946,41 @@ grid.appendChild(card);
         return card;
     }
 
+    function appendEventCardSafely(target, event, isFeatured) {
+        try {
+            target.appendChild(makeEventCard(event, isFeatured));
+        } catch (renderError) {
+            console.error("Could not render event card:", event && event.id, renderError);
+            const fallback = document.createElement("article");
+            fallback.className = isFeatured ? "events-featured" : "event-card";
+            const details = document.createElement("div");
+            const date = document.createElement("div");
+            date.className = "event-date";
+            date.textContent = event && event.date ? String(event.date) : "";
+            const title = document.createElement("div");
+            title.className = "event-title";
+            title.textContent = event && (event.title || event.name) ? String(event.title || event.name) : "Event";
+            details.appendChild(date);
+            details.appendChild(title);
+            if (event && event.location) {
+                const location = document.createElement("div");
+                location.className = "event-location";
+                location.textContent = String(event.location);
+                details.appendChild(location);
+            }
+            fallback.appendChild(details);
+            target.appendChild(fallback);
+        }
+    }
+
     const featured = upcoming.find(event => event.featured);
-    if (featured) featuredContainer.appendChild(makeEventCard(featured, true));
+    if (featured) appendEventCardSafely(featuredContainer, featured, true);
 
     upcoming.forEach(function(event) {
         if (featured && String(event.id) === String(featured.id)) return;
-        upcomingContainer.appendChild(makeEventCard(event, false));
+        appendEventCardSafely(upcomingContainer, event, false);
     });
-    past.forEach(event => pastContainer.appendChild(makeEventCard(event, false)));
+    past.forEach(event => appendEventCardSafely(pastContainer, event, false));
 
     if (!upcoming.length) upcomingContainer.innerHTML = '<p class="event-empty">NO UPCOMING EVENTS RIGHT NOW.</p>';
     if (!past.length) pastContainer.innerHTML = '<p class="event-empty">NO PAST EVENTS YET.</p>';
