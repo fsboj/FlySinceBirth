@@ -1468,7 +1468,8 @@ async function loadSiteImages() {
    
    async function loadMusic() {
     const grid = document.getElementById("musicGrid");
-    if (!grid) return;
+    if (!grid || grid.dataset.homeMusicLoad === "loading" || grid.dataset.homeMusicLoad === "loaded") return;
+    grid.dataset.homeMusicLoad = "loading";
     grid.innerHTML = "";
 
     // Combine artist-page songs/releases with older items saved in the legacy music table.
@@ -1491,6 +1492,7 @@ async function loadSiteImages() {
     if (songsError || releasesError || artistsError) {
         console.error("Could not load homepage music:", songsError || releasesError || artistsError);
         grid.innerHTML = '<div class="empty-state">COULD NOT LOAD MUSIC</div>';
+        grid.dataset.homeMusicLoad = "idle";
         return;
     }
     if (legacyMusicError) console.warn("Could not load older music entries:", legacyMusicError);
@@ -1549,9 +1551,17 @@ async function loadSiteImages() {
         return (a.sortOrder || 0) - (b.sortOrder || 0);
     });
 
-    const newestTen = musicItems.slice(0, 10);
+    const seenMusicKeys = new Set();
+    const uniqueMusicItems = musicItems.filter(function(item) {
+        const key = item.kind + ":" + String(item.id);
+        if (seenMusicKeys.has(key)) return false;
+        seenMusicKeys.add(key);
+        return true;
+    });
+    const newestTen = uniqueMusicItems.slice(0, 10);
     if (!newestTen.length) {
         grid.innerHTML = '<div class="empty-state">NO MUSIC AVAILABLE</div>';
+        grid.dataset.homeMusicLoad = "loaded";
         return;
     }
 
@@ -1573,6 +1583,7 @@ async function loadSiteImages() {
         };
         grid.appendChild(card);
     });
+    grid.dataset.homeMusicLoad = "loaded";
 }
 async function loadArtists() {
 
