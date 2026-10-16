@@ -176,37 +176,37 @@ footer{padding:45px 7%;border-top:1px solid #202020;display:flex;justify-content
 
 /* Compact event flyers while keeping event details easy to scan. */
 .events-featured {
-    width: min(100%, 680px);
-    grid-template-columns: minmax(0, 190px) minmax(0, 1fr);
+    width: min(100%, 500px);
+    grid-template-columns: minmax(0, 130px) minmax(0, 1fr);
     gap: 18px;
     padding: 14px;
 }
 .events-featured-image {
     width: 100%;
-    max-width: 190px;
+    max-width: 130px;
     justify-self: center;
 }
 .events-list {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 190px));
+    grid-template-columns: repeat(auto-fill, minmax(125px, 150px));
     gap: 14px;
 }
-.event-card {
-    max-width: 190px;
+ .event-card {
+    max-width: 150px;
 }
 @media (max-width: 650px) {
     .events-featured {
-        grid-template-columns: minmax(0, 180px) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 120px) minmax(0, 1fr);
         gap: 14px;
         padding: 12px;
     }
     .events-featured-image {
-        max-width: 180px;
+        max-width: 120px;
     }
     .events-list {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 170px));
+        grid-template-columns: repeat(auto-fill, minmax(115px, 135px));
     }
-    .event-card {
-        max-width: 170px;
+     .event-card {
+        max-width: 135px;
     }
 }
 
