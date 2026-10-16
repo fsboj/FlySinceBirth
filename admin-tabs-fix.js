@@ -18,11 +18,6 @@ function init(){
   target.style.removeProperty('display');
   target.style.setProperty('display','block','important');
   target.style.setProperty('visibility','visible','important');
-  if(selectedId==='videos'){
-   const mainPanel=document.getElementById('mainPage');
-   if(mainPanel){mainPanel.classList.add('active');mainPanel.style.setProperty('display','block','important');mainPanel.style.setProperty('visibility','visible','important');}
-   document.querySelectorAll('.main-page-subpanel').forEach(p=>{p.classList.toggle('active',p===target);p.style.setProperty('display',p===target?'block':'none','important');});
-  }
   if(selectedId==='videos'&&typeof loadVideos==='function')await loadVideos();
   if(selectedId==='mainPage')sub('site');
   if(selectedId==='artistPages')openArtistManager();
@@ -35,7 +30,7 @@ function init(){
   if(selectedId==='upcoming'){if(typeof loadArtistsForUpcoming==='function')loadArtistsForUpcoming();if(typeof loadUpcomingReleases==='function')loadUpcomingReleases()}
   if(selectedId==='store' && typeof window.loadMerchProductsAdmin==='function') await window.loadMerchProductsAdmin();
  });
- const ids2=['site','photos','music','artists','videos','sections'],ts=[...document.querySelectorAll('.main-page-tabs button')],h=document.getElementById('mainPageSubPanels');
+ const ids2=['site','photos','music','artists','sections'],ts=[...document.querySelectorAll('.main-page-tabs button')],h=document.getElementById('mainPageSubPanels');
  ids2.forEach(id=>{const p=document.getElementById(id);if(p&&h&&p.parentElement!==h){p.classList.remove('panel','active');p.classList.add('main-page-subpanel');p.style.display='none';h.appendChild(p)}});
  function sub(id){document.querySelectorAll('.main-page-subpanel').forEach(p=>p.style.display='none');ts.forEach(x=>x.classList.remove('active'));const p=document.getElementById(id);if(p)p.style.display='block';const b=ts.find(x=>(x.getAttribute('onclick')||'').includes("'"+id+"'"));if(b)b.classList.add('active')}
  ts.filter(b=>(b.getAttribute('onclick')||'').includes('showMainSubPanel(')).forEach(b=>b.onclick=e=>{e.preventDefault();const z=(b.getAttribute('onclick')||'').match(/showMainSubPanel\(['"]([^'"]+)/);if(z)sub(z[1])});
