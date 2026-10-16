@@ -59,7 +59,7 @@ async function loadPage(){
  byline.innerHTML="";
  if(artist){const a=document.createElement("a");a.className="artist-link";a.href="artist.html?id="+encodeURIComponent(artist.id);a.textContent=artist.name||"Artist";byline.appendChild(a)}
  if(artist&&release){const dot=document.createElement("span");dot.className="separator";dot.textContent="·";byline.appendChild(dot)}
- if(release){const a=document.createElement("a");a.className="release-link";a.href="epalbum.html?id="+encodeURIComponent(release.id);a.textContent=release.title||"Release";byline.appendChild(a);}
+ if(release){const a=document.createElement("a");a.className="release-link";a.href="epalbum.html?id="+encodeURIComponent(release.id) + "&v=70a51fd5";a.textContent=release.title||"Release";byline.appendChild(a);}
  // The artist profile is linked in the byline; no separate backArtist element exists.
  await loadNextVideos();
 }
@@ -78,13 +78,21 @@ async function loadNextVideos(){
   const image=document.createElement("img");image.src=video.image||"fsblogo.PNG";image.alt=video.title||"Video thumbnail";image.loading="lazy";card.appendChild(image);
   const title=document.createElement("div");title.className="next-title";title.textContent=video.title||"Untitled Video";card.appendChild(title);
   const artist=document.createElement("div");artist.className="next-artist";artist.textContent="PLAY NEXT";card.appendChild(artist);
-  function open(){location.href="video.html?video_id="+encodeURIComponent(video.id)}
+  function open(){location.href="video.html?video_id="+encodeURIComponent(video.id) + "&v=70a51fd5"}
   card.addEventListener("click",open);card.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}});
   host.appendChild(card);
  });
 }
 
-loadPage().catch(function(error){console.error(error);document.getElementById("playerHost").innerHTML='<div class="empty">COULD NOT LOAD VIDEO</div>'});
+loadPage().catch(function(error){
+ console.error("Video page load failed:",error);
+ const playerHost=document.getElementById("playerHost");
+ if(playerHost.querySelector(".video-player")){
+  document.getElementById("nextVideos").innerHTML='<div class="empty">MORE VIDEOS COULD NOT BE LOADED</div>';
+  return;
+ }
+ playerHost.innerHTML='<div class="empty">COULD NOT LOAD VIDEO</div>';
+});
 </script>
 <script src="shared-nav.js?v=1"></script>
 </body>
