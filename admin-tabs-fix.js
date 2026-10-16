@@ -69,9 +69,9 @@ function openArtistManager(){
  s.onchange=async function(){
   const id=this.value,manager=document.getElementById('artistPageManager');
   syncReleaseArtistSelector(id);
-  if(!id){if(manager)manager.style.display='none';window.selectedArtistPageId=null;return}
+  if(!id){if(manager)manager.style.display='none';if(typeof window.setSelectedArtistPageId==='function')window.setSelectedArtistPageId(null);else window.selectedArtistPageId=null;return}
   if(manager)manager.style.display='block';
-  window.selectedArtistPageId=id;
+  if(typeof window.setSelectedArtistPageId==='function')window.setSelectedArtistPageId(id);else window.selectedArtistPageId=id;
   try{
    await Promise.allSettled([
     loadArtistProfile(id),
@@ -213,6 +213,25 @@ window.saveArtistFeatureLinks=async function(table,idColumn,recordId,select,prim
  const ids=select?[...select.selectedOptions].map(o=>String(o.value)).filter(id=>id&&id!==String(primaryArtistId)):[];
  const del=await supabaseClient.from(table).delete().eq(idColumn,recordId);if(del.error)throw del.error;
  if(ids.length){const rows=ids.map((artist_id,index)=>({[idColumn]:recordId,artist_id,sort_order:index+1}));const ins=await supabaseClient.from(table).insert(rows);if(ins.error)throw ins.error}
+};
+window.addExternalFeatureRow=function(containerId,credit){
+ const container=document.getElementById(containerId);if(!container)return;
+ const row=document.createElement('div');row.className='external-feature-row';row.style.cssText='display:grid;grid-template-columns:minmax(140px,1fr) minmax(180px,2fr) auto;gap:8px;align-items:center;margin:8px 0';
+ const name=document.createElement('input');name.type='text';name.maxLength=120;name.placeholder='Artist name';name.value=credit&&credit.name||'';
+ const link=document.createElement('input');link.type='url';link.placeholder='https://artist profile';link.value=credit&&credit.url||'';
+ const remove=document.createElement('button');remove.type='button';remove.className='button danger';remove.textContent='REMOVE';remove.onclick=()=>row.remove();
+ row.append(name,link,remove);container.appendChild(row);
+};
+window.collectExternalFeatureCredits=function(containerId){
+ const container=document.getElementById(containerId);if(!container)return [];
+ return [...container.querySelectorAll('.external-feature-row')].map((row,index)=>{
+  const name=row.querySelector('input[type="text"]').value.trim(),url=row.querySelector('input[type="url"]').value.trim();
+  if(!name&&!url)return null;
+  if(!name||!url)throw new Error('Enter both the name and link for non-FSB featured artist '+(index+1)+'.');
+  let parsed;try{parsed=new URL(url)}catch(_){throw new Error('Enter a valid web link for '+name+'.')}
+  if(!['http:','https:'].includes(parsed.protocol))throw new Error('Use an http or https link for '+name+'.');
+  return {name,url:parsed.href};
+ }).filter(Boolean);
 };
 async function artistUploadFile(bucket,artistId,file,folder){
  if(!file)return null;
