@@ -260,43 +260,36 @@ body {
 }
 .compact-song-grid {
     margin-top: 50px;
-
     display: grid;
-
-    grid-template-rows: repeat(2, 70px);
-
+    grid-template-rows: repeat(2, minmax(96px, auto));
     grid-auto-flow: column;
-
-    grid-auto-columns: 250px;
-
+    grid-auto-columns: min(100%, 420px);
     gap: 12px 20px;
-
-    align-items: center;
-
+    align-items: stretch;
     overflow-x: auto;
-
     padding-bottom: 10px;
 }
 
 .compact-song-button {
-    width: 250px;
-    height: 70px;
-
+    width: 100%;
+    min-width: 0;
+    min-height: 96px;
+    height: auto;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-
-    padding: 0 12px;
-
+    gap: 0;
+    padding: 10px 14px;
     border: 1px solid #242424;
-    border-radius: 40px;
-
+    border-radius: 48px;
     background: #090909;
-
     overflow: hidden;
-
     cursor: pointer;
-
     transition: 0.25s;
+}
+.compact-song-button > .fsb-song-actions {
+    flex: 0 0 auto;
+    margin-left: 10px;
 }
 
 .compact-song-button:hover {
@@ -769,27 +762,25 @@ body {
    TOP SONGS
 ===================================================== */
 .top-song-button {
-    width: 250px;
+    width: min(100%, 420px);
     max-width: 100%;
-    height: 70px;
-
+    min-height: 96px;
+    height: auto;
     margin: 12px 0;
-
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-
-    padding: 0 12px;
-
+    padding: 10px 14px;
     border: 1px solid #242424;
-    border-radius: 40px;
-
+    border-radius: 48px;
     background: #090909;
-
     overflow: hidden;
-
     cursor: pointer;
-
     transition: 0.25s;
+}
+.top-song-button > .fsb-song-actions {
+    flex: 0 0 auto;
+    margin-left: 10px;
 }
 
 .top-song-button:hover {
@@ -1033,6 +1024,20 @@ footer {
 ===================================================== */
 
 @media (max-width: 800px) {
+
+    .compact-song-button,
+    .top-song-button {
+        width: 100%;
+        min-height: 104px;
+        border-radius: 34px;
+        padding: 10px 12px;
+    }
+    .compact-song-button > .fsb-song-actions,
+    .top-song-button > .fsb-song-actions {
+        flex-basis: 100%;
+        justify-content: flex-end;
+        margin: 4px 0 0;
+    }
 
     .navbar {
         padding: 20px;
