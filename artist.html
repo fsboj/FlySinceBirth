@@ -3112,55 +3112,64 @@ async function loadArtistReleaseTracks(
 
 
 async function loadArtistVideos() {
-
     const videoSection = document.getElementById("artistVideos");
     if (!videoSection || !artistId) return;
 
-    const { data: videos, error } = await supabaseClient
-        .from("videos")
-        .select("*")
-        .eq("artist_id", artistId)
-        .order("created_at", { ascending: false });
+    const [videoResult, songVideoResult] = await Promise.all([
+        supabaseClient
+            .from("videos")
+            .select("*")
+            .eq("artist_id", artistId)
+            .order("created_at", { ascending: false }),
+        supabaseClient
+            .from("artist_songs")
+            .select("id,title,artist_id,video_url,image_url,created_at")
+            .eq("artist_id", artistId)
+            .not("video_url", "is", null)
+            .order("created_at", { ascending: false })
+    ]);
 
-    if (error) {
-        console.error("Could not load artist videos:", error);
-        return;
-    }
+    if (videoResult.error) console.error("Could not load artist videos:", videoResult.error);
+    if (songVideoResult.error) console.error("Could not load song videos:", songVideoResult.error);
+
+    const items = [
+        ...(videoResult.data || []).map(video => ({ ...video, itemType: "video", link: video.link, image: video.image })),
+        ...(songVideoResult.data || [])
+            .filter(song => song.video_url)
+            .map(song => ({ ...song, itemType: "song", link: song.video_url, image: song.image_url }))
+    ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
     videoSection.innerHTML = "";
 
-    if (!videos || videos.length === 0) {
+    if (!items.length) {
         videoSection.innerHTML = '<div class="empty-state">NO VIDEOS AVAILABLE</div>';
         return;
     }
 
-    videos.forEach(function(video) {
+    items.forEach(function(item) {
         const card = document.createElement("div");
         card.className = "video-card";
+        card.tabIndex = 0;
+        card.setAttribute("role", "link");
+        card.setAttribute("aria-label", "Watch " + (item.title || "video"));
 
         const image = document.createElement("img");
         image.className = "video-thumbnail";
-        image.alt = video.title || "FSB Video";
-        image.src = video.image || "fsblogo.PNG";
+        image.alt = (item.title || "FSB Video") + " thumbnail";
+        image.src = item.image || "fsblogo.PNG";
         card.appendChild(image);
 
-        // If the link is a directly playable video file, replace the saved
-        // artwork with a frame sampled from a random point in the video.
-        // External watch pages (such as YouTube pages) cannot be sampled here.
-        if (video.link && /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(video.link)) {
+        if (item.link && /\\.(mp4|webm|ogg|mov)(\\?|#|$)/i.test(item.link)) {
             const sourceVideo = document.createElement("video");
             sourceVideo.muted = true;
             sourceVideo.preload = "metadata";
             sourceVideo.crossOrigin = "anonymous";
             sourceVideo.playsInline = true;
-
             sourceVideo.addEventListener("loadedmetadata", function() {
                 const duration = sourceVideo.duration;
                 if (!Number.isFinite(duration) || duration <= 0) return;
-                const safeEnd = Math.max(0, duration - 0.25);
-                sourceVideo.currentTime = Math.random() * safeEnd;
+                sourceVideo.currentTime = Math.random() * Math.max(0, duration - 0.25);
             }, { once: true });
-
             sourceVideo.addEventListener("seeked", function() {
                 try {
                     const canvas = document.createElement("canvas");
@@ -3168,11 +3177,9 @@ async function loadArtistVideos() {
                     canvas.height = 360;
                     const context = canvas.getContext("2d");
                     if (!context) return;
-
                     const videoRatio = sourceVideo.videoWidth / sourceVideo.videoHeight;
                     const canvasRatio = canvas.width / canvas.height;
                     let sx = 0, sy = 0, sw = sourceVideo.videoWidth, sh = sourceVideo.videoHeight;
-
                     if (videoRatio > canvasRatio) {
                         sw = sourceVideo.videoHeight * canvasRatio;
                         sx = (sourceVideo.videoWidth - sw) / 2;
@@ -3180,33 +3187,32 @@ async function loadArtistVideos() {
                         sh = sourceVideo.videoWidth / canvasRatio;
                         sy = (sourceVideo.videoHeight - sh) / 2;
                     }
-
                     context.drawImage(sourceVideo, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
                     image.src = canvas.toDataURL("image/jpeg", 0.82);
                 } catch (frameError) {
-                    // Keep the saved thumbnail if the video host blocks frame capture.
                     console.warn("Could not create a video frame thumbnail:", frameError);
                 }
             }, { once: true });
-
-            sourceVideo.addEventListener("error", function() {
-                // Keep the saved thumbnail if this is not a directly playable video URL.
-            }, { once: true });
-
-            sourceVideo.src = video.link;
+            sourceVideo.addEventListener("error", function() {}, { once: true });
+            sourceVideo.src = item.link;
         }
 
-        if (video.title) {
-            const title = document.createElement("div");
-            title.className = "video-title";
-            title.textContent = video.title;
-            card.appendChild(title);
-        }
+        const title = document.createElement("div");
+        title.className = "video-title";
+        title.textContent = item.title || "Untitled Video";
+        card.appendChild(title);
 
-        card.onclick = function() {
-            window.location.href = "video.html?video_id=" + encodeURIComponent(video.id) + "&v=70a51fd5";
+        const open = function() {
+            const parameter = item.itemType === "song" ? "song_id" : "video_id";
+            window.location.href = "video.html?" + parameter + "=" + encodeURIComponent(item.id) + "&v=70a51fd5";
         };
-
+        card.addEventListener("click", open);
+        card.addEventListener("keydown", function(event) {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                open();
+            }
+        });
         videoSection.appendChild(card);
     });
 }
