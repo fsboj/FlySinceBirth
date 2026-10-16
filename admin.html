@@ -1166,7 +1166,7 @@ body {
     <div class="form-grid" style="margin-top:25px;">
       <div class="form-group"><label>UPLOAD TYPE</label><select id="artistMusicUploadType"><option value="single">SINGLE</option><option value="album">ALBUM</option><option value="ep">EP</option></select></div>
       <div class="form-group" id="artistSingleTitleGroup"><label>SONG TITLE</label><input type="text" id="artistSongTitle" placeholder="Song title"></div>
-      <div class="form-group full" id="artistSingleFeaturesGroup"><label for="artistSongFeatureArtists">FEATURED FSB ARTISTS</label><select id="artistSongFeatureArtists" multiple size="5" aria-describedby="artistSongFeatureHelp"></select><small id="artistSongFeatureHelp">Select every FSB artist featured on this song. Hold Ctrl (Windows) or Command (Mac) to select multiple.</small></div><div class="form-group full"><label>NON-FSB FEATURED ARTISTS</label><div id="artistSongExternalFeatures" class="external-feature-list"></div><button type="button" class="button" onclick="addExternalFeatureRow('artistSongExternalFeatures')">+ ADD NON-FSB ARTIST</button><small>Add an artist name and a link to their page or profile.</small></div>
+      <div class="form-group full" id="artistSingleFeaturesGroup"><label>FEATURED FSB ARTISTS</label><div class="artist-feature-picker" data-select-id="artistSongFeatureArtists"></div><select id="artistSongFeatureArtists" multiple hidden aria-hidden="true"></select><small id="artistSongFeatureHelp">Search for and select one or more FSB artists. Selected artists are linked to this song on their artist pages.</small></div><div class="form-group full"><label>NON-FSB FEATURED ARTISTS</label><div id="artistSongExternalFeatures" class="external-feature-list"></div><button type="button" class="button" onclick="addExternalFeatureRow('artistSongExternalFeatures')">+ ADD NON-FSB ARTIST</button><small>Add an artist name and a link to their page or profile.</small></div>
       <div class="form-group" id="artistSingleArtworkGroup"><label>SONG ARTWORK</label><input type="file" id="artistSongImageFile" accept="image/*"><div id="artistSongImagePreview" style="margin-top:12px;"></div></div>
       <div class="form-group full" id="artistSingleAudioGroup"><label>AUDIO FILE</label><input type="file" id="artistSongFile" accept="audio/*"><label style="display:block;margin-top:15px;">OPTIONAL VIDEO</label><input type="file" id="artistSongVideoFile" accept="video/*"></div>
       <div class="form-group" id="artistSingleSectionsGroup"><label>MUSIC SECTIONS</label><div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:18px;margin-top:10px;">
@@ -1336,7 +1336,7 @@ body {
         </option>
     </select>
     <label for="videoFeatureArtistSelect" style="display:block;margin:12px 0 6px;">FEATURE ARTISTS (OPTIONAL)</label>
-    <select id="videoFeatureArtistSelect" class="admin-input" multiple size="5" aria-label="Featured FSB artists for video"></select><small style="display:block;margin-top:6px;color:#aaa">Select all FSB artists featured in this video. Hold Ctrl/Command to select multiple.</small><label for="videoExternalFeatures" style="display:block;margin:12px 0 6px;">NON-FSB FEATURED ARTISTS</label><div id="videoExternalFeatures" class="external-feature-list"></div><button type="button" class="button" onclick="addExternalFeatureRow('videoExternalFeatures')">+ ADD NON-FSB ARTIST</button><small style="display:block;margin-top:6px;color:#aaa">Add each artist name and a link to their page or profile.</small>
+    <div class="artist-feature-picker" data-select-id="videoFeatureArtistSelect"></div><select id="videoFeatureArtistSelect" class="admin-input" multiple hidden aria-hidden="true"></select><small style="display:block;margin-top:6px;color:#aaa">Search for and select one or more FSB artists. Selected artists are linked to this video on their artist pages.</small><label for="videoExternalFeatures" style="display:block;margin:12px 0 6px;">NON-FSB FEATURED ARTISTS</label><div id="videoExternalFeatures" class="external-feature-list"></div><button type="button" class="button" onclick="addExternalFeatureRow('videoExternalFeatures')">+ ADD NON-FSB ARTIST</button><small style="display:block;margin-top:6px;color:#aaa">Add each artist name and a link to their page or profile.</small>
 
 </div>
 
@@ -3372,186 +3372,82 @@ const { data, error } =
 ===================================================== */
 
 async function addVideo() {
-const title =
-    document.getElementById(
-        "videoTitleInput"
-    ).value.trim();
+    const title = document.getElementById("videoTitleInput").value.trim();
+    const videoFile = document.getElementById("videoUrlInput").files[0];
+    const imageFile = document.getElementById("videoImageInput").files[0];
+    const artistId = document.getElementById("videoArtistSelect").value;
+    const releaseId = document.getElementById("videoReleaseSelect").value || null;
+    const featureSelect = document.getElementById("videoFeatureArtistSelect");
+    let externalFeatures;
 
-if (!title) {
-    alert("Enter a video title.");
-    return;
-}
-const videoFile =
-    document.getElementById(
-        "videoUrlInput"
-    ).files[0];
+    if (!title) return alert("Enter a video title.");
+    if (!videoFile) return alert("Select a video file.");
+    if (!imageFile) return alert("Select a thumbnail image.");
+    if (!artistId) return alert("Select an artist.");
 
-const imageFile =
-    document.getElementById(
-        "videoImageInput"
-    ).files[0];
-
-if (!videoFile) {
-    alert("Select a video file.");
-    return;
-}
-
-if (!imageFile) {
-    alert("Select a thumbnail image.");
-    return;
-}
-
-const artistId =
-    document.getElementById(
-        "videoArtistSelect"
-    ).value;
-
-
-const releaseId =
-    document.getElementById(
-        "videoReleaseSelect"
-    ).value || null;
-const featureSelect = document.getElementById("videoFeatureArtistSelect");
-const externalFeatures = window.collectExternalFeatureCredits("videoExternalFeatures");
-if (!artistId) {
-    alert("Select an artist.");
-    return;
-}
-
-const videoPath =
-    "videos/" +
-    Date.now() +
-    "-" +
-    videoFile.name;
-
-const imagePath =
-    "videos/" +
-    Date.now() +
-    "-" +
-    imageFile.name;
-
-
-/* UPLOAD VIDEO */
-
-const { error: videoUploadError } =
-    await supabaseClient
-        .storage
-        .from("videos")
-        .upload(
-            videoPath,
-            videoFile
-        );
-
-if (videoUploadError) {
-
-    alert(
-        "Could not upload video:\n\n" +
-        videoUploadError.message
-    );
-
-    return;
-}
-
-
-/* UPLOAD THUMBNAIL */
-
-const { error: imageUploadError } =
-    await supabaseClient
-        .storage
-        .from("videos")
-        .upload(
-            imagePath,
-            imageFile
-        );
-
-if (imageUploadError) {
-
-    alert(
-        "Could not upload thumbnail:\n\n" +
-        imageUploadError.message
-    );
-
-    return;
-}
-
-
-/* GET VIDEO URL */
-
-const { data: videoPublicData } =
-    supabaseClient
-        .storage
-        .from("videos")
-        .getPublicUrl(videoPath);
-
-const videoUrl =
-    videoPublicData.publicUrl;
-
-
-/* GET THUMBNAIL URL */
-
-const { data: imagePublicData } =
-    supabaseClient
-        .storage
-        .from("videos")
-        .getPublicUrl(imagePath);
-
-const imageUrl =
-    imagePublicData.publicUrl;
-    
-    const { data } =
-        await supabaseClient
-            .from("videos")
-            .select("sort_order")
-            .order(
-                "sort_order",
-                {
-                    ascending: false
-                }
-            )
-            .limit(1);
-
-
-    const nextOrder =
-        data && data.length
-            ? (data[0].sort_order || 0) + 1
-            : 1;
-
-
-    const { data: insertedVideo, error } =
-        await supabaseClient
-            .from("videos")
-           .insert({
-    title: title,
-    link: videoUrl,
-    image: imageUrl,
-    sort_order: nextOrder,
-    artist_id: artistId,
-    release_id: releaseId,
-    external_features: externalFeatures
-}).select("id").single();
-
-
-    if (error) {
-
-        alert(
-            "Could not add video:\n\n" +
-            error.message
-        );
-
-        return;
+    try {
+        externalFeatures = window.collectExternalFeatureCredits("videoExternalFeatures");
+    } catch (error) {
+        return alert(error.message);
     }
 
+    const button = document.querySelector('button[onclick="addVideo()"]');
+    if (button) { button.disabled = true; button.textContent = "UPLOADING…"; }
+    const suffix = Date.now() + "-" + Math.random().toString(36).slice(2);
+    const safeName = file => file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const videoPath = "videos/" + suffix + "-" + safeName(videoFile);
+    const imagePath = "videos/" + suffix + "-thumb-" + safeName(imageFile);
+    let videoUploaded = false;
+    let imageUploaded = false;
 
-    await window.saveArtistFeatureLinks("video_artist_features", "video_id", insertedVideo.id, featureSelect, artistId);
-    featureSelect.replaceChildren();
-    document.getElementById("videoExternalFeatures").replaceChildren();
-    document.getElementById("videoTitleInput").value = "";
-    document.getElementById("videoUrlInput").value = "";
-    document.getElementById("videoImageInput").value = "";
+    try {
+        const videoUpload = await supabaseClient.storage.from("videos").upload(videoPath, videoFile);
+        if (videoUpload.error) throw new Error("Could not upload video: " + videoUpload.error.message);
+        videoUploaded = true;
 
-    await loadVideos();
+        const imageUpload = await supabaseClient.storage.from("videos").upload(imagePath, imageFile);
+        if (imageUpload.error) throw new Error("Could not upload thumbnail: " + imageUpload.error.message);
+        imageUploaded = true;
 
-alert("VIDEO ADDED");
+        const videoUrl = supabaseClient.storage.from("videos").getPublicUrl(videoPath).data.publicUrl;
+        const imageUrl = supabaseClient.storage.from("videos").getPublicUrl(imagePath).data.publicUrl;
+        const orderResult = await supabaseClient.from("videos").select("sort_order").order("sort_order", { ascending: false }).limit(1);
+        if (orderResult.error) throw new Error("Could not prepare the video record: " + orderResult.error.message);
+        const nextOrder = orderResult.data && orderResult.data.length ? (orderResult.data[0].sort_order || 0) + 1 : 1;
+
+        const inserted = await supabaseClient.from("videos").insert({
+            title, link: videoUrl, image: imageUrl, sort_order: nextOrder,
+            artist_id: artistId, release_id: releaseId, external_features: externalFeatures
+        }).select("id").single();
+        if (inserted.error) {
+            await supabaseClient.storage.from("videos").remove([videoPath, imagePath]);
+            throw new Error("Could not save the video record: " + inserted.error.message);
+        }
+
+        try {
+            await window.saveArtistFeatureLinks("video_artist_features", "video_id", inserted.data.id, featureSelect, artistId);
+        } catch (error) {
+            await loadVideos();
+            alert("The video was uploaded, but its FSB feature links could not be saved: " + (error.message || error));
+            return;
+        }
+
+        await window.populateArtistFeatureSelect(featureSelect);
+        document.getElementById("videoExternalFeatures").replaceChildren();
+        document.getElementById("videoTitleInput").value = "";
+        document.getElementById("videoUrlInput").value = "";
+        document.getElementById("videoImageInput").value = "";
+        await loadVideos();
+        alert("VIDEO ADDED");
+    } catch (error) {
+        console.error("VIDEO UPLOAD ERROR:", error);
+        if (videoUploaded && !imageUploaded) {
+            await supabaseClient.storage.from("videos").remove([videoPath]).catch(() => {});
+        }
+        alert("Video upload failed: " + (error.message || error));
+    } finally {
+        if (button) { button.disabled = false; button.textContent = "+ ADD VIDEO"; }
+    }
 }
 
 
@@ -3751,6 +3647,7 @@ window.setSelectedArtistPageId = function(id) {
         videoArtist.value = selectedArtistPageId;
         if (typeof loadVideoReleases === "function") loadVideoReleases(selectedArtistPageId);
     }
+    if (typeof window.refreshArtistFeaturePickers === "function") window.refreshArtistFeaturePickers();
 };
 let editingArtistSongId = null;
 
@@ -3949,6 +3846,7 @@ document.addEventListener(
         loadVideoReleases(
             event.target.value
         );
+        if (typeof window.refreshArtistFeaturePickers === "function") window.refreshArtistFeaturePickers();
 
     }
 );
@@ -4579,6 +4477,7 @@ async function uploadArtistSong() {
             });
             const featureSelect = document.getElementById("artistSongFeatureArtists");
             if (featureSelect) [...featureSelect.options].forEach(option => { option.selected = false; });
+            if (typeof window.refreshArtistFeaturePickers === "function") window.refreshArtistFeaturePickers();
             const externalHost = document.getElementById("artistSongExternalFeatures");
             if (externalHost) externalHost.replaceChildren();
 
@@ -4762,7 +4661,6 @@ async function uploadArtistSong() {
             throw insertError;
         }
         await window.saveArtistFeatureLinks("artist_song_features", "song_id", songInsert.id, document.getElementById("artistSongFeatureArtists"), selectedArtistPageId);
-        await window.saveExternalFeatureCredits("artist_songs", songInsert.id, externalFeatures);
 
         /* CLEAR FORM */
 
@@ -4777,6 +4675,7 @@ async function uploadArtistSong() {
         });
         const featureSelect = document.getElementById("artistSongFeatureArtists");
         if (featureSelect) [...featureSelect.options].forEach(option => { option.selected = false; });
+            if (typeof window.refreshArtistFeaturePickers === "function") window.refreshArtistFeaturePickers();
         const externalHost = document.getElementById("artistSongExternalFeatures");
         if (externalHost) externalHost.replaceChildren();
 
