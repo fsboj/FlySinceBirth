@@ -165,11 +165,15 @@
     });
   }
 
-  supabaseClient.auth.getSession().then(({ data }) => {
+  window.fsbMusicLibraryReady = supabaseClient.auth.getSession().then(async ({ data }) => {
     currentUser = data?.session?.user || null;
-    if (currentUser) supabaseClient.from("customer_favorite_songs").select("song_id").eq("user_id", currentUser.id).then(({ data: rows, error }) => {
-      if (!error) { favoriteIds = new Set((rows || []).map((row) => String(row.song_id))); document.querySelectorAll("[data-fsb-favorite]").forEach((button) => updateFavoriteButtons(button.dataset.fsbFavorite)); }
-    });
+    if (currentUser) {
+      const { data: rows, error } = await supabaseClient.from("customer_favorite_songs").select("song_id").eq("user_id", currentUser.id);
+      if (!error) {
+        favoriteIds = new Set((rows || []).map((row) => String(row.song_id)));
+        document.querySelectorAll("[data-fsb-favorite]").forEach((button) => updateFavoriteButtons(button.dataset.fsbFavorite));
+      }
+    }
   });
 })();
 
