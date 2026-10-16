@@ -1250,6 +1250,17 @@ body {
     </div>
 
 
+    <div class="form-group" style="max-width:420px;margin:0 0 18px;">
+        <label for="videoManageArtistSelect">MANAGE VIDEOS BY ARTIST</label>
+        <select id="videoManageArtistSelect" class="admin-input" onchange="loadVideos()">
+            <option value="">ALL ARTISTS</option>
+        </select>
+    </div>
+
+    <div class="panel-description" style="margin:0 0 14px;">
+        This list includes standalone videos and videos attached to singles, albums, and EPs.
+    </div>
+
     <div class="item-list">
 
        <div
@@ -3249,121 +3260,214 @@ async function removeEvent(id) {
 ===================================================== */
 
 async function loadVideos() {
-
-    const container =
-        document.getElementById("videosList");
-
+    const container = document.getElementById("videosList");
     if (!container) return;
 
+    const selectedArtistId = document.getElementById("videoManageArtistSelect")?.value || "";
+    let videoQuery = supabaseClient.from("videos").select("*, artists!videos_artist_id_fkey(name)").order("sort_order", { ascending: true });
+    let songVideoQuery = supabaseClient.from("artist_songs").select("id,title,artist_id,release_id,video_url,image_url,created_at").not("video_url", "is", null).order("created_at", { ascending: false });
+    if (selectedArtistId) {
+        videoQuery = videoQuery.eq("artist_id", selectedArtistId);
+        songVideoQuery = songVideoQuery.eq("artist_id", selectedArtistId);
+    }
 
-const { data, error } =
-    await supabaseClient
-        .from("videos")
-        .select(`
-    *,
-    artists!videos_artist_id_fkey (
-        name
-    )
-`)
-        .order("sort_order", {
-            ascending: true
-        });
+    const [videoResult, songResult] = await Promise.all([videoQuery, songVideoQuery]);
+    if (videoResult.error) console.error("VIDEOS LOAD ERROR:", videoResult.error);
+    if (songResult.error) console.error("SONG VIDEO LOAD ERROR:", songResult.error);
 
-    if (error) {
-
-        console.error(
-            "VIDEOS LOAD ERROR:",
-            error
-        );
-
-        container.innerHTML = `
-            <div class="admin-item">
-
-                <div class="item-name">
-                    ERROR LOADING VIDEOS
-                </div>
-
-                <div class="item-meta">
-                    ${escapeHtml(error.message)}
-                </div>
-
-            </div>
-        `;
-
+    if (videoResult.error && songResult.error) {
+        container.innerHTML = '<div class="admin-item"><div class="item-name">ERROR LOADING VIDEOS</div><div class="item-meta">' + escapeHtml(videoResult.error.message || songResult.error.message) + '</div></div>';
         return;
     }
 
+    const videos = videoResult.data || [];
+    const songVideos = songResult.data || [];
+    const releaseIds = [...new Set(songVideos.map(song => song.release_id).filter(Boolean).map(String))];
+    const artistIds = [...new Set([
+        ...videos.map(video => video.artist_id),
+        ...songVideos.map(song => song.artist_id)
+    ].filter(Boolean).map(String))];
+
+    const [releaseResult, artistResult] = await Promise.all([
+        releaseIds.length
+            ? supabaseClient.from("artist_releases").select("id,title,type").in("id", releaseIds)
+            : Promise.resolve({ data: [], error: null }),
+        artistIds.length
+            ? supabaseClient.from("artists").select("id,name").in("id", artistIds)
+            : Promise.resolve({ data: [], error: null })
+    ]);
+    const releasesById = new Map((releaseResult.data || []).map(release => [String(release.id), release]));
+    const artistsById = new Map((artistResult.data || []).map(artist => [String(artist.id), artist.name || "Artist"]));
+
+    const items = [
+        ...videos.map(video => ({
+            source: "standalone",
+            id: video.id,
+            title: video.title || "Untitled Video",
+            url: video.link || "",
+            image: video.image || "",
+            artistId: video.artist_id,
+            artistName: video.artists?.name || artistsById.get(String(video.artist_id)) || "",
+            releaseId: video.release_id || null,
+            createdAt: video.created_at
+        })),
+        ...songVideos.filter(song => song.video_url).map(song => {
+            const release = song.release_id ? releasesById.get(String(song.release_id)) : null;
+            return {
+                source: "song",
+                id: song.id,
+                title: song.title || "Untitled Song",
+                url: song.video_url,
+                image: song.image_url || "",
+                artistId: song.artist_id,
+                artistName: artistsById.get(String(song.artist_id)) || "",
+                releaseId: song.release_id || null,
+                releaseTitle: release ? release.title + " (" + String(release.type || "release").toUpperCase() + ")" : "SINGLE",
+                createdAt: song.created_at
+            };
+        })
+    ].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
     container.innerHTML = "";
+    if (!items.length) {
+        container.innerHTML = '<div class="admin-item"><div class="item-name">NO VIDEOS FOUND</div><div class="item-meta">Standalone videos and song videos for this artist will appear here.</div></div>';
+        return;
+    }
 
+    items.forEach(function(item) {
+        const row = document.createElement("div");
+        row.className = "admin-item";
+        row.style.alignItems = "center";
 
-    (data || []).forEach(function(video) {
+        const info = document.createElement("div");
+        info.className = "item-info";
+        info.style.minWidth = "0";
 
-        const item =
-            document.createElement("div");
+        const isDirectVideo = /\\.(mp4|webm|ogg|mov)(\\?|#|$)/i.test(item.url);
+        if (isDirectVideo) {
+            const preview = document.createElement("video");
+            preview.src = item.url;
+            preview.controls = true;
+            preview.preload = "metadata";
+            preview.playsInline = true;
+            preview.setAttribute("aria-label", "Preview " + item.title);
+            preview.style.cssText = "width:180px;height:102px;object-fit:cover;background:#090909;border:1px solid #333;flex-shrink:0";
+            info.appendChild(preview);
+        } else {
+            const image = document.createElement("img");
+            image.className = "item-image";
+            image.src = item.image || "fsbchrome.PNG";
+            image.alt = item.title + " thumbnail";
+            info.appendChild(image);
+        }
 
+        const details = document.createElement("div");
+        details.style.minWidth = "0";
+        const title = document.createElement("div");
+        title.className = "item-name";
+        title.textContent = item.title;
+        const meta = document.createElement("div");
+        meta.className = "item-meta";
+        meta.textContent = [
+            item.source === "song" ? "SONG VIDEO · " + item.releaseTitle : "STANDALONE VIDEO",
+            item.artistName || "ARTIST NOT SET"
+        ].join(" · ");
+        const link = document.createElement("a");
+        link.href = item.source === "song"
+            ? "video.html?song_id=" + encodeURIComponent(item.id)
+            : "video.html?video_id=" + encodeURIComponent(item.id);
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.className = "item-meta";
+        link.textContent = "OPEN VIDEO";
+        details.append(title, meta, link);
+        info.appendChild(details);
+        row.appendChild(info);
 
-        item.className =
-            "admin-item";
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        if (item.source === "standalone") {
+            const edit = document.createElement("button");
+            edit.type = "button";
+            edit.className = "button";
+            edit.textContent = "EDIT";
+            edit.addEventListener("click", () => editVideo(item.id));
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "button danger";
+            remove.textContent = "REMOVE";
+            remove.addEventListener("click", () => removeVideo(item.id));
+            actions.append(edit, remove);
+        } else {
+            const replaceLabel = document.createElement("label");
+            replaceLabel.className = "button";
+            replaceLabel.textContent = "CHANGE VIDEO";
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "video/*";
+            input.hidden = true;
+            input.addEventListener("change", async function() {
+                if (!input.files?.[0]) return;
+                await replaceSongVideo(item.id, input.files[0], input);
+            });
+            replaceLabel.appendChild(input);
 
-
-        item.innerHTML = `
-
-            <div class="item-info">
-
-                <img
-                    class="item-image"
-                    src="${video.image || "fsbchrome.PNG"}"
-                    alt="${escapeHtml(
-                        video.title ||
-                        "Video"
-                    )}"
-                >
-
-                <div>
-
-                    <div class="item-name">
-                        ${escapeHtml(
-                            video.title ||
-                            "Untitled Video"
-                        )}
-                    </div>
-
-                    <div class="item-meta">
-                        ${escapeHtml(
-                           video.link ||
-                            "NO VIDEO URL"
-                        )}
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="actions">
-
-                <button
-                    class="button"
-                    onclick="editVideo('${video.id}')">
-                    EDIT
-                </button>
-
-
-                <button
-                    class="button danger"
-                    onclick="removeVideo('${video.id}')">
-                    REMOVE
-                </button>
-
-            </div>
-
-        `;
-
-
-        container.appendChild(item);
-
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "button danger";
+            remove.textContent = "REMOVE VIDEO";
+            remove.addEventListener("click", () => removeSongVideo(item.id));
+            actions.append(replaceLabel, remove);
+        }
+        row.appendChild(actions);
+        container.appendChild(row);
     });
+}
+
+async function replaceSongVideo(songId, file, input) {
+    const { data: song, error: fetchError } = await supabaseClient
+        .from("artist_songs")
+        .select("artist_id,video_url")
+        .eq("id", songId)
+        .single();
+    if (fetchError || !song) {
+        alert("Could not load the song video: " + (fetchError?.message || "Song not found."));
+        if (input) input.value = "";
+        return;
+    }
+
+    const extension = file.name.split(".").pop().toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = song.artist_id + "/artist-videos/" + Date.now() + "-" + Math.random().toString(36).slice(2) + (extension ? "." + extension : "");
+    const upload = await supabaseClient.storage.from("videos").upload(path, file);
+    if (upload.error) {
+        alert("Could not upload the replacement video: " + upload.error.message);
+        if (input) input.value = "";
+        return;
+    }
+
+    const publicUrl = supabaseClient.storage.from("videos").getPublicUrl(path).data.publicUrl;
+    const update = await supabaseClient.from("artist_songs").update({ video_url: publicUrl }).eq("id", songId);
+    if (update.error) {
+        await supabaseClient.storage.from("videos").remove([path]);
+        alert("The replacement uploaded, but the song could not be updated: " + update.error.message);
+        if (input) input.value = "";
+        return;
+    }
+
+    if (input) input.value = "";
+    if (typeof setStatus === "function") setStatus("SONG VIDEO UPDATED");
+    await loadVideos();
+}
+
+async function removeSongVideo(songId) {
+    if (!confirm("Remove the attached video from this song? The song and its audio will remain.")) return;
+    const { error } = await supabaseClient.from("artist_songs").update({ video_url: null }).eq("id", songId);
+    if (error) {
+        alert("Could not remove the song video: " + error.message);
+        return;
+    }
+    if (typeof setStatus === "function") setStatus("SONG VIDEO REMOVED");
+    await loadVideos();
 }
 
 
@@ -3499,7 +3603,7 @@ async function editVideo(id) {
     const imageUrl =
         prompt(
             "Thumbnail image URL:",
-            data.image_url || ""
+            data.image || ""
         );
 
 
@@ -3737,6 +3841,9 @@ async function loadVideoArtistSelector() {
     select.innerHTML =
         '<option value="">SELECT ARTIST</option>';
 
+    const manageSelect = document.getElementById("videoManageArtistSelect");
+    if (manageSelect) manageSelect.innerHTML = '<option value="">ALL ARTISTS</option>';
+
     (data || []).forEach(function(artist) {
 
         const option =
@@ -3750,6 +3857,12 @@ async function loadVideoArtistSelector() {
 
         select.appendChild(option);
 
+        if (manageSelect) {
+            const manageOption = document.createElement("option");
+            manageOption.value = artist.id;
+            manageOption.textContent = artist.name;
+            manageSelect.appendChild(manageOption);
+        }
     });
     const contextArtist = window.selectedArtistPageId || "";
     if (contextArtist && [...select.options].some(option => option.value === String(contextArtist))) {
