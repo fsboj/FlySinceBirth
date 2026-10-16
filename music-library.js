@@ -66,16 +66,46 @@
     if ($("favoriteSongs")) await renderLibrary();
   }
 
+  async function createPlaylistFromSong(user) {
+    const name = window.prompt("Name your new playlist:");
+    if (name === null) return null;
+    const trimmedName = name.trim();
+    if (!trimmedName) throw new Error("Enter a playlist name.");
+    const { data: playlist, error } = await supabaseClient
+      .from("customer_playlists")
+      .insert({ user_id: user.id, name: trimmedName })
+      .select("id,name")
+      .single();
+    if (error) throw error;
+    return playlist;
+  }
+
   async function addToPlaylist(songId) {
     const user = currentUser || await signedInUser();
     currentUser = user;
     const { data: playlists, error } = await supabaseClient.from("customer_playlists").select("id,name").eq("user_id", user.id).order("created_at", { ascending: true });
     if (error) throw error;
-    if (!playlists?.length) throw new Error("Create a playlist in Your FSB Account first.");
-    const chosen = window.prompt(`Add to which playlist?\n${playlists.map((p, i) => `${i + 1}. ${p.name}`).join("\n")}\n\nEnter a number:`);
-    if (chosen === null) return;
-    const playlist = playlists[Number(chosen) - 1];
-    if (!playlist) throw new Error("Enter a playlist number from the list.");
+
+    let playlist;
+    if (!playlists?.length) {
+      playlist = await createPlaylistFromSong(user);
+      if (!playlist) return;
+    } else {
+      const createChoice = playlists.length + 1;
+      const chosen = window.prompt(
+        `Add to which playlist?\\n${playlists.map((p, i) => `${i + 1}. ${p.name}`).join("\\n")}\\n${createChoice}. Create a new playlist\\n\\nEnter a number:`
+      );
+      if (chosen === null) return;
+      const choice = Number(chosen);
+      if (choice === createChoice) {
+        playlist = await createPlaylistFromSong(user);
+        if (!playlist) return;
+      } else {
+        playlist = playlists[choice - 1];
+        if (!playlist) throw new Error("Enter a playlist number from the list.");
+      }
+    }
+
     const { error: insertError } = await supabaseClient.from("customer_playlist_songs").insert({ playlist_id: playlist.id, song_id: songId });
     if (insertError?.code === "23505") throw new Error("That song is already in this playlist.");
     if (insertError) throw insertError;
