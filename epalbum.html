@@ -542,37 +542,7 @@ loadReleaseVideos();
         }
 
         card.onclick = function() {
-
-            if (!video.link) {
-                return;
-            }
-
-            const player =
-                document.createElement("video");
-
-            player.className =
-                "release-video-player";
-
-            player.controls = true;
-
-            player.autoplay = true;
-
-            player.src =
-                video.link;
-
-            card.innerHTML = "";
-
-            card.appendChild(player);
-
-            player.play().catch(function(error) {
-
-                console.error(
-                    "Video playback failed:",
-                    error
-                );
-
-            });
-
+            window.location.href = "video.html?video_id=" + encodeURIComponent(video.id);
         };
 
         videoList.appendChild(card);
