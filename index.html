@@ -1600,7 +1600,7 @@ async function loadSiteImages() {
             artist: artistMap[String(release.artist_id)] || "FSB ARTIST",
             type: (release.type || "release").toUpperCase(),
             date: release.release_date || release.created_at,
-            link: "epalbum.html?id=" + encodeURIComponent(release.id)
+            link: "epalbum.html?id=" + encodeURIComponent(release.id) + "&v=70a51fd5"
         });
     });
 
@@ -1832,7 +1832,7 @@ grid.appendChild(card);
         card.appendChild(title);
 
         function openVideoPage() {
-            window.location.href = "video.html?video_id=" + encodeURIComponent(video.id);
+            window.location.href = "video.html?video_id=" + encodeURIComponent(video.id) + "&v=70a51fd5";
         }
         card.addEventListener("click", openVideoPage);
         card.addEventListener("keydown", function(event) {
@@ -2296,7 +2296,7 @@ async function loadVipMusic() {
             title = release.title || "";
             image = release.artwork_url || "";
             artistId = release.artist_id;
-            link = "epalbum.html?id=" + encodeURIComponent(release.id);
+            link = "epalbum.html?id=" + encodeURIComponent(release.id) + "&v=70a51fd5";
         } else return;
         if (!title) return;
         const artist = artists.find(function(x) { return String(x.id) === String(artistId); });
@@ -2327,7 +2327,7 @@ async function loadUpcomingHome(){
   if(x.image_url)card.innerHTML+='<img src="'+x.image_url+'" alt="">';
   var link="";
   if(x.song_id)link="artist.html?id="+encodeURIComponent(x.artist_id||"");
-  else if(x.release_id)link="epalbum.html?id="+encodeURIComponent(x.release_id);
+  else if(x.release_id)link="epalbum.html?id="+encodeURIComponent(x.release_id) + "&v=70a51fd5";
   else if(x.video_id)link="#videos";
   else if(x.event_id)link="#events";
   else if(x.target_url)link=x.target_url;
