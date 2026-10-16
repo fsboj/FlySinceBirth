@@ -3261,7 +3261,7 @@ const { data, error } =
         .from("videos")
         .select(`
     *,
-    artists (
+    artists!videos_artist_id_fkey (
         name
     )
 `)
