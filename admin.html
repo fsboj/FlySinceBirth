@@ -6696,6 +6696,10 @@ document.addEventListener("DOMContentLoaded", function(){
       artistPanel.style.setProperty('position','relative','important');
       artistPanel.style.setProperty('top','0','important');
     }
+    const videosPanel=document.getElementById('videos');
+    if(artistPanel && videosPanel && artistPanel.parentElement===nav.parentElement && artistPanel.nextElementSibling!==videosPanel){
+      artistPanel.insertAdjacentElement('afterend',videosPanel);
+    }
     topButtons.forEach((btn,i)=>{
       btn.onclick=function(e){
         e.preventDefault();
