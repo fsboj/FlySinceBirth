@@ -6685,7 +6685,7 @@ document.addEventListener("DOMContentLoaded", function(){
     if(!nav || !main) return;
 
     const topButtons=Array.from(nav.querySelectorAll('button'));
-    const topIds=['mainPage','sideMenu','artistPages','events','upcoming','store'];
+    const topIds=['mainPage','sideMenu','artistPages','videos','events','upcoming','store'];
     // Keep the Artist Pages panel physically next to the navigation in the DOM.
     // Legacy merch/admin markup above it can otherwise leave a large blank region before the panel.
     const artistPanel=document.getElementById('artistPages');
@@ -6710,6 +6710,14 @@ document.addEventListener("DOMContentLoaded", function(){
             p.style.display=selected?'block':'none';
           }
         });
+        if(topIds[i]==='videos'){
+          const mainPanel=document.getElementById('mainPage');
+          const videoPanel=document.getElementById('videos');
+          if(mainPanel){mainPanel.classList.add('active');mainPanel.style.setProperty('display','block','important');mainPanel.style.setProperty('visibility','visible','important');}
+          if(videoPanel){videoPanel.classList.add('active');videoPanel.style.setProperty('display','block','important');videoPanel.style.setProperty('visibility','visible','important');}
+          document.querySelectorAll('.main-page-subpanel').forEach(p=>p.style.display=p===videoPanel?'block':'none');
+          if(typeof loadVideos==='function') loadVideos();
+        }
         if(topIds[i]==='mainPage') showSub('site');
         if(topIds[i]==='artistPages'){if(typeof loadArtistPageSelector==='function') loadArtistPageSelector();var root=document.scrollingElement||document.documentElement;root.scrollTop=0;document.body.scrollTop=0;window.scrollTo({top:0,left:0,behavior:'auto'});requestAnimationFrame(function(){root.scrollTop=0;document.body.scrollTop=0;window.scrollTo({top:0,left:0,behavior:'auto'});});}
         if(topIds[i]==='events'){
@@ -6761,7 +6769,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261016-videonav"></script>
+<script src="admin-tabs-fix.js?v=20261016-videomanager"></script>
 
 <script>
 /* STORE TAB DISPLAY FIX */
