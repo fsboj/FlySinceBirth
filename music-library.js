@@ -163,7 +163,7 @@
         return;
       }
       if (event.key !== "Tab") return;
-      const focusable = [...dialog.querySelectorAll("button:not([disabled]):not([hidden]), input:not([disabled]):not([hidden])")];
+      const focusable = [...dialog.querySelectorAll("button:not([disabled]):not([hidden]), input:not([disabled]):not([hidden])")].filter((control) => !control.closest("[hidden]"));
       if (!focusable.length) return;
       const first = focusable[0], last = focusable[focusable.length - 1];
       if (event.shiftKey && document.activeElement === first) {
