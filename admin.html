@@ -6397,7 +6397,7 @@ document.addEventListener(
 );
 }
 
-const mainPagePanelIds=["site","photos","text","music","artists","videos","sections"];
+const mainPagePanelIds=["site","photos","text","music","artists","sections"];
 function showMainSubPanel(panelId,button){
  document.querySelectorAll(".main-page-subpanel").forEach(function(p){p.classList.remove("active")});
  var target=document.getElementById(panelId); if(target) target.classList.add("active");
@@ -6405,7 +6405,6 @@ function showMainSubPanel(panelId,button){
  if(button) button.classList.add("active");
  if(panelId==="music") loadVipMusicAdmin();
  if(panelId==="artists") loadArtists();
- if(panelId==="videos") loadVideos();
  if(panelId==="events") loadEvents();
  if(panelId==="sections") loadCustomMainSections();
 }
@@ -6762,7 +6761,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261016-standalone-videos"></script>
+<script src="admin-tabs-fix.js?v=20261016-standalone-videos-v2"></script>
 
 <script>
 /* STORE TAB DISPLAY FIX */
