@@ -518,7 +518,7 @@ body {
      ADMIN NAVIGATION
 ===================================================== -->
 
-<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">TOP NAVIGATION</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="document.querySelectorAll('section.panel').forEach(function(p){p.classList.remove('active');p.style.setProperty('display','none','important')});document.querySelectorAll('.main-page-subpanel').forEach(function(p){p.classList.remove('active');p.style.setProperty('display','none','important')});document.querySelectorAll('.admin-nav button').forEach(function(b){b.classList.remove('active')});var main=document.getElementById('mainPage');main.classList.add('active');main.style.setProperty('display','block','important');main.style.setProperty('visibility','visible','important');var p=document.getElementById('videos');p.classList.add('active');p.style.setProperty('display','block','important');p.style.setProperty('visibility','visible','important');this.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});return false;">VIDEOS</button><button type="button" onclick="showEventsAdminPanel(this); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button><button type="button" onclick="document.querySelectorAll('section.panel').forEach(function(p){p.classList.remove('active');p.style.setProperty('display','none','important')});document.querySelectorAll('.admin-nav button').forEach(function(b){b.classList.remove('active')});var p=document.getElementById('store');p.classList.add('active');p.style.setProperty('display','block','important');p.style.setProperty('visibility','visible','important');this.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});if(window.loadMerchProductsAdmin)window.loadMerchProductsAdmin();return false;">STORE</button></nav>
+<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">TOP NAVIGATION</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="document.querySelectorAll('section.panel').forEach(function(p){p.classList.remove('active');p.style.setProperty('display','none','important')});document.querySelectorAll('.admin-nav button').forEach(function(b){b.classList.remove('active')});var p=document.getElementById('videos');p.classList.add('active');p.style.setProperty('display','block','important');p.style.setProperty('visibility','visible','important');this.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});if(window.loadVideos)window.loadVideos();return false;">VIDEOS</button><button type="button" onclick="showEventsAdminPanel(this); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button><button type="button" onclick="document.querySelectorAll('section.panel').forEach(function(p){p.classList.remove('active');p.style.setProperty('display','none','important')});document.querySelectorAll('.admin-nav button').forEach(function(b){b.classList.remove('active')});var p=document.getElementById('store');p.classList.add('active');p.style.setProperty('display','block','important');p.style.setProperty('visibility','visible','important');this.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});if(window.loadMerchProductsAdmin)window.loadMerchProductsAdmin();return false;">STORE</button></nav>
 
 
 <!-- =====================================================
@@ -6710,14 +6710,7 @@ document.addEventListener("DOMContentLoaded", function(){
             p.style.display=selected?'block':'none';
           }
         });
-        if(topIds[i]==='videos'){
-          const mainPanel=document.getElementById('mainPage');
-          const videoPanel=document.getElementById('videos');
-          if(mainPanel){mainPanel.classList.add('active');mainPanel.style.setProperty('display','block','important');mainPanel.style.setProperty('visibility','visible','important');}
-          if(videoPanel){videoPanel.classList.add('active');videoPanel.style.setProperty('display','block','important');videoPanel.style.setProperty('visibility','visible','important');}
-          document.querySelectorAll('.main-page-subpanel').forEach(p=>p.style.display=p===videoPanel?'block':'none');
-          if(typeof loadVideos==='function') loadVideos();
-        }
+        if(topIds[i]==='videos' && typeof loadVideos==='function') loadVideos();
         if(topIds[i]==='mainPage') showSub('site');
         if(topIds[i]==='artistPages'){if(typeof loadArtistPageSelector==='function') loadArtistPageSelector();var root=document.scrollingElement||document.documentElement;root.scrollTop=0;document.body.scrollTop=0;window.scrollTo({top:0,left:0,behavior:'auto'});requestAnimationFrame(function(){root.scrollTop=0;document.body.scrollTop=0;window.scrollTo({top:0,left:0,behavior:'auto'});});}
         if(topIds[i]==='events'){
@@ -6735,7 +6728,7 @@ document.addEventListener("DOMContentLoaded", function(){
       };
     });
 
-    const ids=['site','photos','music','artists','videos','sections'];
+    const ids=['site','photos','music','artists','sections'];
     const tabs=Array.from(document.querySelectorAll('.main-page-tabs button'));
     const host=document.getElementById('mainPageSubPanels');
     ids.forEach(id=>{
@@ -6769,7 +6762,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261016-videomanager"></script>
+<script src="admin-tabs-fix.js?v=20261016-standalone-videos"></script>
 
 <script>
 /* STORE TAB DISPLAY FIX */
