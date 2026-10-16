@@ -211,13 +211,12 @@ footer{padding:45px 7%;border-top:1px solid #202020;display:flex;justify-content
 }
 
 </style><link rel="stylesheet" href="public-polish.css?v=5"></head><body>
-<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="music.html">Music</a><a id="topnavArtist" href="artists.html">Artist</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav></header><main><div class="page-kicker">FLY SINCE BIRTH · WHAT’S HAPPENING</div><h1 class="section-heading">EVENTS</h1><section class="events"><div id="events-featured"></div><h2 class="events-subheading">UPCOMING EVENTS</h2><div id="events-list" class="events-list"><p class="event-empty">LOADING EVENTS...</p></div><h2 class="events-subheading">PAST EVENTS</h2><div id="past-events-list" class="events-list"><p class="event-empty">LOADING EVENTS...</p></div></section></main><footer><div>© 2026 FLY SINCE BIRTH</div><div>FSB WORLDWIDE</div></footer>
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="music.html">Music</a><a id="topnavArtist" href="artists.html">Artist</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav></header><main><div class="page-kicker">FLY SINCE BIRTH · WHAT’S HAPPENING</div><h1 class="section-heading">EVENTS</h1><section class="events"><div id="events-featured"></div><h2 class="events-subheading">UPCOMING EVENTS</h2><div id="events-list" class="events-list"><p class="event-empty">LOADING EVENTS...</p></div></section></main><footer><div>© 2026 FLY SINCE BIRTH</div><div>FSB WORLDWIDE</div></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>const SUPABASE_URL="https://ccvhvxugoebdqwxxankl.supabase.co";const SUPABASE_ANON_KEY="sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z";const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 async function loadEvents() {
     const upcomingContainer = document.getElementById("events-list");
-    const pastContainer = document.getElementById("past-events-list");
     const featuredContainer = document.getElementById("events-featured");
-    if (!upcomingContainer || !pastContainer || !featuredContainer) return;
+    if (!upcomingContainer || !featuredContainer) return;
 
     const { data, error } = await supabaseClient
         .from("events")
@@ -232,7 +231,7 @@ async function loadEvents() {
 
     featuredContainer.innerHTML = "";
     upcomingContainer.innerHTML = "";
-    pastContainer.innerHTML = "";
+
 
     const allEvents = (data || []).map(function(event) {
         const parsedDate = event.date ? new Date(event.date) : null;
@@ -244,7 +243,6 @@ async function loadEvents() {
     });
 
     const upcoming = allEvents.filter(event => !event._isPast);
-    const past = allEvents.filter(event => event._isPast);
 
     upcoming.sort((a,b) => {
         if (a.featured && !b.featured) return -1;
@@ -253,10 +251,6 @@ async function loadEvents() {
         if (a._parsedDate) return -1;
         if (b._parsedDate) return 1;
         return (a.sort_order || 0) - (b.sort_order || 0);
-    });
-    past.sort((a,b) => {
-        if (a._parsedDate && b._parsedDate) return b._parsedDate - a._parsedDate;
-        return (b.sort_order || 0) - (a.sort_order || 0);
     });
 
     function safeEventUrl(url) {
@@ -391,10 +385,9 @@ async function loadEvents() {
         if (featured && String(event.id) === String(featured.id)) return;
         upcomingContainer.appendChild(makeEventCard(event, false));
     });
-    past.forEach(event => pastContainer.appendChild(makeEventCard(event, false)));
+
 
     if (!upcoming.length) upcomingContainer.innerHTML = '<p class="event-empty">NO UPCOMING EVENTS RIGHT NOW.</p>';
-    if (!past.length) pastContainer.innerHTML = '<p class="event-empty">NO PAST EVENTS YET.</p>';
 }
 
 </script><script src="event-ticketing.js"></script><script>loadEvents();</script><script src="shared-nav.js?v=1"></script>
