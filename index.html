@@ -973,6 +973,21 @@ footer {
     }
 }
 
+
+/* Smaller artist tiles in the homepage carousel. */
+#artists .artist-grid {
+    gap: 14px;
+}
+#artists .artist-card {
+    flex: 0 0 210px;
+    aspect-ratio: 0.88;
+}
+@media (max-width: 600px) {
+    #artists .artist-card {
+        flex-basis: 170px;
+    }
+}
+
 </style>
 
 <script>
