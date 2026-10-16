@@ -176,13 +176,14 @@ footer{padding:45px 7%;border-top:1px solid #202020;display:flex;justify-content
 
 /* Compact event flyers while keeping event details easy to scan. */
 .events-featured {
-    grid-template-columns: minmax(0, 210px) minmax(0, 1fr);
-    gap: 22px;
-    padding: 18px;
+    width: min(100%, 680px);
+    grid-template-columns: minmax(0, 190px) minmax(0, 1fr);
+    gap: 18px;
+    padding: 14px;
 }
 .events-featured-image {
     width: 100%;
-    max-width: 210px;
+    max-width: 190px;
     justify-self: center;
 }
 .events-list {
