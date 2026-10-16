@@ -273,20 +273,72 @@ async function loadHubLibrary(user) {
     const tracks = items.filter((item) => item.playlist_id === playlist.id).map((item) => musicById.get(String(item.song_id))).filter(Boolean);
     const article = document.createElement("article");
     article.className = "hub-playlist";
+    article.dataset.playlistId = String(playlist.id);
+
     const head = document.createElement("div");
     head.className = "hub-playlist-head";
+    const toggle = document.createElement("button");
+    toggle.className = "hub-playlist-toggle";
+    toggle.type = "button";
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-label", "Open playlist " + playlist.name);
     const name = document.createElement("strong");
     name.textContent = playlist.name;
-    head.appendChild(name);
+    const chevron = document.createElement("span");
+    chevron.className = "hub-playlist-chevron";
+    chevron.setAttribute("aria-hidden", "true");
+    chevron.textContent = "⌄";
+    toggle.append(name, chevron);
+    head.appendChild(toggle);
+
+    const body = document.createElement("div");
+    body.className = "hub-playlist-body";
+    body.hidden = true;
+    const actions = document.createElement("div");
+    actions.className = "hub-playlist-actions";
+
     const play = document.createElement("button");
     play.className = "hub-playlist-play";
     play.type = "button";
     play.textContent = "PLAY ALL";
     play.disabled = !tracks.some((song) => song.audio_url);
-    play.addEventListener("click", () => tracks.length && startSong(tracks.find((song) => song.audio_url), tracks));
-    head.appendChild(play);
-    article.appendChild(head);
-    if (!tracks.length) article.insertAdjacentHTML("beforeend", '<p class="empty">No songs in this playlist yet.</p>');
+    play.addEventListener("click", () => {
+      const playable = tracks.filter((song) => song.audio_url);
+      if (playable.length) startSong(playable[0], playable);
+    });
+
+    const shuffle = document.createElement("button");
+    shuffle.className = "hub-playlist-play";
+    shuffle.type = "button";
+    shuffle.textContent = "SHUFFLE";
+    shuffle.disabled = !tracks.some((song) => song.audio_url);
+    shuffle.addEventListener("click", () => {
+      const playable = tracks.filter((song) => song.audio_url);
+      for (let i = playable.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [playable[i], playable[j]] = [playable[j], playable[i]];
+      }
+      if (playable.length) startSong(playable[0], playable);
+    });
+
+    const close = document.createElement("button");
+    close.className = "hub-playlist-close";
+    close.type = "button";
+    close.textContent = "CLOSE";
+    close.addEventListener("click", () => {
+      body.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.focus();
+    });
+    actions.append(play, shuffle, close);
+    body.appendChild(actions);
+
+    if (!tracks.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty";
+      empty.textContent = "No songs in this playlist yet.";
+      body.appendChild(empty);
+    }
     tracks.forEach((song) => {
       const row = document.createElement("div");
       row.className = "hub-playlist-song";
@@ -299,8 +351,20 @@ async function loadHubLibrary(user) {
       button.disabled = !song.audio_url;
       button.addEventListener("click", () => startSong(song, tracks));
       row.append(title, button);
-      article.appendChild(row);
+      body.appendChild(row);
     });
+
+    toggle.addEventListener("click", () => {
+      const opening = body.hidden;
+      if (opening) {
+        playlistsNode.querySelectorAll(".hub-playlist-body").forEach((other) => { other.hidden = true; });
+        playlistsNode.querySelectorAll(".hub-playlist-toggle").forEach((other) => other.setAttribute("aria-expanded", "false"));
+      }
+      body.hidden = !opening;
+      toggle.setAttribute("aria-expanded", String(opening));
+    });
+
+    article.append(head, body);
     playlistsNode.appendChild(article);
   }
   const tasteSongIds = new Set([...(fav.data || []).map(row => String(row.song_id)), ...items.map(item => String(item.song_id))]);
@@ -313,7 +377,7 @@ async function loadHubLibrary(user) {
   if (requestedPlaylist) {
     const playlist = (lists.data || []).find((p) => String(p.id) === requestedPlaylist);
     const tracks = items.filter((item) => item.playlist_id === requestedPlaylist).map((item) => musicById.get(String(item.song_id))).filter((song) => song?.audio_url);
-    if (playlist && tracks.length) { setPlayerStatus(`Playlist “${playlist.name}” is ready. Press PLAY ALL to start.`); const buttons = [...playlistsNode.querySelectorAll(".hub-playlist")]; const index = (lists.data || []).indexOf(playlist); buttons[index]?.scrollIntoView({ behavior: "smooth", block: "center" }); }
+    if (playlist) { const card = [...playlistsNode.querySelectorAll(".hub-playlist")].find((item) => item.dataset.playlistId === requestedPlaylist); const toggle = card?.querySelector(".hub-playlist-toggle"); if (toggle && card.querySelector(".hub-playlist-body")?.hidden) toggle.click(); card?.scrollIntoView({ behavior: "smooth", block: "center" }); if (tracks.length) setPlayerStatus(`Playlist “${playlist.name}” is ready. Press PLAY ALL or SHUFFLE to start.`); }
   }
   return { songIds: tasteSongIds, artistIds: tasteArtistIds };
 }
