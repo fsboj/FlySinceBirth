@@ -69,8 +69,54 @@ body {
     font-weight: 800;
 }
 
-.artist-grid {
+.artists-layout {
     margin-top: 55px;
+    display: grid;
+    grid-template-columns: minmax(190px, 240px) minmax(0, 1fr);
+    gap: 34px;
+    align-items: start;
+}
+
+.artist-directory {
+    border: 1px solid #242424;
+    background: #090909;
+    padding: 22px;
+    position: sticky;
+    top: 110px;
+    max-height: calc(100vh - 130px);
+    overflow-y: auto;
+}
+
+.artist-directory h2 {
+    color: #888;
+    font-size: 10px;
+    letter-spacing: 3px;
+    margin-bottom: 18px;
+}
+
+.artist-directory-list {
+    list-style: none;
+    display: grid;
+    gap: 4px;
+}
+
+.artist-directory-list a {
+    display: block;
+    padding: 9px 10px;
+    color: #eee;
+    font-size: 13px;
+    text-decoration: none;
+    border-bottom: 1px solid #1c1c1c;
+    transition: background 0.2s, color 0.2s;
+}
+
+.artist-directory-list a:hover {
+    color: #fff;
+    background: #171717;
+}
+
+.artist-grid {
+    margin-top: 0;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
@@ -220,6 +266,18 @@ body {
         padding: 130px 25px 60px;
     }
 
+    .artists-layout {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        margin-top: 35px;
+    }
+
+    .artist-directory {
+        position: static;
+        max-height: 240px;
+        padding: 16px;
+    }
+
     .artist-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px;
@@ -260,15 +318,23 @@ body {
     </h1>
 
 
-    <div
-        id="artistGrid"
-        class="artist-grid"
-    >
-
-        <div class="empty-state">
-            LOADING ARTISTS
-        </div>
-
+    <div class="artists-layout">
+        <aside class="artist-directory" aria-label="Artists in alphabetical order">
+            <h2>ALL ARTISTS</h2>
+            <ul id="artistDirectoryList" class="artist-directory-list">
+                <li class="empty-state">LOADING ARTISTS</li>
+            </ul>
+        </aside>
+        <section aria-label="Artist profiles">
+            <div
+                id="artistGrid"
+                class="artist-grid"
+            >
+                <div class="empty-state">
+                    LOADING ARTISTS
+                </div>
+            </div>
+        </section>
     </div>
 
 </main>
@@ -296,9 +362,9 @@ const supabaseClient =
 async function loadArtists() {
 
     const grid =
-        document.getElementById(
-            "artistGrid"
-        );
+        document.getElementById("artistGrid");
+    const directory =
+        document.getElementById("artistDirectoryList");
 
     const { data, error } =
         await supabaseClient
@@ -321,24 +387,40 @@ async function loadArtists() {
 
         grid.innerHTML =
             '<div class="empty-state">COULD NOT LOAD ARTISTS</div>';
+        directory.innerHTML =
+            '<li class="empty-state">COULD NOT LOAD ARTISTS</li>';
 
         return;
     }
 
 
     grid.innerHTML = "";
+    directory.innerHTML = "";
 
 
     if (!data || data.length === 0) {
 
         grid.innerHTML =
             '<div class="empty-state">NO ARTISTS AVAILABLE</div>';
+        directory.innerHTML =
+            '<li class="empty-state">NO ARTISTS AVAILABLE</li>';
 
         return;
     }
 
 
+    data.sort(function(a, b) {
+        return String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" });
+    });
+
     data.forEach(function(artist) {
+
+        const directoryItem = document.createElement("li");
+        const directoryLink = document.createElement("a");
+        directoryLink.href = "artist.html?id=" + encodeURIComponent(artist.id);
+        directoryLink.textContent = artist.name || "ARTIST";
+        directoryItem.appendChild(directoryLink);
+        directory.appendChild(directoryItem);
 
         const card =
             document.createElement("a");
