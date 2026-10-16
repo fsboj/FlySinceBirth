@@ -261,9 +261,9 @@ body {
 .compact-song-grid {
     margin-top: 50px;
     display: grid;
-    grid-template-rows: repeat(2, minmax(88px, auto));
+    grid-template-rows: repeat(2, minmax(82px, auto));
     grid-auto-flow: column;
-    grid-auto-columns: min(100%, 380px);
+    grid-auto-columns: min(100%, 360px);
     gap: 12px 20px;
     align-items: stretch;
     overflow-x: auto;
@@ -273,7 +273,7 @@ body {
 .compact-song-button {
     width: 100%;
     min-width: 0;
-    min-height: 88px;
+    min-height: 82px;
     height: auto;
     display: flex;
     flex-wrap: wrap;
@@ -758,7 +758,7 @@ body {
    TOP SONGS
 ===================================================== */
 .top-song-button {
-    width: min(100%, 380px);
+    width: min(100%, 360px);
     max-width: 100%;
     min-height: 96px;
     height: auto;
@@ -1019,18 +1019,38 @@ footer {
 
 @media (max-width: 800px) {
 
+    .compact-song-artwork,
+    .top-song-artwork {
+        width: 44px;
+        height: 44px;
+    }
+    .compact-song-play,
+    .top-song-play {
+        width: 32px;
+        height: 32px;
+    }
+    .compact-song-number,
+    .top-song-number {
+        width: 22px;
+        margin-left: 5px;
+    }
+    .compact-song-info,
+    .top-song-info {
+        margin-left: 4px;
+    }
+
     .compact-song-button,
     .top-song-button {
         width: 100%;
-        min-height: 96px;
-        border-radius: 34px;
-        padding: 10px 12px;
+        min-height: 92px;
+        border-radius: 32px;
+        padding: 7px 12px;
     }
     .compact-song-button > .fsb-song-actions,
     .top-song-button > .fsb-song-actions {
         flex-basis: 100%;
         justify-content: flex-end;
-        margin: 4px 0 0;
+        margin: 2px 0 0;
     }
 
     .navbar {
