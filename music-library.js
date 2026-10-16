@@ -92,8 +92,12 @@
       if (!playlist) return;
     } else {
       const createChoice = playlists.length + 1;
+      const options = playlists
+        .map((p, i) => (i + 1) + ". " + p.name)
+        .concat(createChoice + ". Create a new playlist")
+        .join(String.fromCharCode(10));
       const chosen = window.prompt(
-        `Add to which playlist?\\n${playlists.map((p, i) => `${i + 1}. ${p.name}`).join("\\n")}\\n${createChoice}. Create a new playlist\\n\\nEnter a number:`
+        ["Add to which playlist?", options, "", "Enter a number:"].join(String.fromCharCode(10))
       );
       if (chosen === null) return;
       const choice = Number(chosen);
