@@ -23,6 +23,7 @@ function init(){
    if(mainPanel){mainPanel.classList.add('active');mainPanel.style.setProperty('display','block','important');mainPanel.style.setProperty('visibility','visible','important');}
    document.querySelectorAll('.main-page-subpanel').forEach(p=>{p.classList.toggle('active',p===target);p.style.setProperty('display',p===target?'block':'none','important');});
   }
+  if(selectedId==='videos'&&typeof loadVideos==='function')await loadVideos();
   if(selectedId==='mainPage')sub('site');
   if(selectedId==='artistPages')openArtistManager();
   if(selectedId==='events'){
