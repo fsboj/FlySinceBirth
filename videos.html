@@ -62,7 +62,7 @@ async function loadVideos(){
   if(!artistCredits.length)artist.textContent=video.artist||"";
   card.appendChild(artist);
   const title=document.createElement("div");title.className="video-title";title.textContent=video.title||"Untitled Video";card.appendChild(title);
-  const open=()=>window.location.href="video.html?video_id="+encodeURIComponent(video.id);
+  const open=()=>window.location.href="video.html?video_id="+encodeURIComponent(video.id) + "&v=70a51fd5";
   card.addEventListener("click",e=>{if(e.target.closest(".video-artist a"))return;open();});
   card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){if(e.target.closest(".video-artist a"))return;e.preventDefault();open();}});
   grid.appendChild(card);
