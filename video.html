@@ -78,7 +78,7 @@ async function loadNextVideos(){
   const image=document.createElement("img");image.src=video.image||"fsblogo.PNG";image.alt=video.title||"Video thumbnail";image.loading="lazy";card.appendChild(image);
   const title=document.createElement("div");title.className="next-title";title.textContent=video.title||"Untitled Video";card.appendChild(title);
   const artist=document.createElement("div");artist.className="next-artist";artist.textContent="PLAY NEXT";card.appendChild(artist);
-  function open(){location.href="music.html?video_id="+encodeURIComponent(video.id)}
+  function open(){location.href="video.html?video_id="+encodeURIComponent(video.id)}
   card.addEventListener("click",open);card.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}});
   host.appendChild(card);
  });
