@@ -2348,7 +2348,7 @@ button.onclick = function() {
 
     window.location.href =
         "epalbum.html?id=" +
-        encodeURIComponent(release.id);
+        encodeURIComponent(release.id) + "&v=70a51fd5";
 
 };
 
@@ -3011,7 +3011,7 @@ card.onclick = function() {
 
     window.location.href =
         "epalbum.html?id=" +
-        encodeURIComponent(release.id);
+        encodeURIComponent(release.id) + "&v=70a51fd5";
 
 };
 
@@ -3204,7 +3204,7 @@ async function loadArtistVideos() {
         }
 
         card.onclick = function() {
-            window.location.href = "video.html?video_id=" + encodeURIComponent(video.id);
+            window.location.href = "video.html?video_id=" + encodeURIComponent(video.id) + "&v=70a51fd5";
         };
 
         videoSection.appendChild(card);
