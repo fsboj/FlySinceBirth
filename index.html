@@ -916,7 +916,64 @@ footer {
 
 }
 
- .upcoming-card,.vip-empty{min-height:220px;border:1px solid #242424;background:#070707;display:flex;align-items:flex-end;padding:25px;position:relative;overflow:hidden}.upcoming-card{cursor:pointer}.upcoming-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65}.upcoming-card>div{position:relative;z-index:2}.vip-empty{opacity:.35}.custom-home-section{padding:80px 7%;border-top:1px solid #202020}.custom-home-section h2{font-size:clamp(40px,6vw,80px)}.custom-home-section p{max-width:700px;color:#999;line-height:1.7;margin-top:20px}</style>
+ .upcoming-card,.vip-empty{min-height:220px;border:1px solid #242424;background:#070707;display:flex;align-items:flex-end;padding:25px;position:relative;overflow:hidden}.upcoming-card{cursor:pointer}.upcoming-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65}.upcoming-card>div{position:relative;z-index:2}.vip-empty{opacity:.35}.custom-home-section{padding:80px 7%;border-top:1px solid #202020}.custom-home-section h2{font-size:clamp(40px,6vw,80px)}.custom-home-section p{max-width:700px;color:#999;line-height:1.7;margin-top:20px}
+/* Keep the homepage event preview compact. */
+#events.section {
+    padding-top: 70px;
+    padding-bottom: 70px;
+}
+#events .events-featured {
+    width: min(100%, 560px);
+    grid-template-columns: minmax(0, 120px) minmax(0, 1fr);
+    gap: 16px;
+    margin: 18px 0 22px;
+    padding: 14px;
+}
+#events .events-featured-image {
+    width: 100%;
+    max-width: 120px;
+    aspect-ratio: 2 / 3;
+    object-fit: contain;
+}
+#events .events-list {
+    margin-top: 12px;
+}
+#events .event-card {
+    grid-template-columns: 100px minmax(0, 1fr);
+    gap: 14px;
+    max-width: 620px;
+    padding: 14px 0;
+}
+#events .event-card-image {
+    aspect-ratio: 2 / 3;
+    object-fit: contain;
+}
+#events .event-title {
+    font-size: 17px;
+}
+@media (max-width: 600px) {
+    #events.section {
+        padding-top: 55px;
+        padding-bottom: 55px;
+    }
+    #events .events-featured {
+        grid-template-columns: minmax(0, 100px) minmax(0, 1fr);
+        gap: 12px;
+        padding: 10px;
+    }
+    #events .events-featured-image {
+        max-width: 100px;
+    }
+    #events .event-card {
+        grid-template-columns: 78px minmax(0, 1fr);
+        gap: 10px;
+    }
+    #events .event-title {
+        font-size: 15px;
+    }
+}
+
+</style>
 
 <script>
 (function(){
