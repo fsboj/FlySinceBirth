@@ -58,20 +58,6 @@
     if (!element || !song?.id || element.querySelector(".fsb-song-actions")) return element;
     const actions = document.createElement("span");
     actions.className = "fsb-song-actions";
-    if (song.video_url) {
-      const watch = document.createElement("button");
-      watch.type = "button";
-      watch.className = "fsb-song-action fsb-song-video";
-      watch.setAttribute("aria-label", `Watch the video for ${song.title || "this song"}`);
-      watch.title = "Watch video";
-      watch.textContent = "▶";
-      watch.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        window.location.href = `video.html?song_id=${encodeURIComponent(song.id)}`;
-      });
-      actions.appendChild(watch);
-    }
     const favorite = document.createElement("button");
     favorite.type = "button";
     favorite.className = "fsb-song-action fsb-song-favorite";
