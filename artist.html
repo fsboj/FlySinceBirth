@@ -3159,7 +3159,7 @@ async function loadArtistVideos() {
         image.src = item.image || "fsblogo.PNG";
         card.appendChild(image);
 
-        if (item.link && /\\.(mp4|webm|ogg|mov)(\\?|#|$)/i.test(item.link)) {
+        if (item.link && /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(item.link)) {
             const sourceVideo = document.createElement("video");
             sourceVideo.muted = true;
             sourceVideo.preload = "metadata";
