@@ -243,6 +243,7 @@
           .single();
         if (error) throw error;
         playlistCache = [...playlists, playlist];
+        setBusy(false);
         await saveSongToPlaylist(playlist);
       } catch (error) {
         status.textContent = error.message || "Could not create this playlist.";
