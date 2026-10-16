@@ -420,7 +420,10 @@ async function loadMusicHub() {
   const requestedSong = musicParams.get("song_id");
   if (requestedSong && bySongId.has(requestedSong)) { startSong(bySongId.get(requestedSong)); window.scrollTo({ top: 0, behavior: "smooth" }); }
   const requestedVideo = musicParams.get("video_id");
-  if (requestedVideo && byVideoId.has(requestedVideo)) { playVideo(byVideoId.get(requestedVideo)); document.getElementById("videoPlayerHost").scrollIntoView({ behavior: "smooth", block: "center" }); }
+  if (requestedVideo && byVideoId.has(requestedVideo)) {
+    window.location.replace("video.html?video_id=" + encodeURIComponent(requestedVideo));
+    return;
+  }
 }
 loadMusicHub().catch((error) => {
   console.error("Could not load FSB Music:", error);
