@@ -6,7 +6,7 @@ function init(){
  if(eventsPanel && m.parentElement && eventsPanel.previousElementSibling!==m){
   m.parentElement.insertBefore(eventsPanel,m.nextElementSibling);
  }
- const bs=[...n.querySelectorAll('button')],ids=['mainPage','sideMenu','artistPages','events','upcoming','store'];
+ const bs=[...n.querySelectorAll('button')],ids=['mainPage','sideMenu','artistPages','videos','events','upcoming','store'];
  bs.forEach((b,i)=>b.onclick=async e=>{
   e.preventDefault();
   const selectedId=ids[i];
@@ -18,6 +18,11 @@ function init(){
   target.style.removeProperty('display');
   target.style.setProperty('display','block','important');
   target.style.setProperty('visibility','visible','important');
+  if(selectedId==='videos'){
+   const mainPanel=document.getElementById('mainPage');
+   if(mainPanel){mainPanel.classList.add('active');mainPanel.style.setProperty('display','block','important');mainPanel.style.setProperty('visibility','visible','important');}
+   document.querySelectorAll('.main-page-subpanel').forEach(p=>{p.classList.toggle('active',p===target);p.style.setProperty('display',p===target?'block':'none','important');});
+  }
   if(selectedId==='mainPage')sub('site');
   if(selectedId==='artistPages')openArtistManager();
   if(selectedId==='events'){
