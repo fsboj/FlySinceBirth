@@ -142,11 +142,9 @@
 .release-track {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
     padding: 16px 12px;
     border-bottom: 1px solid #242424;
-}
-.release-track {
     cursor: pointer;
 }
 
@@ -160,10 +158,16 @@
 }
 
     .track-title {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
         font-size: 16px;
     }
         .track-play {
-    margin-left: auto;
+    margin-left: 0;
+    flex-shrink: 0;
     width: 38px;
     height: 38px;
     border: 1px solid #242424;
@@ -176,6 +180,23 @@
 
 .track-play:hover {
     background: #242424;
+}
+.release-track > .fsb-song-actions {
+    flex-shrink: 0;
+    margin-left: 0;
+}
+@media (max-width: 600px) {
+    .release-track {
+        gap: 8px;
+        padding: 13px 6px;
+    }
+    .track-number {
+        width: 20px;
+    }
+    .track-play {
+        width: 34px;
+        height: 34px;
+    }
 }
 </style>
 <head>
@@ -401,6 +422,10 @@ if (!tracks || tracks.length === 0) {
 
     trackList.innerHTML = "";
 
+    if (window.fsbMusicLibraryReady) {
+        await window.fsbMusicLibraryReady;
+    }
+
     tracks.forEach((track, index) => {
 
         const trackRow = document.createElement("div");
@@ -449,6 +474,9 @@ playButton.onclick = function(event) {
     });
 
 };
+        if (window.decorateSongControls) {
+            window.decorateSongControls(trackRow, track);
+        }
         trackList.appendChild(trackRow);
 
     });
@@ -556,6 +584,7 @@ loadReleaseVideos();
     
 </script>
     
+<script src="music-library.js?v=1"></script>
 <script src="shared-nav.js?v=1"></script>
 </body>
 </html>
