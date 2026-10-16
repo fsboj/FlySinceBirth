@@ -50,6 +50,9 @@ async function addArtist(){
   const nextOrder=((maxResult.data&&maxResult.data[0]&&Number(maxResult.data[0].sort_order))||0)+1;
   const created=await supabaseClient.from('artists').insert({name:cleanName,slug:slug,sort_order:nextOrder,homepage_featured:false}).select('id,name,slug').single();
   if(created.error)throw created.error;
+  artistFeatureCache=null;
+  const featureSelects=['artistSongFeatureArtists','videoFeatureArtistSelect'].map(id=>document.getElementById(id)).filter(Boolean);
+  await Promise.all(featureSelects.map(select=>window.populateArtistFeatureSelect(select)));
   const select=document.getElementById('artistPageSelect');
   if(select){const option=document.createElement('option');option.value=created.data.id;option.textContent=created.data.name;select.appendChild(option);select.value=String(created.data.id);select.dispatchEvent(new Event('change'));}
   alert(cleanName+' added successfully.');
@@ -205,9 +208,47 @@ async function getArtistFeatureOptions(){
  if(!artistFeatureCache){const result=await supabaseClient.from('artists').select('id,name').order('name',{ascending:true});if(result.error)throw result.error;artistFeatureCache=result.data||[]}
  return artistFeatureCache;
 }
+function renderArtistFeaturePicker(select){
+ if(!select)return;
+ const host=[...document.querySelectorAll('.artist-feature-picker')].find(node=>node.dataset.selectId===select.id);
+ if(!host)return;
+ host.replaceChildren();
+ host.style.cssText='border:1px solid #333;border-radius:10px;background:#0b0b0b;padding:10px;';
+ const search=document.createElement('input');search.type='search';search.className='artist-feature-search';search.placeholder='Search FSB artists…';search.autocomplete='off';search.setAttribute('aria-label','Search FSB artists');
+ search.style.cssText='width:100%;min-width:0;padding:11px 12px;border:1px solid #333;border-radius:7px;background:#111;color:#fff;';
+ const chips=document.createElement('div');chips.style.cssText='display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;';
+ const results=document.createElement('div');results.setAttribute('role','listbox');results.setAttribute('aria-label','FSB artists');results.style.cssText='display:flex;flex-direction:column;gap:4px;margin-top:8px;max-height:190px;overflow:auto;';
+ const message=document.createElement('small');message.style.cssText='display:block;color:#aaa;margin-top:7px;';
+ host.append(search,chips,results,message);
+ function draw(){
+  chips.replaceChildren();results.replaceChildren();
+  const selected=[...select.options].filter(option=>option.selected);
+  selected.forEach(option=>{const chip=document.createElement('span');chip.style.cssText='display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border-radius:999px;background:#202020;color:#fff;font-size:12px;';
+   const label=document.createElement('span');label.textContent=option.textContent;const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.setAttribute('aria-label','Remove '+option.textContent);remove.style.cssText='border:0;background:none;color:#fff;font-size:17px;cursor:pointer;padding:0;';
+   remove.onclick=()=>{option.selected=false;draw()};chip.append(label,remove);chips.appendChild(chip);
+  });
+  const primary=select.id==='videoFeatureArtistSelect'?(document.getElementById('videoArtistSelect')||{}).value:window.selectedArtistPageId;
+  [...select.options].forEach(option=>{if(primary&&String(option.value)===String(primary))option.selected=false});
+  const term=search.value.trim().toLocaleLowerCase();
+  const matches=[...select.options].filter(option=>String(option.value)!==String(primary||'')&&option.textContent.toLocaleLowerCase().includes(term));
+  const shown=matches.slice(0,30);
+  shown.forEach(option=>{const item=document.createElement('button');item.type='button';item.setAttribute('role','option');item.setAttribute('aria-selected',String(option.selected));item.textContent=(option.selected?'✓  ':'＋  ')+option.textContent;item.style.cssText='text-align:left;padding:9px 10px;border:1px solid '+(option.selected?'#8ab4ff':'#292929')+';border-radius:6px;background:'+(option.selected?'#172334':'#111')+';color:#fff;cursor:pointer;';
+   item.onclick=()=>{option.selected=!option.selected;draw();search.focus()};results.appendChild(item);
+  });
+  message.textContent=selected.length?selected.length+' FSB artist'+(selected.length===1?'':'s')+' selected. Search and select more.':(matches.length?'Choose one or more artists from the list.':'No matching artists.');
+ }
+ search.addEventListener('input',draw);draw();
+}
 window.populateArtistFeatureSelect=async function(select,selectedIds){
  if(!select)return;const artists=await getArtistFeatureOptions(),selected=new Set((selectedIds||[]).map(String));select.replaceChildren();
  artists.forEach(artist=>{const option=document.createElement('option');option.value=String(artist.id);option.textContent=artist.name||('Artist '+artist.id);option.selected=selected.has(String(artist.id));select.appendChild(option)});
+ renderArtistFeaturePicker(select);
+};
+window.refreshArtistFeaturePickers=function(){
+ document.querySelectorAll('.artist-feature-picker').forEach(host=>{
+  const select=document.getElementById(host.dataset.selectId);
+  if(select)renderArtistFeaturePicker(select);
+ });
 };
 window.saveArtistFeatureLinks=async function(table,idColumn,recordId,select,primaryArtistId){
  const ids=select?[...select.selectedOptions].map(o=>String(o.value)).filter(id=>id&&id!==String(primaryArtistId)):[];
