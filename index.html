@@ -1278,27 +1278,32 @@ async function loadMerchImageRotation() {
     const element = document.querySelector(".clothing-box img");
     if (!element) return;
 
+    const { data: settingRows, error: settingsError } = await supabaseClient
+        .from("site_content")
+        .select("key,value")
+        .in("key", ["merch_hover_delay", "merch_hover_cycle"]);
+    if (settingsError) console.error("Could not load merch rotation settings:", settingsError);
+    const settings = Object.fromEntries((settingRows || []).map(function(row) { return [row.key, row.value]; }));
+    const intervalSeconds = Math.max(1, Math.min(120, parseInt(settings.merch_hover_delay, 10) || 10));
+    const maxImages = Math.max(1, Math.min(6, parseInt(settings.merch_hover_cycle, 10) || 6));
+
     const { data, error } = await supabaseClient
         .from("merch_image_rotation")
         .select("image_url, sort_order")
         .eq("visible", true)
         .not("image_url", "is", null)
         .order("sort_order", { ascending: true })
-        .limit(6);
+        .limit(maxImages);
 
     if (error) {
         console.error("Could not load merch image rotation:", error);
         return;
     }
 
-    const images = (data || [])
-        .map(function(item) { return item.image_url; })
-        .filter(Boolean);
-
+    const images = (data || []).map(function(item) { return item.image_url; }).filter(Boolean);
     if (!images.length) return;
 
     let current = 0;
-
     element.style.transition = "opacity 0.6s ease";
     element.src = images[current];
 
@@ -1306,12 +1311,11 @@ async function loadMerchImageRotation() {
         window.merchRotationTimer = setInterval(function() {
             current = (current + 1) % images.length;
             element.style.opacity = "0";
-
             setTimeout(function() {
                 element.src = images[current];
                 element.style.opacity = "1";
             }, 300);
-        }, 3000);
+        }, intervalSeconds * 1000);
     }
 }
 
