@@ -1580,6 +1580,9 @@ async function loadSiteImages() {
         artistMap[String(artist.id)] = artist.name || "FSB ARTIST";
     });
 
+    const songFeatureResult=(songs||[]).length?await supabaseClient.from("artist_song_features").select("song_id,artist_id,sort_order").in("song_id",songs.map(song=>song.id)).order("sort_order",{ascending:true}):{data:[],error:null};
+    const featureIdsBySong=new Map();
+    (songFeatureResult.data||[]).forEach(function(row){const key=String(row.song_id);if(!featureIdsBySong.has(key))featureIdsBySong.set(key,[]);featureIdsBySong.get(key).push(String(row.artist_id))});
     const musicItems = [];
     (songs || []).filter(function(song) {
         return !song.release_id;
@@ -1587,17 +1590,22 @@ async function loadSiteImages() {
         musicItems.push({
             kind: "song", id: song.id, title: song.title || "Untitled",
             image: song.image_url || "fsblogo.PNG",
-            artist: artistMap[String(song.artist_id)] || "FSB ARTIST",
+            artist: artistMap[String(song.artist_id)] || "FSB ARTIST",artistId:song.artist_id,
+            featuredArtistIds:featureIdsBySong.get(String(song.id))||[],externalFeatures:song.external_features||[],
             date: song.release_date || song.created_at,
             link: "artist.html?id=" + encodeURIComponent(song.artist_id)
         });
     });
 
     eligibleReleases.forEach(function(release) {
+        const releaseTracks=(songs||[]).filter(song=>String(song.release_id)===String(release.id));
+        const featuredArtistIds=[...new Set(releaseTracks.flatMap(song=>featureIdsBySong.get(String(song.id))||[]))];
+        const externalFeatures=releaseTracks.flatMap(song=>song.external_features||[]);
         musicItems.push({
             kind: "release", id: release.id, title: release.title || "Untitled",
             image: release.artwork_url || "fsblogo.PNG",
-            artist: artistMap[String(release.artist_id)] || "FSB ARTIST",
+            artist: artistMap[String(release.artist_id)] || "FSB ARTIST",artistId:release.artist_id,
+            featuredArtistIds,externalFeatures,
             type: (release.type || "release").toUpperCase(),
             date: release.release_date || release.created_at,
             link: "epalbum.html?id=" + encodeURIComponent(release.id) + "&v=70a51fd5"
@@ -1645,8 +1653,12 @@ async function loadSiteImages() {
         const subtitle = music.kind === "release" ? escapeHtml(music.type) :
             (music.kind === "legacy" ? "MUSIC" : "SINGLE");
         card.innerHTML = '<div><div class="card-title">' + escapeHtml(music.title) +
-            '</div><div class="card-artist">' + escapeHtml(music.artist || "") +
-            '</div><div class="card-subtitle">' + subtitle + '</div></div>';
+            '</div><div class="card-artist"></div><div class="card-subtitle">' + subtitle + '</div></div>';
+        const creditLine=card.querySelector(".card-artist");let creditCount=0;
+        const artistCredits=[...new Set([music.artistId,...(music.featuredArtistIds||[])].filter(Boolean).map(String))];
+        artistCredits.forEach(function(id){const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(id);link.textContent=artistMap[id]||"Artist";link.style.color="inherit";link.addEventListener("click",event=>event.stopPropagation());if(creditCount)creditLine.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));creditLine.appendChild(link);creditCount++});
+        (music.externalFeatures||[]).forEach(function(credit){if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;link.style.color="inherit";link.addEventListener("click",event=>event.stopPropagation());if(creditCount)creditLine.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));creditLine.appendChild(link);creditCount++}catch(_){}});
+        if(!creditCount)creditLine.textContent=music.artist||"";
         card.onclick = function() {
             if (!music.link || music.link === "#music") return;
             if (/^https?:\/\//i.test(music.link)) window.open(music.link, "_blank", "noopener");
@@ -1783,9 +1795,10 @@ grid.appendChild(card);
         [videos[i], videos[j]] = [videos[j], videos[i]];
     }
 
-    const artistIds = Array.from(new Set(videos.map(function(video) {
-        return video.artist_id;
-    }).filter(Boolean)));
+    const featureResult=videos.length?await supabaseClient.from("video_artist_features").select("video_id,artist_id,sort_order").in("video_id",videos.map(video=>video.id)).order("sort_order",{ascending:true}):{data:[],error:null};
+    const featureIdsByVideo=new Map();
+    (featureResult.data||[]).forEach(function(row){const key=String(row.video_id);if(!featureIdsByVideo.has(key))featureIdsByVideo.set(key,[]);featureIdsByVideo.get(key).push(String(row.artist_id))});
+    const artistIds = Array.from(new Set([...videos.map(function(video){return video.artist_id}),...(featureResult.data||[]).map(row=>row.artist_id)].filter(Boolean).map(String)));
     const artistNames = {};
 
     if (artistIds.length) {
@@ -1823,7 +1836,10 @@ grid.appendChild(card);
 
         const artist = document.createElement("div");
         artist.className = "video-artist";
-        artist.textContent = artistNames[String(video.artist_id)] || video.artist || "";
+        const ids=[...new Set([video.artist_id,...(featureIdsByVideo.get(String(video.id))||[])].filter(Boolean).map(String))];let creditCount=0;
+        ids.forEach(function(id){const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(id);link.textContent=artistNames[String(id)]||"Artist";link.style.color="inherit";link.addEventListener("click",event=>event.stopPropagation());if(creditCount)artist.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));artist.appendChild(link);creditCount++});
+        (video.external_features||[]).forEach(function(credit){if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;link.style.color="inherit";link.addEventListener("click",event=>event.stopPropagation());if(creditCount)artist.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));artist.appendChild(link);creditCount++}catch(_){}});
+        if(!creditCount)artist.textContent=video.artist||"";
         card.appendChild(artist);
 
         const title = document.createElement("div");
