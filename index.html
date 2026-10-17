@@ -1590,7 +1590,7 @@ async function loadSiteImages() {
     }).forEach(function(song) {
         musicItems.push({
             kind: "song", id: song.id, title: song.title || "Untitled",
-            image: song.image_url || "fsblogo.PNG",
+            image: song.image_url || "fsblogo.PNG", audioUrl: song.audio_url,
             artist: artistMap[String(song.artist_id)] || "FSB ARTIST",artistId:song.artist_id,
             featuredArtistIds:featureIdsBySong.get(String(song.id))||[],externalFeatures:song.external_features||[],
             date: song.release_date || song.created_at,
@@ -1618,7 +1618,7 @@ async function loadSiteImages() {
         if (!item.title) return;
         musicItems.push({
             kind: "legacy", id: item.id, title: item.title,
-            image: item.image || "fsblogo.PNG", artist: item.artist || "",
+            image: item.image || "fsblogo.PNG", artist: item.artist || "", audioUrl: item.audio_url || item.link,
             date: item.created_at || null, sortOrder: item.sort_order || 0,
             link: item.link || "#music"
         });
@@ -1665,6 +1665,13 @@ async function loadSiteImages() {
             if (/^https?:\/\//i.test(music.link)) window.open(music.link, "_blank", "noopener");
             else window.location.href = music.link;
         };
+        const download = window.fsbCreateDownloadLink ? window.fsbCreateDownloadLink(music.audioUrl, music.title || "FSB song", "audio") : null;
+        if (download) {
+            download.style.position = "absolute";
+            download.style.right = "12px";
+            download.style.bottom = "12px";
+            card.appendChild(download);
+        }
         grid.appendChild(card);
     });
     grid.dataset.homeMusicLoad = "loaded";
@@ -1847,6 +1854,14 @@ grid.appendChild(card);
         title.className = "video-title";
         title.textContent = video.title || "Untitled Video";
         card.appendChild(title);
+
+        const download = window.fsbCreateDownloadLink ? window.fsbCreateDownloadLink(video.link, video.title || "FSB video", "video") : null;
+        if (download) {
+            download.style.position = "absolute";
+            download.style.right = "12px";
+            download.style.bottom = "12px";
+            card.appendChild(download);
+        }
 
         function openVideoPage() {
             window.location.href = "video.html?video_id=" + encodeURIComponent(video.id) + "&v=70a51fd5";
