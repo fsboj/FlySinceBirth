@@ -1287,7 +1287,7 @@ body {
           <input id="videoUrlInput" type="file" accept="video/*" class="admin-input">
           <div id="videoCurrentFile" class="item-meta"></div>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="videoThumbnailField">
           <label for="videoImageInput">THUMBNAIL IMAGE</label>
           <input id="videoImageInput" type="file" accept="image/*" class="admin-input">
           <div id="videoCurrentImage" class="item-meta"></div>
@@ -3373,25 +3373,17 @@ async function loadVideos() {
             remove.addEventListener("click", () => removeVideo(item.id));
             actions.append(edit, remove);
         } else {
-            const replaceLabel = document.createElement("label");
-            replaceLabel.className = "button";
-            replaceLabel.textContent = "CHANGE VIDEO";
-            const input = document.createElement("input");
-            input.type = "file";
-            input.accept = "video/*";
-            input.hidden = true;
-            input.addEventListener("change", async function() {
-                if (!input.files?.[0]) return;
-                await replaceSongVideo(item.id, input.files[0], input);
-            });
-            replaceLabel.appendChild(input);
-
+            const edit = document.createElement("button");
+            edit.type = "button";
+            edit.className = "button";
+            edit.textContent = "EDIT";
+            edit.addEventListener("click", () => editSongVideo(item.id));
             const remove = document.createElement("button");
             remove.type = "button";
             remove.className = "button danger";
             remove.textContent = "REMOVE VIDEO";
             remove.addEventListener("click", () => removeSongVideo(item.id));
-            actions.append(replaceLabel, remove);
+            actions.append(edit, remove);
         }
         row.appendChild(actions);
         container.appendChild(row);
@@ -3450,11 +3442,15 @@ async function removeSongVideo(songId) {
 ===================================================== */
 
 let editingStandaloneVideo = null;
+let editingSongVideo = null;
 
 function openVideoModal() {
     const dialog = document.getElementById("videoUploadModal");
     if (!dialog) return;
     editingStandaloneVideo = null;
+    editingSongVideo = null;
+    document.getElementById("videoTitleInput").readOnly = false;
+    document.getElementById("videoThumbnailField").style.display = "";
     document.getElementById("videoUploadModalTitle").textContent = "ADD VIDEO";
     document.getElementById("videoUploadSubmit").textContent = "UPLOAD VIDEO";
     document.getElementById("videoUploadSubmit").onclick = addVideo;
@@ -3469,9 +3465,12 @@ function openVideoModal() {
 }
 function closeVideoModal() {
     const dialog = document.getElementById("videoUploadModal");
-    const wasEditing = !!editingStandaloneVideo;
+    const wasEditing = !!(editingStandaloneVideo || editingSongVideo);
     if (dialog && dialog.open) dialog.close();
     editingStandaloneVideo = null;
+    editingSongVideo = null;
+    document.getElementById("videoTitleInput").readOnly = false;
+    document.getElementById("videoThumbnailField").style.display = "";
     if (wasEditing) {
         document.getElementById("videoTitleInput").value = "";
         document.getElementById("videoUrlInput").value = "";
@@ -3579,9 +3578,11 @@ async function saveEditedVideo() {
     const title = document.getElementById("videoTitleInput").value.trim();
     const videoFile = document.getElementById("videoUrlInput").files[0] || null;
     const imageFile = document.getElementById("videoImageInput").files[0] || null;
-    const record = editingStandaloneVideo;
+    const songRecord = editingSongVideo;
+    const record = songRecord || editingStandaloneVideo;
     if (!record) return alert("Open the video editor again and retry.");
-    if (!title) return alert("Enter a video title.");
+    if (!songRecord && !title) return alert("Enter a video title.");
+    if (songRecord && !videoFile) return alert("Choose a replacement video file from your device.");
 
     const uploadedPaths = [];
     let recordSaved = false;
@@ -3602,7 +3603,9 @@ async function saveEditedVideo() {
         if (videoFile) link = await upload(videoFile, "");
         if (imageFile) image = await upload(imageFile, "thumb");
 
-        const result = await supabaseClient.from("videos").update({title, link, image}).eq("id", record.id);
+        const result = songRecord
+            ? await supabaseClient.from("artist_songs").update({video_url: link}).eq("id", record.id)
+            : await supabaseClient.from("videos").update({title, link, image}).eq("id", record.id);
         if (result.error) throw new Error("Could not save video: " + result.error.message);
         recordSaved = true;
         try { await loadVideos(); } catch (refreshError) { console.warn("Video saved, but the list could not refresh:", refreshError); }
@@ -3613,7 +3616,7 @@ async function saveEditedVideo() {
         if (!recordSaved && uploadedPaths.length) await supabaseClient.storage.from("videos").remove(uploadedPaths).catch(() => {});
         alert("Could not update video: " + (error.message || error));
     } finally {
-        if (button) { button.disabled = false; button.textContent = editingStandaloneVideo ? "SAVE VIDEO" : "UPLOAD VIDEO"; }
+        if (button) { button.disabled = false; button.textContent = editingStandaloneVideo || editingSongVideo ? "SAVE VIDEO" : "UPLOAD VIDEO"; }
     }
 }
 
@@ -3655,6 +3658,53 @@ async function editVideo(id) {
         alert("Could not open video editor: " + (error.message || error));
     }
 }
+
+async function editSongVideo(id) {
+    try {
+        const result = await supabaseClient.from("artist_songs")
+            .select("id,title,artist_id,release_id,video_url,image_url")
+            .eq("id", id)
+            .single();
+        if (result.error) throw result.error;
+        const song = result.data;
+        if (typeof loadVideoArtistSelector === "function") await loadVideoArtistSelector();
+
+        editingStandaloneVideo = null;
+        editingSongVideo = song;
+        document.getElementById("videoUploadModalTitle").textContent = "EDIT SONG VIDEO";
+        document.getElementById("videoUploadSubmit").textContent = "SAVE VIDEO";
+        document.getElementById("videoUploadSubmit").onclick = saveEditedVideo;
+        document.getElementById("videoEditNote").textContent = "Choose a replacement video from your device. The song, artwork, artist, release, and feature credits stay linked.";
+        document.getElementById("videoEditNote").style.display = "block";
+        document.getElementById("videoTitleInput").value = song.title || "";
+        document.getElementById("videoTitleInput").readOnly = true;
+        document.getElementById("videoUrlInput").value = "";
+        document.getElementById("videoImageInput").value = "";
+        document.getElementById("videoThumbnailField").style.display = "none";
+        const currentFile = document.getElementById("videoCurrentFile");
+        const currentImage = document.getElementById("videoCurrentImage");
+        currentFile.innerHTML = song.video_url ? '<a href="' + escapeHtml(song.video_url) + '" target="_blank" rel="noopener noreferrer">VIEW CURRENT VIDEO</a>' : "No current video file";
+        currentImage.textContent = "Song artwork is kept as is.";
+
+        const artistSelect = document.getElementById("videoArtistSelect");
+        const releaseSelect = document.getElementById("videoReleaseSelect");
+        artistSelect.value = song.artist_id ? String(song.artist_id) : "";
+        if (song.artist_id && typeof loadVideoReleases === "function") {
+            await loadVideoReleases(String(song.artist_id));
+            releaseSelect.value = song.release_id ? String(song.release_id) : "";
+        }
+        artistSelect.disabled = true;
+        releaseSelect.disabled = true;
+        document.getElementById("videoFeatureArtistGroup").style.display = "none";
+        document.getElementById("videoExternalFeatureGroup").style.display = "none";
+        const dialog = document.getElementById("videoUploadModal");
+        if (!dialog.open) dialog.showModal();
+    } catch (error) {
+        editingSongVideo = null;
+        alert("Could not open song video editor: " + (error.message || error));
+    }
+}
+
 
 async function removeVideo(id) {
 
