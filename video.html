@@ -42,9 +42,9 @@ function videoPlayer(url,title){
 async function loadPage(){
  if(!videoId&&!songId){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
  if(songId){
-  const result=await supabaseClient.from("artist_songs").select("id,title,video_url,artist_id").eq("id",songId).single();
+  const result=await supabaseClient.from("artist_songs").select("id,title,video_url,artist_id,external_features").eq("id",songId).single();
   if(result.error||!result.data||!result.data.video_url){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
-  currentVideo={id:"song-"+result.data.id,song_id:result.data.id,title:result.data.title,link:result.data.video_url,artist_id:result.data.artist_id};
+  currentVideo={id:"song-"+result.data.id,song_id:result.data.id,title:result.data.title,link:result.data.video_url,artist_id:result.data.artist_id,external_features:result.data.external_features||[]};
  }else{
   const result=await supabaseClient.from("videos").select("*").eq("id",videoId).single();
   if(result.error||!result.data){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
@@ -65,6 +65,16 @@ async function loadPage(){
  const byline=document.getElementById("videoByline");
  byline.innerHTML="";
  if(artist){const a=document.createElement("a");a.className="artist-link";a.href="artist.html?id="+encodeURIComponent(artist.id);a.textContent=artist.name||"Artist";byline.appendChild(a)}
+ const featureTable=currentVideo.song_id?"artist_song_features":"video_artist_features";
+ const featureIdColumn=currentVideo.song_id?"song_id":"video_id";
+ const featureRecordId=currentVideo.song_id||currentVideo.id;
+ const featureResult=featureRecordId?await supabaseClient.from(featureTable).select("artist_id,sort_order").eq(featureIdColumn,featureRecordId).order("sort_order",{ascending:true}):{data:[],error:null};
+ const featuredIds=(featureResult.data||[]).map(row=>String(row.artist_id)).filter(id=>!artist||id!==String(artist.id));
+ let featureNames={};
+ if(featuredIds.length){const namesResult=await supabaseClient.from("artists").select("id,name").in("id",featuredIds);if(!namesResult.error)(namesResult.data||[]).forEach(item=>featureNames[String(item.id)]=item.name||"Artist")}
+ let creditCount=artist?1:0;
+ featuredIds.forEach(id=>{const link=document.createElement("a");link.className="artist-link";link.href="artist.html?id="+encodeURIComponent(id);link.textContent=featureNames[id]||"Artist";if(creditCount)byline.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));byline.appendChild(link);creditCount++});
+ (currentVideo.external_features||[]).forEach(credit=>{if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.className="artist-link";link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;if(creditCount)byline.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));byline.appendChild(link);creditCount++}catch(_){}});
  if(artist&&release){const dot=document.createElement("span");dot.className="separator";dot.textContent="·";byline.appendChild(dot)}
  if(release){const a=document.createElement("a");a.className="release-link";a.href="epalbum.html?id="+encodeURIComponent(release.id) + "&v=70a51fd5";a.textContent=release.title||"Release";byline.appendChild(a);}
  // The artist profile is linked in the byline; no separate backArtist element exists.
