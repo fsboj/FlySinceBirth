@@ -1271,8 +1271,8 @@ body {
     <div class="video-upload-card" role="document">
       <div class="video-upload-header">
         <div>
-          <div class="panel-title">ADD VIDEO</div>
-          <div class="panel-description">Upload a video and link it to an FSB artist and optional release.</div>
+          <div class="panel-title" id="videoUploadModalTitle">ADD VIDEO</div>
+          <div class="panel-description">Upload a video and link it to an FSB artist and optional release.<div id="videoEditNote" class="panel-description" style="display:none;margin-top:8px">Leave either file blank to keep the current media. Artist, release, and feature credits stay linked.</div></div>
         </div>
         <button type="button" class="button" aria-label="Close" onclick="closeVideoModal()">CLOSE</button>
       </div>
@@ -1285,10 +1285,12 @@ body {
         <div class="form-group">
           <label for="videoUrlInput">VIDEO FILE</label>
           <input id="videoUrlInput" type="file" accept="video/*" class="admin-input">
+          <div id="videoCurrentFile" class="item-meta"></div>
         </div>
         <div class="form-group">
           <label for="videoImageInput">THUMBNAIL IMAGE</label>
           <input id="videoImageInput" type="file" accept="image/*" class="admin-input">
+          <div id="videoCurrentImage" class="item-meta"></div>
         </div>
         <div class="form-group">
           <label for="videoArtistSelect">ARTIST</label>
@@ -1302,13 +1304,13 @@ body {
             <option value="">SELECT ALBUM / EP (OPTIONAL)</option>
           </select>
         </div>
-        <div class="form-group full">
+        <div class="form-group full" id="videoFeatureArtistGroup">
           <label for="videoFeatureArtistSelect">FEATURE ARTISTS (OPTIONAL)</label>
           <div class="artist-feature-picker" data-select-id="videoFeatureArtistSelect"></div>
           <select id="videoFeatureArtistSelect" class="admin-input" multiple hidden aria-hidden="true"></select>
           <small style="display:block;margin-top:6px;color:#aaa">Search for and select one or more FSB artists. Selected artists are linked to this video on their artist pages.</small>
         </div>
-        <div class="form-group full">
+        <div class="form-group full" id="videoExternalFeatureGroup">
           <label for="videoExternalFeatures">NON-FSB FEATURED ARTISTS</label>
           <div id="videoExternalFeatures" class="external-feature-list"></div>
           <button type="button" class="button" onclick="addExternalFeatureRow('videoExternalFeatures')">+ ADD NON-FSB ARTIST</button>
@@ -1318,7 +1320,7 @@ body {
 
       <div class="actions video-upload-actions">
         <button type="button" class="button" onclick="closeVideoModal()">CANCEL</button>
-        <button type="button" class="button primary" onclick="addVideo()">UPLOAD VIDEO</button>
+        <button type="button" id="videoUploadSubmit" class="button primary" onclick="addVideo()">UPLOAD VIDEO</button>
       </div>
     </div>
   </dialog>
@@ -3447,13 +3449,28 @@ async function removeSongVideo(songId) {
    ADD VIDEO
 ===================================================== */
 
+let editingStandaloneVideo = null;
+
 function openVideoModal() {
     const dialog = document.getElementById("videoUploadModal");
-    if (dialog && typeof dialog.showModal === "function") dialog.showModal();
+    if (!dialog) return;
+    editingStandaloneVideo = null;
+    document.getElementById("videoUploadModalTitle").textContent = "ADD VIDEO";
+    document.getElementById("videoUploadSubmit").textContent = "UPLOAD VIDEO";
+    document.getElementById("videoUploadSubmit").onclick = addVideo;
+    document.getElementById("videoEditNote").style.display = "none";
+    document.getElementById("videoCurrentFile").textContent = "";
+    document.getElementById("videoCurrentImage").textContent = "";
+    document.getElementById("videoArtistSelect").disabled = false;
+    document.getElementById("videoReleaseSelect").disabled = false;
+    document.getElementById("videoFeatureArtistGroup").style.display = "";
+    document.getElementById("videoExternalFeatureGroup").style.display = "";
+    if (!dialog.open) dialog.showModal();
 }
 function closeVideoModal() {
     const dialog = document.getElementById("videoUploadModal");
     if (dialog && dialog.open) dialog.close();
+    editingStandaloneVideo = null;
 }
 
 async function addVideo() {
@@ -3541,90 +3558,78 @@ async function addVideo() {
    EDIT VIDEO
 ===================================================== */
 
-async function editVideo(id) {
+async function saveEditedVideo() {
+    const button = document.getElementById("videoUploadSubmit");
+    const title = document.getElementById("videoTitleInput").value.trim();
+    const videoFile = document.getElementById("videoUrlInput").files[0] || null;
+    const imageFile = document.getElementById("videoImageInput").files[0] || null;
+    const record = editingStandaloneVideo;
+    if (!record) return alert("Open the video editor again and retry.");
+    if (!title) return alert("Enter a video title.");
 
-    const { data, error } =
-        await supabaseClient
-            .from("videos")
-            .select("*")
-            .eq("id", id)
-            .single();
+    const uploadedPaths = [];
+    const suffix = Date.now() + "-" + Math.random().toString(36).slice(2);
+    if (button) { button.disabled = true; button.textContent = "SAVING…"; }
 
+    try {
+        let link = record.link || "";
+        let image = record.image || "";
+        async function upload(file, label) {
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const path = "videos/" + suffix + (label ? "-" + label : "") + "-" + safeName;
+            const result = await supabaseClient.storage.from("videos").upload(path, file);
+            if (result.error) throw new Error("Could not upload " + (label ? "thumbnail" : "video") + ": " + result.error.message);
+            uploadedPaths.push(path);
+            return supabaseClient.storage.from("videos").getPublicUrl(path).data.publicUrl;
+        }
+        if (videoFile) link = await upload(videoFile, "");
+        if (imageFile) image = await upload(imageFile, "thumb");
 
-    if (error) {
-
-        alert(
-            "Could not load video:\n\n" +
-            error.message
-        );
-
-        return;
+        const result = await supabaseClient.from("videos").update({title, link, image}).eq("id", record.id);
+        if (result.error) throw new Error("Could not save video: " + result.error.message);
+        await loadVideos();
+        closeVideoModal();
+        alert("VIDEO UPDATED");
+        if (typeof setStatus === "function") setStatus("VIDEO UPDATED");
+    } catch (error) {
+        if (uploadedPaths.length) await supabaseClient.storage.from("videos").remove(uploadedPaths).catch(() => {});
+        alert("Could not update video: " + (error.message || error));
+    } finally {
+        if (button) { button.disabled = false; button.textContent = editingStandaloneVideo ? "SAVE VIDEO" : "UPLOAD VIDEO"; }
     }
-
-
-    const title =
-        prompt(
-            "Video title:",
-            data.title || ""
-        );
-
-
-    if (title === null) return;
-
-
-    const videoUrl =
-        prompt(
-            "Video URL:",
-            data.link || ""
-        );
-
-
-    if (videoUrl === null) return;
-
-
-    const imageUrl =
-        prompt(
-            "Thumbnail image URL:",
-            data.image || ""
-        );
-
-
-    if (imageUrl === null) return;
-
-
-    const { error: updateError } =
-        await supabaseClient
-            .from("videos")
-            .update({
-    title: title,
-    link: videoUrl,
-    image: imageUrl
-})
-            .eq("id", id);
-
-
-    if (updateError) {
-
-        alert(
-            "Could not update video:\n\n" +
-            updateError.message
-        );
-
-        return;
-    }
-
-
-    await loadVideos();
-
-    setStatus(
-        "VIDEO UPDATED"
-    );
 }
 
+async function editVideo(id) {
+    try {
+        const result = await supabaseClient.from("videos").select("*").eq("id", id).single();
+        if (result.error) throw result.error;
+        const video = result.data;
+        if (typeof loadVideoArtistSelector === "function") await loadVideoArtistSelector();
 
-/* =====================================================
-   REMOVE VIDEO
-===================================================== */
+        editingStandaloneVideo = video;
+        document.getElementById("videoUploadModalTitle").textContent = "EDIT VIDEO";
+        document.getElementById("videoUploadSubmit").textContent = "SAVE VIDEO";
+        document.getElementById("videoUploadSubmit").onclick = saveEditedVideo;
+        document.getElementById("videoEditNote").style.display = "block";
+        document.getElementById("videoTitleInput").value = video.title || "";
+        document.getElementById("videoUrlInput").value = "";
+        document.getElementById("videoImageInput").value = "";
+        const currentFile = document.getElementById("videoCurrentFile");
+        const currentImage = document.getElementById("videoCurrentImage");
+        currentFile.innerHTML = video.link ? '<a href="' + escapeHtml(video.link) + '" target="_blank" rel="noopener noreferrer">VIEW CURRENT VIDEO</a>' : "No current video file";
+        currentImage.innerHTML = video.image ? '<a href="' + escapeHtml(video.image) + '" target="_blank" rel="noopener noreferrer">VIEW CURRENT THUMBNAIL</a>' : "No current thumbnail";
+
+        document.getElementById("videoArtistSelect").disabled = true;
+        document.getElementById("videoReleaseSelect").disabled = true;
+        document.getElementById("videoFeatureArtistGroup").style.display = "none";
+        document.getElementById("videoExternalFeatureGroup").style.display = "none";
+        const dialog = document.getElementById("videoUploadModal");
+        if (!dialog.open) dialog.showModal();
+    } catch (error) {
+        editingStandaloneVideo = null;
+        alert("Could not open video editor: " + (error.message || error));
+    }
+}
 
 async function removeVideo(id) {
 
