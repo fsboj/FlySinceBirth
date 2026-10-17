@@ -37,6 +37,27 @@
   let playlistCache = [];
   let favoriteIds = new Set();
   let allSongs = [];
+  const guestFavoriteStorageKey = "fsbGuestFavoriteSongs";
+
+  function readGuestFavoriteIds() {
+    try { return [...new Set((JSON.parse(localStorage.getItem(guestFavoriteStorageKey) || "[]") || []).map(String))]; }
+    catch (_) { return []; }
+  }
+
+  function saveGuestFavoriteIds(ids) {
+    const uniqueIds = [...new Set(ids.map(String))];
+    try { localStorage.setItem(guestFavoriteStorageKey, JSON.stringify(uniqueIds)); } catch (_) {}
+    return uniqueIds;
+  }
+
+  function accountReturnHref() {
+    const returnPath = location.pathname + location.search + location.hash;
+    return "account.html?return=" + encodeURIComponent(returnPath);
+  }
+
+  function announceFavoriteChange() {
+    window.dispatchEvent(new CustomEvent("fsb:favorites-changed", { detail: { ids: [...favoriteIds] } }));
+  }
 
   async function signedInUser() {
     const { data, error } = await supabaseClient.auth.getUser();
@@ -77,20 +98,29 @@
     return element;
   };
 
-  async function toggleFavorite(songId, button) {
-    const user = currentUser || await signedInUser();
-    currentUser = user;
+  async function toggleFavorite(songId) {
+    if (!currentUser) {
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) throw error;
+      currentUser = data?.session?.user || null;
+    }
     const id = String(songId);
-    if (favoriteIds.has(id)) {
-      const { error } = await supabaseClient.from("customer_favorite_songs").delete().eq("user_id", user.id).eq("song_id", songId);
+    if (!currentUser) {
+      const guestIds = readGuestFavoriteIds();
+      const nextIds = guestIds.includes(id) ? guestIds.filter((item) => item !== id) : [...guestIds, id];
+      favoriteIds = new Set(saveGuestFavoriteIds(nextIds));
+    } else if (favoriteIds.has(id)) {
+      const { error } = await supabaseClient.from("customer_favorite_songs").delete().eq("user_id", currentUser.id).eq("song_id", songId);
       if (error) throw error;
       favoriteIds.delete(id);
+      saveGuestFavoriteIds(readGuestFavoriteIds().filter((item) => item !== id));
     } else {
-      const { error } = await supabaseClient.from("customer_favorite_songs").insert({ user_id: user.id, song_id: songId });
+      const { error } = await supabaseClient.from("customer_favorite_songs").insert({ user_id: currentUser.id, song_id: songId });
       if (error) throw error;
       favoriteIds.add(id);
     }
     updateFavoriteButtons(songId);
+    announceFavoriteChange();
     if ($("favoriteSongs")) await renderLibrary();
   }
 
@@ -273,8 +303,17 @@
   }
 
   async function addToPlaylist(songId, trigger) {
-    const user = currentUser || await signedInUser();
-    currentUser = user;
+    if (!currentUser) {
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) throw error;
+      currentUser = data?.session?.user || null;
+    }
+    if (!currentUser) {
+      try { sessionStorage.setItem("fsbPendingPlaylistSong", JSON.stringify({ songId: String(songId) })); } catch (_) {}
+      location.assign(accountReturnHref());
+      return;
+    }
+    const user = currentUser;
     const { data: playlists, error } = await supabaseClient.from("customer_playlists").select("id,name").eq("user_id", user.id).order("created_at", { ascending: true });
     if (error) throw error;
     openPlaylistDialog(songId, playlists || [], user, trigger);
@@ -320,7 +359,7 @@
     ]);
     if (favoritesResult.error) throw favoritesResult.error;
     if (playlistsResult.error) throw playlistsResult.error;
-    favoriteIds = new Set((favoritesResult.data || []).map((row) => String(row.song_id)));
+    favoriteIds = new Set([...(favoritesResult.data || []).map((row) => String(row.song_id)), ...readGuestFavoriteIds()]);
     playlistCache = playlistsResult.data || [];
     const songMap = new Map(allSongs.map((song) => [String(song.id), song]));
     const favoriteSongs = [...favoriteIds].map((id) => songMap.get(id)).filter(Boolean);
@@ -357,19 +396,26 @@
         if (removeFavorite) result = await supabaseClient.from("customer_favorite_songs").delete().eq("user_id", currentUser.id).eq("song_id", removeFavorite.dataset.removeFavorite);
         else if (removeSong) { const [playlistId, songId] = removeSong.dataset.removeSong.split(":"); result = await supabaseClient.from("customer_playlist_songs").delete().eq("playlist_id", playlistId).eq("song_id", songId); }
         else result = await supabaseClient.from("customer_playlists").delete().eq("id", deletePlaylist.dataset.deletePlaylist).eq("user_id", currentUser.id);
-        if (result.error) throw result.error; await renderLibrary();
+        if (result.error) throw result.error; if (removeFavorite) saveGuestFavoriteIds(readGuestFavoriteIds().filter((id) => id !== String(removeFavorite.dataset.removeFavorite))); announceFavoriteChange(); await renderLibrary();
       } catch (error) { status.textContent = error.message || "Could not update your music library."; } finally { button.disabled = false; }
     });
   }
 
   window.fsbMusicLibraryReady = supabaseClient.auth.getSession().then(async ({ data }) => {
     currentUser = data?.session?.user || null;
+    favoriteIds = new Set(readGuestFavoriteIds());
     if (currentUser) {
       const { data: rows, error } = await supabaseClient.from("customer_favorite_songs").select("song_id").eq("user_id", currentUser.id);
       if (!error) {
-        favoriteIds = new Set((rows || []).map((row) => String(row.song_id)));
-        document.querySelectorAll("[data-fsb-favorite]").forEach((button) => updateFavoriteButtons(button.dataset.fsbFavorite));
+        favoriteIds = new Set([...(rows || []).map((row) => String(row.song_id)), ...readGuestFavoriteIds()]);
       }
+    }
+    document.querySelectorAll("[data-fsb-favorite]").forEach((button) => updateFavoriteButtons(button.dataset.fsbFavorite));
+    let pendingPlaylist = null;
+    try { pendingPlaylist = JSON.parse(sessionStorage.getItem("fsbPendingPlaylistSong") || "null"); } catch (_) {}
+    if (currentUser && pendingPlaylist?.songId) {
+      sessionStorage.removeItem("fsbPendingPlaylistSong");
+      setTimeout(() => addToPlaylist(pendingPlaylist.songId).catch((error) => showLibraryNotice(error.message || "Could not open your playlists.")), 0);
     }
   });
 })();
