@@ -258,7 +258,6 @@ function renderHubFavoriteSongs(favoriteSongs) {
   });
 }
 window.addEventListener("fsb:favorites-changed", event => {
-  if (hubUser) return;
   const ids = event.detail?.ids || [];
   renderHubFavoriteSongs(ids.map(id => musicById.get(String(id))).filter(Boolean));
 });
@@ -285,7 +284,10 @@ async function loadHubLibrary(user) {
   ]);
   if (fav.error) throw fav.error;
   if (lists.error) throw lists.error;
-  const favoriteSongs = (fav.data || []).map((row) => musicById.get(String(row.song_id))).filter(Boolean);
+  let guestIds = [];
+  try { guestIds = (JSON.parse(localStorage.getItem("fsbGuestFavoriteSongs") || "[]") || []).map(String); } catch (_) {}
+  const favoriteIds = [...new Set([...(fav.data || []).map((row) => String(row.song_id)), ...guestIds])];
+  const favoriteSongs = favoriteIds.map(id => musicById.get(id)).filter(Boolean);
   renderHubFavoriteSongs(favoriteSongs);
   const playlistIds = (lists.data || []).map((p) => p.id);
   playlistsNode.innerHTML = "";
