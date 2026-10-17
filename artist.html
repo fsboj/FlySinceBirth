@@ -1722,6 +1722,7 @@ const audio =
     new Audio();
 
 let songs = [];
+let artistFeatureNameMap = new Map();
 
 let currentSongIndex = -1;
 
@@ -2198,11 +2199,7 @@ image.className = "video-thumbnail";
     artist.className =
         "song-artist";
 
-    artist.textContent =
-        document.getElementById(
-            "artistName"
-        ).textContent ||
-        "FLY SINCE BIRTH";
+    renderArtistSongCredits(artist,song);
 
 
     details.appendChild(title);
@@ -2419,11 +2416,25 @@ async function loadArtistMusic() {
     }
 
     songs = artistSongs || [];
+    const featureResult=songs.length?await supabaseClient.from("artist_song_features").select("song_id,artist_id,sort_order").in("song_id",songs.map(song=>song.id)).order("sort_order",{ascending:true}):{data:[],error:null};
+    const featureRows=featureResult.error?[]:(featureResult.data||[]);
+    const featureIdsBySong=new Map();
+    featureRows.forEach(row=>{const key=String(row.song_id);if(!featureIdsBySong.has(key))featureIdsBySong.set(key,[]);featureIdsBySong.get(key).push(String(row.artist_id))});
+    const featureArtistIds=[...new Set(featureRows.map(row=>String(row.artist_id)).filter(id=>id!==String(artistId)))];
+    if(featureArtistIds.length){const artistsResult=await supabaseClient.from("artists").select("id,name").in("id",featureArtistIds);if(!artistsResult.error)(artistsResult.data||[]).forEach(artist=>artistFeatureNameMap.set(String(artist.id),artist.name||"Artist"))}
+    songs.forEach(song=>song.feature_artist_ids=featureIdsBySong.get(String(song.id))||[]);
 
     console.log(
         "ARTIST SONGS LOADED:",
         songs
     );
+function renderArtistSongCredits(node,song){
+    node.replaceChildren();
+    const ids=[...new Set([String(artistId),...(song.feature_artist_ids||[]).map(String)].filter(Boolean))];
+    let count=0;
+    ids.forEach(id=>{const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(id);link.textContent=id===String(artistId)?(document.getElementById("artistName").textContent||"FSB ARTIST"):(artistFeatureNameMap.get(id)||"Artist");if(count)node.appendChild(document.createTextNode(count===1?" feat. ":", "));node.appendChild(link);link.addEventListener("click",event=>event.stopPropagation());count++});
+    (song.external_features||[]).forEach(credit=>{if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;if(count)node.appendChild(document.createTextNode(count===1?" feat. ":", "));node.appendChild(link);link.addEventListener("click",event=>event.stopPropagation());count++}catch(_){}});
+}
 function createTopSongButton(song) {
 
     const button =
@@ -2498,11 +2509,7 @@ function createTopSongButton(song) {
     artist.className =
         "top-song-artist";
 
-    artist.textContent =
-        document.getElementById(
-            "artistName"
-        ).textContent ||
-        "FLY SINCE BIRTH";
+    renderArtistSongCredits(artist,song);
 
 
     info.appendChild(title);
@@ -2597,11 +2604,7 @@ function createCompactSongButton(song) {
     artist.className =
         "compact-song-artist";
 
-    artist.textContent =
-        document.getElementById(
-            "artistName"
-        ).textContent ||
-        "FLY SINCE BIRTH";
+    renderArtistSongCredits(artist,song);
 
 
     info.appendChild(title);
