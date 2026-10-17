@@ -3449,6 +3449,7 @@ function openVideoModal() {
     if (!dialog) return;
     editingStandaloneVideo = null;
     editingSongVideo = null;
+    document.getElementById("videoEditNote").textContent = "Leave either file blank to keep the current media. Artist, release, and feature credits stay linked.";
     document.getElementById("videoTitleInput").readOnly = false;
     document.getElementById("videoThumbnailField").style.display = "";
     document.getElementById("videoUploadModalTitle").textContent = "ADD VIDEO";
@@ -3631,7 +3632,10 @@ async function editVideo(id) {
         document.getElementById("videoUploadModalTitle").textContent = "EDIT VIDEO";
         document.getElementById("videoUploadSubmit").textContent = "SAVE VIDEO";
         document.getElementById("videoUploadSubmit").onclick = saveEditedVideo;
+        document.getElementById("videoEditNote").textContent = "Leave either file blank to keep the current media. Artist, release, and feature credits stay linked.";
         document.getElementById("videoEditNote").style.display = "block";
+        document.getElementById("videoTitleInput").readOnly = false;
+        document.getElementById("videoThumbnailField").style.display = "";
         document.getElementById("videoTitleInput").value = video.title || "";
         document.getElementById("videoUrlInput").value = "";
         document.getElementById("videoImageInput").value = "";
