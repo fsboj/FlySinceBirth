@@ -29,7 +29,6 @@ function init(){
   }
   if(selectedId==='upcoming'){if(typeof loadArtistsForUpcoming==='function')loadArtistsForUpcoming();if(typeof loadUpcomingReleases==='function')loadUpcomingReleases()}
   if(selectedId==='store' && typeof window.loadMerchProductsAdmin==='function') await window.loadMerchProductsAdmin();
-  if(selectedId==='support' && typeof window.loadFsbSupportAdmin==='function') await window.loadFsbSupportAdmin();
  });
  const ids2=['site','photos','music','artists','sections'],ts=[...document.querySelectorAll('.main-page-tabs button')],h=document.getElementById('mainPageSubPanels');
  ids2.forEach(id=>{const p=document.getElementById(id);if(p&&h&&p.parentElement!==h){p.classList.remove('panel','active');p.classList.add('main-page-subpanel');p.style.display='none';h.appendChild(p)}});
