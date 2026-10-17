@@ -286,11 +286,16 @@ async function artistUploadFile(bucket,artistId,file,folder){
 }
 function artistUploadTrackRow(container,number){
  const row=document.createElement('div');
- row.className='admin-item';
- row.style.cssText='display:grid;grid-template-columns:45px minmax(120px,1fr) minmax(110px,1fr) minmax(110px,1fr) minmax(150px,1fr) 90px;gap:10px;align-items:center';
- row.innerHTML='<div style="text-align:center">'+number+'</div><input class="artist-upload-track-title" placeholder="Track title"><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">AUDIO<input class="artist-upload-track-file" type="file" accept="audio/*"></label><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">VIDEO<input class="artist-upload-track-video" type="file" accept="video/*"></label><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">FEATURE ARTISTS<select class="artist-track-feature-select" multiple size="3" aria-label="Featured artists for track"></select></label><button class="button danger" type="button">REMOVE</button>';
- row.querySelector('button').onclick=()=>{row.remove();[...container.children].forEach((x,i)=>x.firstElementChild.textContent=i+1)};
- container.appendChild(row);window.populateArtistFeatureSelect(row.querySelector('.artist-track-feature-select')).catch(e=>alert('Could not load artists: '+e.message));
+ const pickerId='artistTrackFeatures_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+ const externalId=pickerId+'_external';
+ row.className='admin-item artist-release-track-row';
+ row.dataset.externalFeatureId=externalId;
+ row.style.cssText='display:grid;grid-template-columns:45px repeat(3,minmax(100px,1fr)) minmax(220px,1.8fr) auto;gap:10px;align-items:start';
+ row.innerHTML='<div style="text-align:center;padding-top:12px">'+number+'</div><input class="artist-upload-track-title" placeholder="Track title"><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">AUDIO<input class="artist-upload-track-file" type="file" accept="audio/*"></label><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">VIDEO<input class="artist-upload-track-video" type="file" accept="video/*"></label><div><strong style="display:block;font-size:11px;margin-bottom:6px">FEATURE ARTISTS</strong><div class="artist-feature-picker" data-select-id="'+pickerId+'"></div><select id="'+pickerId+'" class="artist-track-feature-select" multiple aria-label="Featured FSB artists for track" style="display:none"></select><div style="display:flex;align-items:center;gap:8px;margin:10px 0 5px"><span style="font-size:11px">NON-FSB ARTISTS</span><button class="button" type="button" data-add-external-feature>Add artist + link</button></div><div id="'+externalId+'"></div></div><button class="button danger" type="button">REMOVE</button>';
+ row.querySelector('[data-add-external-feature]').onclick=()=>window.addExternalFeatureRow(externalId);
+ row.querySelector('.button.danger').onclick=()=>{row.remove();[...container.children].forEach((x,i)=>{const n=x.firstElementChild;if(n)n.textContent=i+1})};
+ container.appendChild(row);
+ window.populateArtistFeatureSelect(row.querySelector('.artist-track-feature-select')).catch(e=>alert('Could not load artists: '+e.message));
 }
 async function createArtistScheduledRelease(type,title,date,artworkFile,rows,releaseVideoFiles){
  if(!selectedArtistPageId)throw new Error('Please select an artist page first.');
@@ -305,7 +310,7 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
   const trackTitle=titleEl&&titleEl.value.trim(),audio=audioEl&&audioEl.files[0],video=videoEl&&videoEl.files[0];
   if(!trackTitle)throw new Error('Enter a title for track '+(i+1)+'.');
   if(!audio)throw new Error('Select an audio file for track '+(i+1)+'.');
-  return {title:trackTitle,audio,video,featureIds:[...(row.querySelector('.artist-track-feature-select')?.selectedOptions||[])].map(o=>o.value)};
+  return {title:trackTitle,audio,video,externalFeatures:window.collectExternalFeatureCredits(row.dataset.externalFeatureId),featureIds:[...(row.querySelector('.artist-track-feature-select')?.selectedOptions||[])].map(o=>o.value)};
  });
  const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
  const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,release_date:date||null,sort_order:0}).select().single();
@@ -316,7 +321,7 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
   if(!v.file)continue;
   const link=await artistUploadFile('videos',selectedArtistPageId,v.file,'artist-releases/'+ins.data.id);
   const thumb=await artistUploadFile('artist-artwork',selectedArtistPageId,v.thumbnail,'release-video-thumbnails/'+ins.data.id);
-  const vr=await supabaseClient.from('videos').insert({title:v.title||('Video '+(i+1)),link,image:thumb,sort_order:i+1,artist_id:selectedArtistPageId,release_id:ins.data.id}).select('id').single();
+  const vr=await supabaseClient.from('videos').insert({title:v.title||('Video '+(i+1)),link,image:thumb,sort_order:i+1,artist_id:selectedArtistPageId,release_id:ins.data.id,external_features:v.externalFeatures||[]}).select('id').single();
   if(vr.error)throw vr.error;
   await window.saveArtistFeatureLinks('video_artist_features','video_id',vr.data.id,v.featureSelect,selectedArtistPageId);
  }
@@ -324,7 +329,7 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
   const {title:trackTitle,audio,video}=tracks[i];
   const audioUrl=await artistUploadFile('artist-music',selectedArtistPageId,audio,'releases/'+ins.data.id);
   const videoUrl=await artistUploadFile('videos',selectedArtistPageId,video,'artist-videos/'+ins.data.id);
-  const song=await supabaseClient.from('artist_songs').insert({artist_id:selectedArtistPageId,title:trackTitle,audio_url:audioUrl,image_url:artwork,video_url:videoUrl,sort_order:i+1,plays:0,is_top_song:false,sections:[type==='album'?'albums':'eps'],release_id:ins.data.id,track_number:i+1}).select('id').single();
+  const song=await supabaseClient.from('artist_songs').insert({artist_id:selectedArtistPageId,title:trackTitle,audio_url:audioUrl,image_url:artwork,video_url:videoUrl,sort_order:i+1,plays:0,is_top_song:false,external_features:tracks[i].externalFeatures||[],sections:[type==='album'?'albums':'eps'],release_id:ins.data.id,track_number:i+1}).select('id').single();
   if(song.error)throw song.error;
   await window.saveArtistFeatureLinks('artist_song_features','song_id',song.data.id,rows[i].querySelector('.artist-track-feature-select'),selectedArtistPageId);
  }
@@ -362,7 +367,7 @@ window.saveArtistRelease=async function(){
   const art=document.getElementById('artistReleaseArtwork').files[0];
   const rows=[...document.querySelectorAll('#artistReleaseTracks .admin-item')];
   const b=document.getElementById('artistReleaseSubmitButton');if(b){b.disabled=true;b.textContent='UPLOADING...'}
-  const releaseVideos=[...document.querySelectorAll('#artistReleaseVideos .artist-release-video-row')].map(function(row){return {title:row.querySelector('.artist-release-video-title')?.value.trim()||'',file:row.querySelector('.artist-release-video-file')?.files[0]||null,thumbnail:row.querySelector('.artist-release-video-thumb')?.files[0]||null,featureSelect:row.querySelector('.artist-release-video-features')}}); if(releaseVideos.some(function(v){return !v.file}))throw new Error('Select a video file for every release video row.'); await createArtistScheduledRelease(type,title,date,art,rows,releaseVideos);
+  const releaseVideos=[...document.querySelectorAll('#artistReleaseVideos .artist-release-video-row')].map(function(row){return {title:row.querySelector('.artist-release-video-title')?.value.trim()||'',file:row.querySelector('.artist-release-video-file')?.files[0]||null,thumbnail:row.querySelector('.artist-release-video-thumb')?.files[0]||null,featureSelect:row.querySelector('.artist-release-video-features'),externalFeatures:window.collectExternalFeatureCredits(row.dataset.externalFeatureId)}}); if(releaseVideos.some(function(v){return !v.file}))throw new Error('Select a video file for every release video row.'); await createArtistScheduledRelease(type,title,date,art,rows,releaseVideos);
   document.getElementById('artistReleaseTitle').value='';document.getElementById('artistReleaseDate').value='';document.getElementById('artistReleaseArtwork').value='';if(document.getElementById('artistReleaseVideos'))document.getElementById('artistReleaseVideos').innerHTML='';document.getElementById('artistReleaseTracks').innerHTML='';
   await renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('UPCOMING RELEASE SAVED');
   alert('Upcoming '+type.toUpperCase()+' saved. It will appear publicly on '+(date||'the release date')+'.');
@@ -375,9 +380,10 @@ function setupArtistMusicUploadUI(){
  window.populateArtistFeatureSelect(document.getElementById('videoFeatureArtistSelect')).catch(e=>console.error('Could not load video feature artists',e));
  if(releaseVideos&&addReleaseVideo){
   const addVideo=()=>{
-   const row=document.createElement('div');row.className='admin-item artist-release-video-row';row.style.cssText='display:grid;grid-template-columns:repeat(3,minmax(120px,1fr)) minmax(150px,1fr) 90px;gap:10px;align-items:center';
-   row.innerHTML='<input class="artist-release-video-title" placeholder="Video title"><input class="artist-release-video-file" type="file" accept="video/*"><input class="artist-release-video-thumb" type="file" accept="image/*"><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">FEATURE ARTISTS<select class="artist-release-video-features" multiple size="3" aria-label="Featured artists for video"></select></label><button class="button danger" type="button">REMOVE</button>';
-   row.querySelector('button').onclick=()=>row.remove();releaseVideos.appendChild(row);window.populateArtistFeatureSelect(row.querySelector('.artist-release-video-features')).catch(e=>alert('Could not load artists: '+e.message));
+   const row=document.createElement('div'),pickerId='artistReleaseVideoFeatures_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),externalId=pickerId+'_external';
+   row.className='admin-item artist-release-video-row';row.dataset.externalFeatureId=externalId;row.style.cssText='display:grid;grid-template-columns:repeat(3,minmax(110px,1fr)) minmax(220px,1.8fr) auto;gap:10px;align-items:start';
+   row.innerHTML='<input class="artist-release-video-title" placeholder="Video title"><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">VIDEO FILE<input class="artist-release-video-file" type="file" accept="video/*"></label><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">THUMBNAIL<input class="artist-release-video-thumb" type="file" accept="image/*"></label><div><strong style="display:block;font-size:11px;margin-bottom:6px">FEATURE ARTISTS</strong><div class="artist-feature-picker" data-select-id="'+pickerId+'"></div><select id="'+pickerId+'" class="artist-release-video-features" multiple aria-label="Featured FSB artists for video" style="display:none"></select><div style="display:flex;align-items:center;gap:8px;margin:10px 0 5px"><span style="font-size:11px">NON-FSB ARTISTS</span><button class="button" type="button" data-add-external-feature>Add artist + link</button></div><div id="'+externalId+'"></div></div><button class="button danger" type="button">REMOVE</button>';
+   row.querySelector('[data-add-external-feature]').onclick=()=>window.addExternalFeatureRow(externalId);row.querySelector('.button.danger').onclick=()=>row.remove();releaseVideos.appendChild(row);window.populateArtistFeatureSelect(row.querySelector('.artist-release-video-features')).catch(e=>alert('Could not load artists: '+e.message));
   };
   addReleaseVideo.onclick=addVideo;
  }
