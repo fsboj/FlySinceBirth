@@ -3469,8 +3469,24 @@ function openVideoModal() {
 }
 function closeVideoModal() {
     const dialog = document.getElementById("videoUploadModal");
+    const wasEditing = !!editingStandaloneVideo;
     if (dialog && dialog.open) dialog.close();
     editingStandaloneVideo = null;
+    if (wasEditing) {
+        document.getElementById("videoTitleInput").value = "";
+        document.getElementById("videoUrlInput").value = "";
+        document.getElementById("videoImageInput").value = "";
+    }
+    document.getElementById("videoUploadModalTitle").textContent = "ADD VIDEO";
+    document.getElementById("videoUploadSubmit").textContent = "UPLOAD VIDEO";
+    document.getElementById("videoUploadSubmit").onclick = addVideo;
+    document.getElementById("videoEditNote").style.display = "none";
+    document.getElementById("videoCurrentFile").textContent = "";
+    document.getElementById("videoCurrentImage").textContent = "";
+    document.getElementById("videoArtistSelect").disabled = false;
+    document.getElementById("videoReleaseSelect").disabled = false;
+    document.getElementById("videoFeatureArtistGroup").style.display = "";
+    document.getElementById("videoExternalFeatureGroup").style.display = "";
 }
 
 async function addVideo() {
@@ -3589,7 +3605,7 @@ async function saveEditedVideo() {
         const result = await supabaseClient.from("videos").update({title, link, image}).eq("id", record.id);
         if (result.error) throw new Error("Could not save video: " + result.error.message);
         recordSaved = true;
-        await loadVideos();
+        try { await loadVideos(); } catch (refreshError) { console.warn("Video saved, but the list could not refresh:", refreshError); }
         closeVideoModal();
         alert("VIDEO UPDATED");
         if (typeof setStatus === "function") setStatus("VIDEO UPDATED");
@@ -3621,8 +3637,15 @@ async function editVideo(id) {
         currentFile.innerHTML = video.link ? '<a href="' + escapeHtml(video.link) + '" target="_blank" rel="noopener noreferrer">VIEW CURRENT VIDEO</a>' : "No current video file";
         currentImage.innerHTML = video.image ? '<a href="' + escapeHtml(video.image) + '" target="_blank" rel="noopener noreferrer">VIEW CURRENT THUMBNAIL</a>' : "No current thumbnail";
 
-        document.getElementById("videoArtistSelect").disabled = true;
-        document.getElementById("videoReleaseSelect").disabled = true;
+        const artistSelect = document.getElementById("videoArtistSelect");
+        const releaseSelect = document.getElementById("videoReleaseSelect");
+        artistSelect.value = video.artist_id ? String(video.artist_id) : "";
+        if (video.artist_id && typeof loadVideoReleases === "function") {
+            await loadVideoReleases(String(video.artist_id));
+            releaseSelect.value = video.release_id ? String(video.release_id) : "";
+        }
+        artistSelect.disabled = true;
+        releaseSelect.disabled = true;
         document.getElementById("videoFeatureArtistGroup").style.display = "none";
         document.getElementById("videoExternalFeatureGroup").style.display = "none";
         const dialog = document.getElementById("videoUploadModal");
