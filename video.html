@@ -31,7 +31,7 @@ function videoPlayer(url,title){
  const host=document.getElementById("playerHost");host.innerHTML="";
  if(!url){host.innerHTML='<div class="empty">VIDEO LINK NOT AVAILABLE</div>';return}
  const isFile=/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url);
- if(isFile){const v=document.createElement("video");v.className="video-player";v.controls=true;v.playsInline=true;v.preload="metadata";v.src=url;v.setAttribute("aria-label",title||"Video player");host.appendChild(v);return}
+ if(isFile){const v=document.createElement("video");v.className="video-player";v.controls=true;v.controlsList="nodownload";v.playsInline=true;v.preload="metadata";v.src=url;v.setAttribute("aria-label",title||"Video player");host.appendChild(v);return}
  let embed=url;
  const yt=url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
  const vm=url.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
