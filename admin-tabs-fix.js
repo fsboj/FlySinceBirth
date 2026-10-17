@@ -128,29 +128,14 @@ function renderSingles(list,songs){
  list.style.setProperty('width','100%','important');
  if(!songs.length){list.innerHTML='<div class="admin-item"><div class="item-name">NO STANDALONE SINGLES</div></div>';return}
  songs.forEach(song=>{
-  const card=document.createElement('div');
-  card.className='admin-item artist-single-editor-card';
-  card.style.cssText='display:block;width:100%;box-sizing:border-box;padding:14px;overflow:visible';
-  const summary=document.createElement('div');
-  summary.className='artist-single-summary';
-  summary.style.cssText='display:flex;align-items:center;gap:14px;cursor:pointer;min-height:65px';
+  const card=document.createElement('div');card.className='admin-item artist-single-editor-card';card.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;box-sizing:border-box;padding:14px;overflow:visible';
+  const summary=document.createElement('div');summary.className='artist-single-summary';summary.style.cssText='display:flex;align-items:center;gap:14px;min-height:65px;min-width:0;flex:1';
   const img=song.image_url?'<img src="'+esc(song.image_url)+'" alt="" style="width:54px;height:54px;object-fit:cover;border:1px solid #242424;flex:0 0 auto">':'<div style="width:54px;height:54px;border:1px solid #242424;display:flex;align-items:center;justify-content:center;color:#555;font-size:10px;flex:0 0 auto">SINGLE</div>';
-  summary.innerHTML=img+'<div><div class="item-name" style="font-size:12px;line-height:1.25">'+esc(song.title)+'</div><div class="item-meta">CLICK TO EDIT</div></div>';
-  const editor=document.createElement('div');
-  editor.className='inline-song-editor';
-  editor.style.cssText='display:none;position:static;clear:both;width:100%;box-sizing:border-box;margin-top:16px;padding:20px;border:1px solid #242424;background:#090909';
-  editor.innerHTML=inlineSongEditorHtml(song);
-  summary.addEventListener('click',()=>{
-   const open=editor.style.display!=='none';
-   document.querySelectorAll('#artistSongsAdminList .inline-song-editor').forEach(x=>{x.style.display='none'});
-   document.querySelectorAll('#artistSongsAdminList .artist-single-summary .item-meta').forEach(x=>{x.textContent='CLICK TO EDIT'});
-   if(!open){editor.style.display='block';summary.querySelector('.item-meta').textContent='CLICK TO CLOSE'}
-  });
-  editor.querySelector('.inline-song-save').onclick=()=>saveInlineSong(song.id,editor);
-  editor.querySelector('.inline-song-delete').onclick=()=>deleteArtistSong(song.id).then(()=>renderArtistMusic(selectedArtistPageId));
-  card.appendChild(summary);
-  card.appendChild(editor);
-  list.appendChild(card);
+  summary.innerHTML=img+'<div><div class="item-name" style="font-size:12px;line-height:1.25">'+esc(song.title)+'</div><div class="item-meta">SINGLE</div></div>';
+  const actions=document.createElement('div');actions.className='actions';actions.style.cssText='margin:0;flex:0 0 auto';
+  const edit=document.createElement('button');edit.type='button';edit.className='button';edit.textContent='EDIT';edit.onclick=()=>window.editArtistSong(song.id);
+  const remove=document.createElement('button');remove.type='button';remove.className='button danger';remove.textContent='DELETE';remove.onclick=()=>deleteArtistSong(song.id).then(()=>renderArtistMusic(selectedArtistPageId));
+  actions.append(edit,remove);card.append(summary,actions);list.appendChild(card);
  });
 }
 function inlineSongEditorHtml(song){
@@ -621,4 +606,107 @@ window.addEvent = async function(){
  function hostValue(selector){const node=document.querySelector(selector);return node?node.value:null}
  function init(){mount();const support=$('support');if(support?.classList.contains('active'))window.loadFsbSupportAdmin()}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+
+
+/* Artist admin dialogs: keep the existing Supabase-backed controls, but host
+   each workflow in a focused modal instead of a long inline form. */
+(function(){
+ const style=document.createElement('style');
+ style.textContent='dialog.fsb-artist-modal{color:#fff;background:#080808;border:1px solid #333;border-radius:12px;padding:0;width:min(980px,calc(100vw - 28px));max-width:980px;max-height:92vh;overflow:auto;box-shadow:0 24px 90px #000}dialog.fsb-artist-modal::backdrop{background:rgba(0,0,0,.82)}.fsb-artist-modal-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;background:#080808;border-bottom:1px solid #292929}.fsb-artist-modal-body{padding:22px}.artist-modal-launch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;margin:20px 0 30px}.artist-modal-launch{min-height:58px;white-space:normal}.fsb-artist-modal .artist-feature-picker{min-width:0}@media(max-width:600px){.fsb-artist-modal-body{padding:14px}.fsb-artist-modal-head{padding:14px}}';
+ document.head.appendChild(style);
+ function makeDialog(id,title){
+  let dialog=document.getElementById(id);if(dialog)return dialog;
+  dialog=document.createElement('dialog');dialog.id=id;dialog.className='fsb-artist-modal';
+  const head=document.createElement('div');head.className='fsb-artist-modal-head';
+  const heading=document.createElement('div');heading.className='panel-title';heading.textContent=title;heading.dataset.modalTitle='1';
+  const close=document.createElement('button');close.type='button';close.className='button';close.textContent='CLOSE';close.setAttribute('aria-label','Close dialog');close.onclick=()=>dialog.close();
+  head.append(heading,close);
+  const body=document.createElement('div');body.className='fsb-artist-modal-body';body.dataset.modalBody='1';
+  dialog.append(head,body);dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});
+  document.body.appendChild(dialog);return dialog;
+ }
+ function open(dialog){if(dialog&&typeof dialog.showModal==='function'&&!dialog.open)dialog.showModal()}
+ function sectionByTitle(manager,title){
+  return [...manager.children].find(node=>[...node.children].some(child=>child.classList&&child.classList.contains('panel-title')&&(child.textContent||'').trim().toUpperCase()===title));
+ }
+ function addLauncher(host,label,handler){
+  const button=document.createElement('button');button.type='button';button.className='button primary artist-modal-launch';button.textContent=label;button.onclick=handler;host.appendChild(button);return button;
+ }
+ function moveSection(manager,launchers,title,dialogId,modalTitle,buttonLabel,onOpen){
+  const node=sectionByTitle(manager,title);if(!node)return null;
+  const dialog=makeDialog(dialogId,modalTitle),body=dialog.querySelector('[data-modal-body]');
+  const slot=document.createElement('div');slot.className='admin-item';slot.style.cssText='display:none';
+  node.parentNode.insertBefore(slot,node);node.remove();node.style.margin='0';node.style.padding='0';node.style.borderTop='0';body.appendChild(node);
+  if(buttonLabel)addLauncher(launchers,buttonLabel,()=>{if(onOpen)onOpen(dialog);open(dialog)});
+  return dialog;
+ }
+ function setup(){
+  const manager=document.getElementById('artistPageManager');if(!manager||manager.dataset.modalized==='1')return;
+  const header=manager.firstElementChild;
+  const launchers=document.createElement('div');launchers.className='artist-modal-launch-grid';
+  if(header)header.insertAdjacentElement('afterend',launchers);
+  manager.dataset.modalized='1';
+
+  const profileFields=[...manager.children].find(node=>node.classList&&node.classList.contains('form-grid'));
+  const profileSave=[...manager.children].find(node=>node.classList&&node.classList.contains('actions'));
+  const profileDialog=makeDialog('artistProfileModal','EDIT ARTIST PROFILE');
+  const profileBody=profileDialog.querySelector('[data-modal-body]');
+  if(profileFields)profileBody.appendChild(profileFields);
+  if(profileSave)profileBody.appendChild(profileSave);
+  addLauncher(launchers,'EDIT ARTIST PROFILE',()=>open(profileDialog));
+
+  const musicDialog=moveSection(manager,null,'MUSIC UPLOAD','artistMusicUploadModal','UPLOAD MUSIC',null);
+  if(musicDialog){
+   const type=document.getElementById('artistMusicUploadType');
+   const typeGroup=type&&type.closest('.form-group');
+   if(typeGroup)typeGroup.style.display='none';
+   ['single','ep','album'].forEach(kind=>addLauncher(launchers,'ADD '+kind.toUpperCase(),()=>{
+    if(type){type.value=kind;type.dispatchEvent(new Event('change',{bubbles:true}))}
+    const title=musicDialog.querySelector('[data-modal-title]');if(title)title.textContent='UPLOAD '+kind.toUpperCase();
+    const submit=document.getElementById('artistSongSubmitButton');if(submit)submit.textContent='UPLOAD '+kind.toUpperCase();
+    open(musicDialog);
+   }));
+  }
+  moveSection(manager,launchers,'UPCOMING RELEASE','artistUpcomingReleaseModal','CREATE UPCOMING RELEASE','ADD UPCOMING RELEASE');
+  moveSection(manager,launchers,'LINKS','artistLinksModal','ARTIST LINKS','MANAGE LINKS');
+
+  const songHeading=sectionByTitle(manager,'SINGLES');
+  if(songHeading){const desc=[...songHeading.children].find(x=>x.classList&&x.classList.contains('panel-description'));if(desc)desc.textContent='Edit or remove a standalone song. Editing opens a modal.'}
+  const releasesHeading=sectionByTitle(manager,'ALBUMS / EPS');
+  if(releasesHeading){const desc=[...releasesHeading.children].find(x=>x.classList&&x.classList.contains('panel-description'));if(desc)desc.textContent='Open a project to edit its release or individual tracks in a modal.'}
+
+  if(window.addArtistLink&&!window.addArtistLink.__artistModalWrapped){
+   const original=window.addArtistLink;
+   const wrapped=async function(){await original.apply(this,arguments);const title=document.getElementById('artistLinkTitle'),url=document.getElementById('artistLinkUrl');if(title&&url&&!title.value&&!url.value)document.getElementById('artistLinksModal')?.close()};
+   wrapped.__artistModalWrapped=true;window.addArtistLink=wrapped;
+  }
+  if(window.saveArtistRelease&&!window.saveArtistRelease.__artistModalWrapped){
+   const original=window.saveArtistRelease;
+   const wrapped=async function(){await original.apply(this,arguments);const title=document.getElementById('artistReleaseTitle');if(title&&!title.value)document.getElementById('artistUpcomingReleaseModal')?.close()};
+   wrapped.__artistModalWrapped=true;window.saveArtistRelease=wrapped;
+  }
+  if(window.uploadArtistMusic&&!window.uploadArtistMusic.__artistModalWrapped){
+   const original=window.uploadArtistMusic;
+   const wrapped=async function(){await original.apply(this,arguments);const kind=document.getElementById('artistMusicUploadType')?.value;const complete=kind==='single'?(!document.getElementById('artistSongTitle')?.value&&!document.getElementById('artistSongFile')?.value):(!document.getElementById('artistMusicProjectTitle')?.value&&!document.getElementById('artistMusicProjectArtwork')?.value);if(complete)document.getElementById('artistMusicUploadModal')?.close()};
+   wrapped.__artistModalWrapped=true;window.uploadArtistMusic=wrapped;
+  }
+  if(window.editArtistLink&&!window.editArtistLink.__artistModalWrapped){
+   window.editArtistLink=async function(id){
+    const result=await supabaseClient.from('artist_links').select('*').eq('id',id).single();if(result.error){alert('Could not load link: '+result.error.message);return}
+    document.getElementById('artistLinkEditModal')?.remove();
+    const dialog=makeDialog('artistLinkEditModal','EDIT ARTIST LINK'),body=dialog.querySelector('[data-modal-body]');
+    const titleGroup=document.createElement('div');titleGroup.className='form-group';titleGroup.innerHTML='<label>LINK NAME</label><input type="text" class="artist-link-edit-title">';
+    const urlGroup=document.createElement('div');urlGroup.className='form-group';urlGroup.innerHTML='<label>LINK URL</label><input type="url" class="artist-link-edit-url">';
+    titleGroup.querySelector('input').value=result.data.title||'';urlGroup.querySelector('input').value=result.data.url||'';
+    const actions=document.createElement('div');actions.className='actions';actions.style.marginTop='20px';
+    const save=document.createElement('button');save.type='button';save.className='button primary';save.textContent='SAVE LINK';
+    const cancel=document.createElement('button');cancel.type='button';cancel.className='button';cancel.textContent='CANCEL';cancel.onclick=()=>dialog.close();
+    save.onclick=async()=>{const title=titleGroup.querySelector('input').value.trim(),url=urlGroup.querySelector('input').value.trim();if(!title||!url){alert('Enter both a link name and URL.');return}try{new URL(url)}catch(_){alert('Enter a valid link URL.');return}const update=await supabaseClient.from('artist_links').update({title,url}).eq('id',id);if(update.error){alert('Could not update link: '+update.error.message);return}dialog.close();await loadArtistLinksAdmin();if(typeof setStatus==='function')setStatus('ARTIST LINK UPDATED')};
+    actions.append(save,cancel);body.append(titleGroup,urlGroup,actions);open(dialog);
+   };
+   window.editArtistLink.__artistModalWrapped=true;
+  }
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(setup,0),{once:true});else setTimeout(setup,0);
 })();
