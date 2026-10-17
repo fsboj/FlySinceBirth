@@ -240,11 +240,6 @@ function renderVideo(video, artistName, featuredIds, artistNames) {
   info.className = "hub-video-info";
   const credits = artistCreditLinks(video.artist_id, artistName || "FLY SINCE BIRTH", featuredIds, artistNames || new Map(), video.external_features);
   info.innerHTML = `<strong>${musicEsc(video.title || "Untitled video")}</strong><small>${credits || "FLY SINCE BIRTH"}</small><button class="hub-video-play" type="button" data-hub-play-video="${musicEsc(video.id)}">WATCH HERE</button>`;
-  const download = window.fsbCreateDownloadLink ? window.fsbCreateDownloadLink(video.link, video.title || "FSB video", "video") : null;
-  if (download) {
-    download.classList.add("hub-video-download");
-    info.appendChild(download);
-  }
   card.appendChild(info);
   return card;
 }
@@ -363,13 +358,7 @@ async function loadHubLibrary(user) {
       button.textContent = song.audio_url ? "PLAY" : "UNAVAILABLE";
       button.disabled = !song.audio_url;
       button.addEventListener("click", () => startSong(song, tracks));
-      const download = window.fsbCreateDownloadLink ? window.fsbCreateDownloadLink(song.audio_url, song.title || "FSB song", "audio") : null;
-      if (download) {
-        download.classList.add("hub-playlist-download");
-        row.append(title, download, button);
-      } else {
-        row.append(title, button);
-      }
+      row.append(title, button);
       body.appendChild(row);
     });
 
