@@ -3568,6 +3568,7 @@ async function saveEditedVideo() {
     if (!title) return alert("Enter a video title.");
 
     const uploadedPaths = [];
+    let recordSaved = false;
     const suffix = Date.now() + "-" + Math.random().toString(36).slice(2);
     if (button) { button.disabled = true; button.textContent = "SAVING…"; }
 
@@ -3587,12 +3588,13 @@ async function saveEditedVideo() {
 
         const result = await supabaseClient.from("videos").update({title, link, image}).eq("id", record.id);
         if (result.error) throw new Error("Could not save video: " + result.error.message);
+        recordSaved = true;
         await loadVideos();
         closeVideoModal();
         alert("VIDEO UPDATED");
         if (typeof setStatus === "function") setStatus("VIDEO UPDATED");
     } catch (error) {
-        if (uploadedPaths.length) await supabaseClient.storage.from("videos").remove(uploadedPaths).catch(() => {});
+        if (!recordSaved && uploadedPaths.length) await supabaseClient.storage.from("videos").remove(uploadedPaths).catch(() => {});
         alert("Could not update video: " + (error.message || error));
     } finally {
         if (button) { button.disabled = false; button.textContent = editingStandaloneVideo ? "SAVE VIDEO" : "UPLOAD VIDEO"; }
