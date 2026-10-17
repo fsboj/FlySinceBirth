@@ -32,7 +32,7 @@ async function loadVideos(){
  const grid=document.getElementById("videoGrid");
  const [videoResult,songVideoResult]=await Promise.all([
   supabaseClient.from("videos").select("*").order("sort_order",{ascending:true}),
-  supabaseClient.from("artist_songs").select("id,title,artist_id,video_url,image_url,created_at").not("video_url","is",null).order("created_at",{ascending:false})
+  supabaseClient.from("artist_songs").select("id,title,artist_id,video_url,image_url,created_at,external_features").not("video_url","is",null).order("created_at",{ascending:false})
  ]);
  if(videoResult.error)console.error("Could not load videos:",videoResult.error);
  if(songVideoResult.error)console.error("Could not load song videos:",songVideoResult.error);
@@ -45,15 +45,20 @@ async function loadVideos(){
  ];
  if(!items.length){grid.innerHTML='<p class="status">NO VIDEOS AVAILABLE YET.</p>';return;}
  const standaloneVideos=videos.filter(v=>v.id!=null);
- const [featureResult]=await Promise.all([
+ const [featureResult,songFeatureResult]=await Promise.all([
   standaloneVideos.length
    ?supabaseClient.from("video_artist_features").select("video_id,artist_id,sort_order").in("video_id",standaloneVideos.map(v=>v.id)).order("sort_order")
+   :Promise.resolve({data:[],error:null}),
+  songVideos.length
+   ?supabaseClient.from("artist_song_features").select("song_id,artist_id,sort_order").in("song_id",songVideos.map(v=>v.id)).order("sort_order")
    :Promise.resolve({data:[],error:null})
  ]);
  const features=featureResult.error?[]:(featureResult.data||[]);
- const creditsByVideo=new Map();
+ const songFeatures=songFeatureResult.error?[]:(songFeatureResult.data||[]);
+ const creditsByVideo=new Map(),creditsBySong=new Map();
  features.forEach(row=>{const key=String(row.video_id);if(!creditsByVideo.has(key))creditsByVideo.set(key,[]);creditsByVideo.get(key).push(String(row.artist_id))});
- const allArtistIds=[...new Set([...items.map(v=>v.artist_id),...features.map(row=>row.artist_id)].filter(Boolean).map(String))],artistNames={};
+ songFeatures.forEach(row=>{const key=String(row.song_id);if(!creditsBySong.has(key))creditsBySong.set(key,[]);creditsBySong.get(key).push(String(row.artist_id))});
+ const allArtistIds=[...new Set([...items.map(v=>v.artist_id),...features.map(row=>row.artist_id),...songFeatures.map(row=>row.artist_id)].filter(Boolean).map(String))],artistNames={};
  if(allArtistIds.length){
   const result=await supabaseClient.from("artists").select("id,name").in("id",allArtistIds);
   if(!result.error)(result.data||[]).forEach(a=>artistNames[String(a.id)]=a.name||"");
@@ -66,14 +71,22 @@ async function loadVideos(){
   const artist=document.createElement("div");artist.className="video-artist";
   const artistCredits=item.itemType==="video"
    ?[...new Set([item.artist_id,...(creditsByVideo.get(String(item.id))||[])].filter(Boolean).map(String))]
-   :[...new Set([item.artist_id].filter(Boolean).map(String))];
-  artistCredits.forEach((artistId,index)=>{
+   :[...new Set([item.artist_id,...(creditsBySong.get(String(item.id))||[])].filter(Boolean).map(String))];
+  let creditCount=0;
+  artistCredits.forEach(artistId=>{
    const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(artistId);link.textContent=artistNames[artistId]||"Artist";
    link.addEventListener("click",event=>event.stopPropagation());
-   if(index===1)artist.appendChild(document.createTextNode(" feat. "));else if(index>1)artist.appendChild(document.createTextNode(", "));
-   artist.appendChild(link);
+   if(creditCount===1)artist.appendChild(document.createTextNode(" feat. "));else if(creditCount>1)artist.appendChild(document.createTextNode(", "));
+   artist.appendChild(link);creditCount++;
   });
-  if(!artistCredits.length)artist.textContent=item.artist||"";
+  (item.external_features||[]).forEach(credit=>{
+   if(!credit||!credit.name||!credit.url)return;
+   try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;
+    const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;link.addEventListener("click",event=>event.stopPropagation());
+    artist.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));artist.appendChild(link);creditCount++;
+   }catch(_){}
+  });
+  if(!creditCount)artist.textContent=item.artist||"";
   card.appendChild(artist);
   const title=document.createElement("div");title.className="video-title";title.textContent=item.title||"Untitled Video";card.appendChild(title);
   const open=()=>window.location.href="video.html?"+(item.itemType==="song"?"song_id=":"video_id=")+encodeURIComponent(item.id)+"&v=70a51fd5";
