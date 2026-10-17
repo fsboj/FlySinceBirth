@@ -2374,7 +2374,7 @@ button.onclick = function() {
         }
     };
 
-    return row;
+    return window.decorateSongControls ? window.decorateSongControls(row, song) : row;
 }
 async function loadArtistMusic() {
 
