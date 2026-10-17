@@ -1,5 +1,6 @@
 const musicSupabase = window.supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co", "sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
 const musicById = new Map();
+let hubUser = null;
 let playQueue = [];
 let playIndex = -1;
 const musicParams = new URLSearchParams(location.search);
@@ -245,15 +246,39 @@ function renderVideo(video, artistName, featuredIds, artistNames) {
   return card;
 }
 
+function renderHubFavoriteSongs(favoriteSongs) {
+  const favoritesNode = document.getElementById("hubFavorites");
+  favoritesNode.replaceChildren();
+  if (!favoriteSongs.length) favoritesNode.innerHTML = '<p class="empty">Favorite songs on the site and they will show up here.</p>';
+  favoriteSongs.forEach(song => {
+    const row = document.createElement("div");
+    row.className = "hub-fav";
+    row.appendChild(songCard(song));
+    favoritesNode.appendChild(row);
+  });
+}
+window.addEventListener("fsb:favorites-changed", event => {
+  if (hubUser) return;
+  const ids = event.detail?.ids || [];
+  renderHubFavoriteSongs(ids.map(id => musicById.get(String(id))).filter(Boolean));
+});
+
 async function loadHubLibrary(user) {
   const favoritesNode = document.getElementById("hubFavorites");
   const playlistsNode = document.getElementById("hubPlaylists");
   if (!user) {
-    document.getElementById("libraryLogin").hidden = false;
-    favoritesNode.innerHTML = '<p class="empty">Sign in to load your favorites.</p>';
-    playlistsNode.innerHTML = '<p class="empty">Sign in to load your playlists.</p>';
-    return { songIds: new Set(), artistIds: new Set() };
+    hubUser = null;
+    const login = document.getElementById("libraryLogin");
+    login.hidden = false;
+    login.innerHTML = '<a href="account.html?return=' + encodeURIComponent(location.pathname + location.search + location.hash) + '">Sign in or create an account</a> to make and manage playlists.';
+    let guestIds = [];
+    try { guestIds = [...new Set((JSON.parse(localStorage.getItem("fsbGuestFavoriteSongs") || "[]") || []).map(String))]; } catch (_) {}
+    const favoriteSongs = guestIds.map(id => musicById.get(id)).filter(Boolean);
+    renderHubFavoriteSongs(favoriteSongs);
+    playlistsNode.innerHTML = '<p class="empty">Sign in or create an account to make playlists.</p>';
+    return { songIds: new Set(favoriteSongs.map(song => String(song.id))), artistIds: new Set(favoriteSongs.map(song => String(song.artist_id)).filter(Boolean)) };
   }
+  hubUser = user;
   const [fav, lists] = await Promise.all([
     musicSupabase.from("customer_favorite_songs").select("song_id").eq("user_id", user.id),
     musicSupabase.from("customer_playlists").select("id,name").eq("user_id", user.id).order("created_at", { ascending: true })
@@ -261,14 +286,7 @@ async function loadHubLibrary(user) {
   if (fav.error) throw fav.error;
   if (lists.error) throw lists.error;
   const favoriteSongs = (fav.data || []).map((row) => musicById.get(String(row.song_id))).filter(Boolean);
-  favoritesNode.innerHTML = "";
-  if (!favoriteSongs.length) favoritesNode.innerHTML = '<p class="empty">Favorite songs from artist pages and they will show up here.</p>';
-  favoriteSongs.forEach((song) => {
-    const row = document.createElement("div");
-    row.className = "hub-fav";
-    row.appendChild(songCard(song));
-    favoritesNode.appendChild(row);
-  });
+  renderHubFavoriteSongs(favoriteSongs);
   const playlistIds = (lists.data || []).map((p) => p.id);
   playlistsNode.innerHTML = "";
   if (!playlistIds.length) playlistsNode.innerHTML = '<p class="empty">Create a playlist on your account page, then add songs from artist pages.</p>';
