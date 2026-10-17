@@ -203,19 +203,27 @@ async function loadMerchRecommendations(user) {
 }
 const merchEsc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-function artistCreditLinks(primaryId, primaryName, featuredIds, artistNames) {
+function artistCreditLinks(primaryId, primaryName, featuredIds, artistNames, externalCredits) {
   const ids = [...new Set([primaryId, ...(featuredIds || [])].filter(Boolean).map(String))];
-  return ids.map((id, index) => {
+  const links = ids.map(id => {
     const name = artistNames.get(id) || (id === String(primaryId) ? primaryName : "");
     if (!name) return "";
-    const link = '<a href="artist.html?id=' + encodeURIComponent(id) + '" style="color:inherit;text-decoration:underline;text-underline-offset:3px">' + musicEsc(name) + '</a>';
-    return (index === 0 ? "" : (index === 1 ? " feat. " : ", ")) + link;
-  }).join("");
+    return '<a href="artist.html?id=' + encodeURIComponent(id) + '" style="color:inherit;text-decoration:underline;text-underline-offset:3px">' + musicEsc(name) + '</a>';
+  }).filter(Boolean);
+  (externalCredits || []).forEach(credit => {
+    if (!credit || !credit.name || !credit.url) return;
+    try {
+      const url = new URL(credit.url);
+      if (!["http:", "https:"].includes(url.protocol)) return;
+      links.push('<a href="' + musicEsc(url.href) + '" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:3px">' + musicEsc(credit.name) + '</a>');
+    } catch (_) {}
+  });
+  return links.map((link,index)=> (index===0 ? "" : (index===1 ? " feat. " : ", ")) + link).join("");
 }
 function songCard(song) {
   const card = document.createElement("article");
   card.className = "hub-song";
-  const credits = artistCreditLinks(song.artist_id, song.artist_name || "FLY SINCE BIRTH", song.feature_artist_ids, song.artistNames || new Map());
+  const credits = artistCreditLinks(song.artist_id, song.artist_name || "FLY SINCE BIRTH", song.feature_artist_ids, song.artistNames || new Map(), song.external_features);
   card.innerHTML = `<img src="${musicEsc(song.image_url || "fsblogo.PNG")}" alt=""><div class="hub-song-info"><strong>${musicEsc(song.title || "Untitled")}</strong><small>${credits || "FLY SINCE BIRTH"}</small></div><button class="hub-play" type="button" data-hub-play-song="${musicEsc(song.id)}">${song.audio_url ? "PLAY" : "UNAVAILABLE"}</button>`;
   if (window.decorateSongControls) window.decorateSongControls(card, song);
   return card;
@@ -230,7 +238,7 @@ function renderVideo(video, artistName, featuredIds, artistNames) {
   card.appendChild(image);
   const info = document.createElement("div");
   info.className = "hub-video-info";
-  const credits = artistCreditLinks(video.artist_id, artistName || "FLY SINCE BIRTH", featuredIds, artistNames || new Map());
+  const credits = artistCreditLinks(video.artist_id, artistName || "FLY SINCE BIRTH", featuredIds, artistNames || new Map(), video.external_features);
   info.innerHTML = `<strong>${musicEsc(video.title || "Untitled video")}</strong><small>${credits || "FLY SINCE BIRTH"}</small><button class="hub-video-play" type="button" data-hub-play-video="${musicEsc(video.id)}">WATCH HERE</button>`;
   card.appendChild(info);
   return card;
@@ -384,7 +392,7 @@ async function loadHubLibrary(user) {
 
 async function loadMusicHub() {
   const [{ data: songs, error: songError }, { data: videos, error: videoError }, { data: sessionData }] = await Promise.all([
-    musicSupabase.from("artist_songs").select("id,title,artist_id,audio_url,image_url,release_id,track_number").order("created_at", { ascending: false }),
+    musicSupabase.from("artist_songs").select("id,title,artist_id,audio_url,image_url,release_id,track_number,external_features").order("created_at", { ascending: false }),
     musicSupabase.from("videos").select("*").order("sort_order", { ascending: true }),
     musicSupabase.auth.getSession()
   ]);
