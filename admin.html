@@ -992,10 +992,10 @@ body {
         <div class="form-group">
 
             <label>
-                HOVER DELAY
+                IMAGE ROTATION INTERVAL (SECONDS)
             </label>
 
-            <input id="merchHoverDelay" type="number" value="10" min="1" step="1">
+            <input id="merchHoverDelay" type="number" value="10" min="1" max="120" step="1">
 
         </div>
 
@@ -1003,13 +1003,18 @@ body {
         <div class="form-group">
 
             <label>
-                HOVER CYCLE
+                MAX IMAGES IN ROTATION
             </label>
 
             <select id="merchHoverCycle"><option value="6" selected>6 IMAGES</option><option value="1">1 IMAGE</option><option value="2">2 IMAGES</option><option value="3">3 IMAGES</option><option value="4">4 IMAGES</option><option value="5">5 IMAGES</option></select>
 
         </div>
 
+    </div>
+
+    <div class="actions" style="margin-top:16px">
+      <button class="button primary" id="saveMerchRotationSettingsButton" type="button" onclick="saveMerchRotationSettings()">SAVE ROTATION SETTINGS</button>
+      <span id="merchRotationSettingsStatus" class="save-status" role="status" aria-live="polite"></span>
     </div>
 
     <div class="panel-header" style="margin-top:35px;">
@@ -1831,6 +1836,29 @@ async function saveChanges() {
 ===================================================== */
 
 
+async function loadMerchRotationSettings(){
+ var delay=document.getElementById("merchHoverDelay"),cycle=document.getElementById("merchHoverCycle");
+ var result=await supabaseClient.from("site_content").select("key,value").in("key",["merch_hover_delay","merch_hover_cycle"]);
+ if(result.error){console.error("Could not load merch rotation settings:",result.error);var status=document.getElementById("merchRotationSettingsStatus");if(status)status.textContent="SETTINGS LOAD FAILED";return}
+ var values={};(result.data||[]).forEach(function(row){values[row.key]=row.value});
+ if(delay)delay.value=String(Math.max(1,Math.min(120,parseInt(values.merch_hover_delay,10)||10)));
+ if(cycle)cycle.value=String(Math.max(1,Math.min(6,parseInt(values.merch_hover_cycle,10)||6)));
+}
+async function saveMerchRotationSettings(){
+ var delay=document.getElementById("merchHoverDelay"),cycle=document.getElementById("merchHoverCycle");
+ var status=document.getElementById("merchRotationSettingsStatus"),button=document.getElementById("saveMerchRotationSettingsButton");
+ var seconds=Number(delay&&delay.value),images=Number(cycle&&cycle.value);
+ if(!Number.isInteger(seconds)||seconds<1||seconds>120){if(status)status.textContent="ENTER 1–120 SECONDS";return}
+ if(!Number.isInteger(images)||images<1||images>6){if(status)status.textContent="SELECT 1–6 IMAGES";return}
+ if(status)status.textContent="SAVING…";if(button)button.disabled=true;
+ try{
+  var rows=[{key:"merch_hover_delay",value:String(seconds),updated_at:new Date().toISOString()},{key:"merch_hover_cycle",value:String(images),updated_at:new Date().toISOString()}];
+  var result=await supabaseClient.from("site_content").upsert(rows,{onConflict:"key"});
+  if(result.error)throw result.error;
+  if(status)status.textContent="ROTATION SETTINGS SAVED";
+ }catch(error){console.error("Could not save merch rotation settings:",error);if(status)status.textContent="SAVE FAILED";alert("Could not save rotation settings: "+(error.message||String(error)))}
+ finally{if(button)button.disabled=false}
+}
 async function loadMerchRotationAdmin(){
  var list=document.getElementById("merchRotationAdminList");if(!list)return;
  var r=await supabaseClient.from("merch_image_rotation").select("*").order("sort_order",{ascending:true});
@@ -6628,7 +6656,7 @@ async function loadArtistReleasesAdmin(){
 function toggleReleaseTracks(button){var t=button.closest(".admin-item").querySelector(".release-tracks");if(t)t.classList.toggle("open")}
 async function editArtistRelease(id){var r=await supabaseClient.from("artist_releases").select("*").eq("id",id).single();if(r.error)return;var title=prompt("Release name:",r.data.title||"");if(title===null)return;var video=prompt("Release video URL (optional):",r.data.video_url||"");if(video===null)return;var remove=confirm("Remove artwork? Click OK to remove, Cancel to keep it.");var artwork=r.data.artwork_url||null;if(remove)artwork=null;var u=await supabaseClient.from("artist_releases").update({title:title,artwork_url:artwork,video_url:video||null}).eq("id",id);if(u.error){alert(u.error.message);return}loadArtistReleasesAdmin();setStatus("RELEASE UPDATED")}
 async function editArtistSong(id){var r=await supabaseClient.from("artist_songs").select("*").eq("id",id).single();if(r.error)return;var title=prompt("Song name:",r.data.title||"");if(title===null)return;var video=prompt("Video URL (optional):",r.data.video_url||"");if(video===null)return;var remove=confirm("Remove artwork? Click OK to remove, Cancel to keep it.");var image=r.data.image_url||null;if(remove)image=null;var u=await supabaseClient.from("artist_songs").update({title:title,image_url:image,video_url:video||null}).eq("id",id);if(u.error){alert(u.error.message);return}loadArtistSongsAdmin();loadArtistReleasesAdmin();setStatus("SONG UPDATED")}
-document.addEventListener("DOMContentLoaded",function(){setupMainPagePanels();loadMerchRotationAdmin();var t=document.getElementById("upcomingType");if(t)t.addEventListener("change",populateUpcomingTargetOptions)});
+document.addEventListener("DOMContentLoaded",function(){setupMainPagePanels();loadMerchRotationAdmin();loadMerchRotationSettings();var t=document.getElementById("upcomingType");if(t)t.addEventListener("change",populateUpcomingTargetOptions)});
 const adminOriginalShowPanelV2=window.showPanel;
 window.showPanel=function(panelId,button){adminOriginalShowPanelV2(panelId,button);if(panelId==="mainPage"){var first=document.querySelector(".main-page-tabs .button");showMainSubPanel("site",first)}if(panelId==="artistPages"){loadArtistPageSelector()}if(panelId==="upcoming"){loadArtistsForUpcoming();loadUpcomingReleases()}};
 
