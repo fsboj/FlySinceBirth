@@ -528,7 +528,7 @@ body {
      ADMIN NAVIGATION
 ===================================================== -->
 
-<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">TOP NAVIGATION</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="document.querySelectorAll('section.panel').forEach(function(p){p.classList.remove('active');p.style.setProperty('display','none','important')});document.querySelectorAll('.admin-nav button').forEach(function(b){b.classList.remove('active')});var p=document.getElementById('videos');p.classList.add('active');p.style.setProperty('display','block','important');p.style.setProperty('visibility','visible','important');this.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});if(window.loadVideos)window.loadVideos();return false;">VIDEOS</button><button type="button" onclick="showEventsAdminPanel(this); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button><button type="button" onclick="document.querySelectorAll('section.panel').forEach(function(p){p.classList.remove('active');p.style.setProperty('display','none','important')});document.querySelectorAll('.admin-nav button').forEach(function(b){b.classList.remove('active')});var p=document.getElementById('store');p.classList.add('active');p.style.setProperty('display','block','important');p.style.setProperty('visibility','visible','important');this.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});if(window.loadMerchProductsAdmin)window.loadMerchProductsAdmin();return false;">STORE</button><button type="button" onclick="showPanel('support', this); return false;">SUPPORT</button></nav>
+<nav class="admin-nav"><button type="button" class="active" onclick="showPanel('mainPage', this); return false;">MAIN PAGE</button><button type="button" onclick="showPanel('sideMenu', this); return false;">TOP NAVIGATION</button><button type="button" onclick="showPanel('artistPages', this); return false;">ARTIST PAGES</button><button type="button" onclick="document.querySelectorAll('section.panel').forEach(function(p){p.classList.remove('active');p.style.setProperty('display','none','important')});document.querySelectorAll('.admin-nav button').forEach(function(b){b.classList.remove('active')});var p=document.getElementById('videos');p.classList.add('active');p.style.setProperty('display','block','important');p.style.setProperty('visibility','visible','important');this.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});if(window.loadVideos)window.loadVideos();return false;">VIDEOS</button><button type="button" onclick="showEventsAdminPanel(this); return false;">EVENTS</button><button type="button" onclick="showPanel('upcoming', this); return false;">UPCOMING RELEASES</button><button type="button" onclick="document.querySelectorAll('section.panel').forEach(function(p){p.classList.remove('active');p.style.setProperty('display','none','important')});document.querySelectorAll('.admin-nav button').forEach(function(b){b.classList.remove('active')});var p=document.getElementById('store');p.classList.add('active');p.style.setProperty('display','block','important');p.style.setProperty('visibility','visible','important');this.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});if(window.loadMerchProductsAdmin)window.loadMerchProductsAdmin();return false;">STORE</button></nav>
 
 
 <!-- =====================================================
@@ -1395,16 +1395,7 @@ body {
 </section>
 
 
-<section id="support" class="panel">
-  <div class="panel-header">
-    <div class="panel-title">CUSTOMER SUPPORT</div>
-    <div class="panel-description">Account help and order inquiries. Replies appear in the customer’s account.</div>
-  </div>
-  <div id="fsbSupportAdminStatus" class="item-meta" role="status" aria-live="polite"></div>
-  <div id="fsbSupportAdminList" class="item-list">
-    <div class="admin-item"><div class="item-name">Open the SUPPORT tab to load support requests.</div></div>
-  </div>
-</section>
+
 
 <!-- =====================================================
      SAVE / PREVIEW
@@ -6771,7 +6762,7 @@ document.addEventListener("DOMContentLoaded", function(){
     if(!nav || !main) return;
 
     const topButtons=Array.from(nav.querySelectorAll('button'));
-    const topIds=['mainPage','sideMenu','artistPages','videos','events','upcoming','store','support'];
+    const topIds=['mainPage','sideMenu','artistPages','videos','events','upcoming','store'];
     // Keep the Artist Pages panel physically next to the navigation in the DOM.
     // Legacy merch/admin markup above it can otherwise leave a large blank region before the panel.
     const artistPanel=document.getElementById('artistPages');
@@ -6811,7 +6802,6 @@ document.addEventListener("DOMContentLoaded", function(){
           if(typeof loadEvents==='function') loadEvents();
         }
         if(topIds[i]==='store' && typeof loadMerchProductsAdmin==='function') loadMerchProductsAdmin();
-        if(topIds[i]==='support' && typeof loadFsbSupportAdmin==='function') loadFsbSupportAdmin();
         if(topIds[i]==='upcoming'){
           if(typeof loadArtistsForUpcoming==='function') loadArtistsForUpcoming();
           if(typeof loadUpcomingReleases==='function') loadUpcomingReleases();
