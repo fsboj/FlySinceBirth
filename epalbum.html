@@ -583,6 +583,8 @@ loadReleaseVideos();
         let videoCreditCount=videoIds.length;
         (video.external_features||[]).forEach(credit=>{if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;link.style.color="inherit";if(videoCreditCount)creditLine.appendChild(document.createTextNode(videoCreditCount===1?" feat. ":", "));creditLine.appendChild(link);link.addEventListener("click",event=>event.stopPropagation());videoCreditCount++}catch(_){}});
         if(creditLine.childNodes.length)card.appendChild(creditLine);
+        const download=window.fsbCreateDownloadLink?window.fsbCreateDownloadLink(video.link,video.title||"FSB video","video"):null;
+        if(download){download.classList.add("fsb-release-video-download");download.style.margin="0 12px 12px";card.appendChild(download)}
 
         card.onclick = function() {
             window.location.href = "video.html?video_id=" + encodeURIComponent(video.id) + "&v=70a51fd5";
