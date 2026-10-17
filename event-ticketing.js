@@ -43,11 +43,6 @@
     }
 
     const form = element("form", "fsb-ticket-form");
-    const accountNotice = element("p", "event-detail-copy", "Sign in to your FSB account before buying tickets. Your tickets will be saved to your profile.");
-    const accountLink = element("a", "event-action", "SIGN IN / CREATE ACCOUNT");
-    accountLink.href = "account.html?return=" + encodeURIComponent(window.location.pathname + window.location.search + window.location.hash);
-    form.append(accountNotice, accountLink);
-
     const quantityLabel = element("label", "fsb-ticket-label", "Quantity");
     const quantity = element("select", "fsb-ticket-input");
     const maxQuantity = Math.min(10, status.remaining == null ? 10 : Number(status.remaining));
@@ -75,7 +70,7 @@
       submitEvent.preventDefault();
       submit.disabled = true; message.textContent = "Starting secure checkout…";
       const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session?.user) { message.textContent = "Sign in or create an account before checkout."; submit.disabled = false; return; }
+      if (!session?.user) { message.textContent = "Sign in or create an account to buy tickets. "; const accountLink = element("a", "event-action", "SIGN IN / CREATE ACCOUNT"); accountLink.href = "account.html?return=" + encodeURIComponent(window.location.pathname + window.location.search + window.location.hash); message.appendChild(accountLink); submit.disabled = false; return; }
       const provider = form.querySelector("input[name='ticket-provider']:checked")?.value;
       let started;
       try {
