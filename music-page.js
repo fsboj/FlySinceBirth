@@ -47,6 +47,7 @@ function playVideo(video) {
     const videoElement = document.createElement("video");
     videoElement.className = "video-player";
     videoElement.controls = true;
+    videoElement.controlsList = "nodownload";
     videoElement.playsInline = true;
     videoElement.preload = "metadata";
     videoElement.src = url.href;
