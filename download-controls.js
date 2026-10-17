@@ -45,6 +45,7 @@
     link.title = "Download " + (title || (mediaType === "video" ? "video" : "song"));
     link.textContent = compact ? "↓" : "DOWNLOAD";
     link.addEventListener("click", (event) => event.stopPropagation());
+    link.addEventListener("keydown", (event) => event.stopPropagation());
     return link;
   }
 
