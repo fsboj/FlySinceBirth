@@ -426,17 +426,27 @@ if (!tracks || tracks.length === 0) {
         await window.fsbMusicLibraryReady;
     }
 
+    const trackFeatureResult=tracks.length?await supabaseClient.from("artist_song_features").select("song_id,artist_id,sort_order").in("song_id",tracks.map(track=>track.id)).order("sort_order",{ascending:true}):{data:[],error:null};
+    const trackFeatures=trackFeatureResult.error?[]:(trackFeatureResult.data||[]);
+    const featureIdsBySong=new Map();
+    trackFeatures.forEach(row=>{const key=String(row.song_id);if(!featureIdsBySong.has(key))featureIdsBySong.set(key,[]);featureIdsBySong.get(key).push(String(row.artist_id))});
+    const creditArtistIds=[...new Set([...tracks.map(track=>track.artist_id),...trackFeatures.map(row=>row.artist_id)].filter(Boolean).map(String))];
+    const creditArtistNames={};
+    if(creditArtistIds.length){const artistsResult=await supabaseClient.from("artists").select("id,name").in("id",creditArtistIds);if(!artistsResult.error)(artistsResult.data||[]).forEach(artist=>creditArtistNames[String(artist.id)]=artist.name||"Artist")}
     tracks.forEach((track, index) => {
 
         const trackRow = document.createElement("div");
 
         trackRow.className = "release-track";
 
-        trackRow.innerHTML = `
-   <span class="track-number">${track.track_number || index + 1}</span>
-    <span class="track-title">${track.title || ""}</span>
-    <button class="track-play" type="button">▶</button>
-`;
+        trackRow.innerHTML = '<span class="track-number"></span><span class="track-meta"><span class="track-title"></span><span class="track-credits"></span></span><button class="track-play" type="button">▶</button>';
+        trackRow.querySelector(".track-number").textContent=track.track_number||index+1;
+        trackRow.querySelector(".track-title").textContent=track.title||"";
+        const credits=trackRow.querySelector(".track-credits");
+        const ids=[...new Set([track.artist_id,...(featureIdsBySong.get(String(track.id))||[])].filter(Boolean).map(String))];
+        ids.forEach((id,creditIndex)=>{const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(id);link.textContent=creditArtistNames[id]||"Artist";if(creditIndex)credits.appendChild(document.createTextNode(creditIndex===1?" feat. ":", "));credits.appendChild(link);link.addEventListener("click",event=>event.stopPropagation())});
+        let trackCreditCount=ids.length;
+        (track.external_features||[]).forEach(credit=>{if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;if(trackCreditCount)credits.appendChild(document.createTextNode(trackCreditCount===1?" feat. ":", "));credits.appendChild(link);link.addEventListener("click",event=>event.stopPropagation());trackCreditCount++}catch(_){}});
 trackRow.onclick = function() {
 
     if (!track.audio_url) {
@@ -525,6 +535,11 @@ loadReleaseVideos();
     }
 
     videoList.innerHTML = "";
+    const videoFeatureResult=await supabaseClient.from("video_artist_features").select("video_id,artist_id,sort_order").in("video_id",videos.map(video=>video.id)).order("sort_order",{ascending:true});
+    const videoFeatures=videoFeatureResult.error?[]:(videoFeatureResult.data||[]);
+    const videoFeatureIds=new Map();videoFeatures.forEach(row=>{const key=String(row.video_id);if(!videoFeatureIds.has(key))videoFeatureIds.set(key,[]);videoFeatureIds.get(key).push(String(row.artist_id))});
+    const videoCreditArtistIds=[...new Set([...videos.map(video=>video.artist_id),...videoFeatures.map(row=>row.artist_id)].filter(Boolean).map(String))],videoCreditNames={};
+    if(videoCreditArtistIds.length){const artistResult=await supabaseClient.from("artists").select("id,name").in("id",videoCreditArtistIds);if(!artistResult.error)(artistResult.data||[]).forEach(artist=>videoCreditNames[String(artist.id)]=artist.name||"Artist")}
 
     videos.forEach(function(video) {
 
@@ -556,18 +571,17 @@ loadReleaseVideos();
         }
 
         if (video.title) {
-
-            const title =
-                document.createElement("div");
-
-            title.className =
-                "release-video-title";
-
-            title.textContent =
-                video.title;
-
+            const title=document.createElement("div");
+            title.className="release-video-title";
+            title.textContent=video.title;
             card.appendChild(title);
         }
+        const creditLine=document.createElement("div");creditLine.className="release-video-credits";creditLine.style.cssText="padding:0 12px 12px;font-size:13px;color:#bbb";
+        const videoIds=[...new Set([video.artist_id,...(videoFeatureIds.get(String(video.id))||[])].filter(Boolean).map(String))];
+        videoIds.forEach((id,index)=>{const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(id);link.textContent=videoCreditNames[id]||"Artist";link.style.color="inherit";if(index)creditLine.appendChild(document.createTextNode(index===1?" feat. ":", "));creditLine.appendChild(link);link.addEventListener("click",event=>event.stopPropagation())});
+        let videoCreditCount=videoIds.length;
+        (video.external_features||[]).forEach(credit=>{if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;link.style.color="inherit";if(videoCreditCount)creditLine.appendChild(document.createTextNode(videoCreditCount===1?" feat. ":", "));creditLine.appendChild(link);link.addEventListener("click",event=>event.stopPropagation());videoCreditCount++}catch(_){}});
+        if(creditLine.childNodes.length)card.appendChild(creditLine);
 
         card.onclick = function() {
             window.location.href = "video.html?video_id=" + encodeURIComponent(video.id) + "&v=70a51fd5";
