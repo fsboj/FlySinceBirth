@@ -57,7 +57,8 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
 .field-label{font-size:9px;color:#999;letter-spacing:2px;display:block;margin:18px 0 9px}
 .options{display:flex;gap:8px;flex-wrap:wrap}
 .options button{background:transparent;border:1px solid #3a3a3a;color:#ddd;padding:10px 12px;cursor:pointer;font-size:11px}
-.options button.selected{background:#fff;color:#000;border-color:#fff}.options button:disabled,.options button:disabled.selected{opacity:.32;color:#888;border-color:#333;background:#141414;cursor:not-allowed;text-decoration:line-through}.options button:disabled:hover{background:#141414;color:#888;border-color:#333}
+.options button.selected{background:#fff;color:#000;border-color:#fff}
+.options button:disabled,.options button:disabled.selected{opacity:.32;color:#888;border-color:#333;background:#141414;cursor:not-allowed;text-decoration:line-through}.options button:disabled:hover{background:#141414;color:#888;border-color:#333}
 #saveForLaterButton{display:block;width:100%;margin-top:18px}#saveForLaterButton[aria-pressed="true"]{border-color:#fff;color:#fff}.add{margin-top:12px;width:100%;padding:16px;background:#f5f5f5;color:#000;border:1px solid #fff;font-size:10px;letter-spacing:3px;cursor:pointer}
 .add:disabled{opacity:.35;cursor:not-allowed}
 .cart-panel{position:fixed;inset:0;z-index:30;display:none;background:rgba(0,0,0,.75);justify-content:flex-end}
@@ -82,21 +83,28 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
 .shop-nav-all,.shop-aisle-link,.shop-aisle-toggle,.shop-subcategory-link{border:0;background:transparent;color:#bbb;text-align:left;cursor:pointer}
 .shop-nav-all{width:100%;padding:12px 10px;margin-bottom:8px;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:1.5px}
 .shop-nav-all:hover,.shop-nav-all.selected,.shop-aisle-link:hover,.shop-aisle-link.selected,.shop-subcategory-link:hover,.shop-subcategory-link.selected{color:#fff}
-.shop-aisle{min-width:0}
-.shop-aisle-head{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.shop-aisle{min-width:0}.shop-aisle-head{display:flex;align-items:center;justify-content:space-between;gap:4px}
 .shop-aisle-link{flex:1;padding:12px 8px;font-size:11px;letter-spacing:1.2px;text-transform:uppercase}
-.shop-aisle-toggle{width:32px;height:32px;color:#888;font-size:17px}
-.shop-aisle-toggle:hover{color:#fff}
-.shop-subcategories{display:grid;gap:2px;padding:0 0 8px 10px}
-.shop-subcategories[hidden]{display:none}
+.shop-aisle-toggle{width:32px;height:32px;color:#888;font-size:17px}.shop-aisle-toggle:hover{color:#fff}
+.shop-subcategories{display:grid;gap:2px;padding:0 0 8px 10px}.shop-subcategories[hidden]{display:none}
 .shop-subcategory-link{padding:9px 8px;font-size:11px;color:#888}
-.shop-content{min-width:0}
-.shop-content .toolbar{padding:15px 0 22px;align-items:end}
-.shop-content .toolbar h2{font-size:25px}
-.shop-count{font-size:10px;color:#777;letter-spacing:1.5px}
-.shop-content .grid{padding:0 0 70px}
+.shop-content{min-width:0}.shop-content .toolbar{padding:15px 0 22px;align-items:end}
+.shop-content .toolbar h2{font-size:25px}.shop-count{font-size:10px;color:#777;letter-spacing:1.5px}.shop-content .grid{padding:0 0 70px}
+.shop-tools{display:grid;grid-template-columns:minmax(180px,1.5fr) repeat(3,minmax(125px,1fr));gap:9px;margin:0 0 20px}
+.shop-tools input,.shop-tools select{width:100%;min-height:42px;padding:0 12px;background:#0d0d0d;border:1px solid #333;color:#eee;font-size:11px;letter-spacing:.3px}
+.shop-tools input:focus,.shop-tools select:focus{outline:2px solid #aaa;outline-offset:2px}
+.product-image .stock-flag{position:absolute;right:12px;top:12px;background:rgba(0,0,0,.78);color:#eee;padding:7px 9px;font-size:8px;letter-spacing:1px;text-transform:uppercase}
+.price del{display:block;color:#777;font-size:10px;margin-top:5px;text-align:right}.price .current-price{display:block}
+.shop-assurance{display:flex;justify-content:space-between;gap:20px;padding:16px 18px;margin:0 0 22px;border:1px solid #272727;background:#0b0b0b;color:#999;font-size:11px;line-height:1.6}
+.shop-assurance strong{color:#eee}.shop-assurance a{color:#eee;text-decoration:underline;text-underline-offset:3px}
+.shop-assurance a:hover,.product-help a:hover{color:#fff;opacity:.78}
+.product-help{padding:13px 0;border-top:1px solid #292929;margin:18px 0;color:#999;font-size:11px;line-height:1.65}
+.product-help strong{display:block;color:#eee;font-size:10px;letter-spacing:1px;margin-bottom:4px}
+.product-help a{color:#eee;text-decoration:underline;text-underline-offset:3px}
+.store-footer-links{display:flex;gap:18px;flex-wrap:wrap}.store-footer-links a:hover{color:#fff}
 @media(max-width:800px){.shop-layout{grid-template-columns:175px minmax(0,1fr);gap:20px;padding:26px 5vw 70px}.shop-sidebar{position:static;max-height:none}.shop-content .toolbar{padding:12px 0 18px;flex-direction:row;align-items:end}.shop-content .grid{padding:0 0 60px}}
 @media(max-width:600px){.shop-layout{grid-template-columns:1fr;gap:0}.shop-sidebar{border-right:0;border-bottom:1px solid var(--line);padding:0 0 14px;margin-bottom:8px}.shop-sidebar-heading{margin-bottom:8px}.shop-sidebar-list{display:flex;gap:8px;overflow:visible;align-items:flex-start}.shop-nav-all{width:auto;flex:0 0 auto;margin:0;padding:11px 10px;border:1px solid var(--line)}.shop-aisle{position:relative;flex:0 0 auto}.shop-aisle-head{border:1px solid var(--line)}.shop-aisle-link{white-space:nowrap;padding:11px 8px}.shop-aisle-toggle{height:36px}.shop-subcategories{position:absolute;z-index:5;top:100%;left:0;min-width:175px;max-height:55vh;overflow:auto;background:#101010;border:1px solid #333;box-shadow:0 15px 35px #000;padding:7px}.shop-content .toolbar{padding:15px 0 20px}.shop-content .grid{padding:0 0 55px}}
+@media(max-width:700px){.shop-tools{grid-template-columns:1fr 1fr}.shop-tools input{grid-column:1/-1}.shop-assurance{flex-direction:column;gap:8px}}
 </style>
 <link rel="stylesheet" href="public-polish.css?v=5">
 </head>
@@ -109,12 +117,12 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
   <p>Clothing, accessories, and limited releases from FSB. A uniform for those who move differently.</p>
 </section>
 <section id="shop">
-  <div class="shop-layout"><aside class="shop-sidebar" aria-label="Shop categories"><div class="shop-sidebar-heading">SHOP BY AISLE</div><nav class="shop-sidebar-list" id="shopSidebar" aria-label="Product categories"><button type="button" class="shop-nav-all selected" data-shop-category="all">ALL PIECES</button></nav></aside><main class="shop-content"><div class="toolbar"><h2 id="shopCollectionTitle">ALL PIECES</h2><span id="shopProductCount" class="shop-count"></span></div><div class="grid" id="productGrid"><div class="empty"><strong>THE FIRST DROP IS COMING.</strong>FSB pieces will appear here as they are added in the store admin.</div></div></main></div>
+  <div class="shop-layout"><aside class="shop-sidebar" aria-label="Shop categories"><div class="shop-sidebar-heading">SHOP BY AISLE</div><nav class="shop-sidebar-list" id="shopSidebar" aria-label="Product categories"><button type="button" class="shop-nav-all selected" data-shop-category="all">ALL PIECES</button></nav></aside><main class="shop-content"><div class="toolbar"><h2 id="shopCollectionTitle">ALL PIECES</h2><span id="shopProductCount" class="shop-count"></span></div><div class="shop-tools" role="search" aria-label="Filter products"><input id="shopSearch" type="search" placeholder="Search the collection" aria-label="Search products"><select id="shopSizeFilter" aria-label="Filter by size"><option value="">All sizes</option></select><select id="shopColorFilter" aria-label="Filter by color"><option value="">All colors</option></select><select id="shopSort" aria-label="Sort products"><option value="featured">Featured</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="newest">Newest</option></select></div><div class="shop-assurance"><span><strong>Need help with fit or stock?</strong> Ask us before ordering.</span><a href="mailto:fsbsupport@flysbirth.com?subject=FSB%20Store%20Question">Contact FSB Support</a></div><div class="grid" id="productGrid" aria-live="polite"><div class="empty"><strong>THE FIRST DROP IS COMING.</strong>FSB pieces will appear here as they are added in the store admin.</div></div></main></div>
 </section>
 <section class="statement"><p>MORE THAN CLOTHING.<br>IT'S FSB.</p><small>FLY SINCE BIRTH · FSB WORLDWIDE</small></section>
-<footer><span>© 2026 FLY SINCE BIRTH</span><span>FSB WORLDWIDE</span><a href="index.html">BACK TO HOME</a></footer>
-<div class="modal-backdrop" id="productModal" role="dialog" aria-modal="true" aria-label="Product details"><div class="modal"><button class="close" id="closeProduct" aria-label="Close">×</button><div class="modal-image"><img id="modalImage" alt=""><button class="gallery-control gallery-prev" id="previousProductImage" type="button" aria-label="Previous product image">‹</button><button class="gallery-control gallery-next" id="nextProductImage" type="button" aria-label="Next product image">›</button><span class="gallery-count" id="productImageCount" aria-live="polite"></span></div><div class="modal-info"><div class="cat" id="modalCategory"></div><h2 id="modalName"></h2><div class="modal-price" id="modalPrice"></div><p class="modal-desc" id="modalDescription"></p><div id="modalOptions"></div><button class="outline" id="saveForLaterButton" type="button">SAVE FOR LATER</button><button class="add" id="addToBag">ADD TO BAG</button></div></div></div>
-<div class="cart-panel" id="cartPanel"><div class="cart-inner"><div class="cart-head"><h2>YOUR BAG (<span id="cartCount2">0</span>)</h2><button class="close" id="closeCart" aria-label="Close bag">×</button></div><div class="cart-items" id="cartItems"></div><div class="cart-total"><span>Subtotal</span><strong id="cartTotal">$0.00</strong></div><p class="cart-note">Shipping and taxes are calculated at checkout. Checkout will be enabled once secure payments and fulfillment integrations are connected.</p><button class="add" id="checkoutButton">CHECKOUT — COMING SOON</button></div></div>
+<footer><span>© 2026 FLY SINCE BIRTH</span><span>FSB WORLDWIDE</span><div class="store-footer-links"><a href="mailto:fsbsupport@flysbirth.com">CONTACT</a><a href="index.html">BACK TO HOME</a></div></footer>
+<div class="modal-backdrop" id="productModal" role="dialog" aria-modal="true" aria-label="Product details"><div class="modal"><button class="close" id="closeProduct" aria-label="Close">×</button><div class="modal-image"><img id="modalImage" alt=""><button class="gallery-control gallery-prev" id="previousProductImage" type="button" aria-label="Previous product image">‹</button><button class="gallery-control gallery-next" id="nextProductImage" type="button" aria-label="Next product image">›</button><span class="gallery-count" id="productImageCount" aria-live="polite"></span></div><div class="modal-info"><div class="cat" id="modalCategory"></div><h2 id="modalName"></h2><div class="modal-price" id="modalPrice"></div><p class="modal-desc" id="modalDescription"></p><div id="modalOptions"></div><div class="product-help"><strong>ORDERING HELP</strong><span>Need a sizing, stock, shipping, or returns answer? <a href="mailto:fsbsupport@flysbirth.com?subject=FSB%20Product%20Question">Contact FSB Support</a> before ordering.</span></div><button class="outline" id="saveForLaterButton" type="button">SAVE FOR LATER</button><button class="add" id="addToBag">ADD TO BAG</button></div></div></div>
+<div class="cart-panel" id="cartPanel"><div class="cart-inner"><div class="cart-head"><h2>YOUR BAG (<span id="cartCount2">0</span>)</h2><button class="close" id="closeCart" aria-label="Close bag">×</button></div><div class="cart-items" id="cartItems"></div><div class="cart-total"><span>Subtotal</span><strong id="cartTotal">$0.00</strong></div><p class="cart-note"><strong>Checkout is being set up.</strong> You can build a bag, but payment and shipping are not available here yet. No order or charge will be created.</p><button class="add" id="checkoutButton" disabled>CHECKOUT UNAVAILABLE</button></div></div>
 <div class="notice" id="notice" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -122,8 +130,8 @@ const SUPABASE_URL="https://ccvhvxugoebdqwxxankl.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 let products=[],shopCategories=[],activeShopCategory="all",openShopAisles=new Set(),selectedProduct=null,selectedSize="",selectedColor="",savedProductUser=null;
-let productGalleryImages=[],productGalleryIndex=0;
 let cart=[];
+let productGalleryImages=[],productGalleryIndex=0;
 try{cart=JSON.parse(sessionStorage.getItem("fsbCart")||"[]")}catch(e){cart=[]}
 const $=id=>document.getElementById(id);
 const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -142,8 +150,9 @@ $("saveForLaterButton").addEventListener("click",async()=>{if(!selectedProduct)r
 async function resumePendingSavedProduct(){let id="";try{id=sessionStorage.getItem("fsbPendingSavedProduct")||""}catch(_){}if(!id)return;let session;try{session=await supabaseClient.auth.getSession()}catch(_){return}const user=session.data?.session?.user;if(!user)return;const product=products.find(item=>String(item.id)===id);if(!product){sessionStorage.removeItem("fsbPendingSavedProduct");return}const result=await supabaseClient.from("customer_saved_products").insert({user_id:user.id,product_id:product.id});if(result.error&&result.error.code!=="23505"){notify(result.error.message||"Could not save this product for later.");return}sessionStorage.removeItem("fsbPendingSavedProduct");notify("Saved to Buy Later.");if(selectedProduct?.id===product.id)updateSaveForLaterButton()}
 async function loadProducts(){
  const grid=$("productGrid");
- const {data,error}=await supabaseClient.from("merch_products").select("id,name,slug,description,category,category_id,price,compare_at_price,images,sizes,colors,variants,fulfillment_method,stock_quantity,track_inventory,active,featured,sort_order").eq("active",true).order("featured",{ascending:false}).order("sort_order",{ascending:true}).order("created_at",{ascending:false});
- if(error){console.error("Merch catalog error",error);grid.innerHTML='<div class="empty"><strong>THE COLLECTION IS LOADING.</strong>Please refresh in a moment.</div>';return}
+ grid.innerHTML='<div class="empty" role="status"><strong>LOADING THE COLLECTION…</strong>Just a moment.</div>';
+ const {data,error}=await supabaseClient.from("merch_products").select("id,name,slug,description,category,category_id,price,compare_at_price,images,sizes,colors,variants,fulfillment_method,stock_quantity,track_inventory,active,featured,sort_order,created_at").eq("active",true).order("featured",{ascending:false}).order("sort_order",{ascending:true}).order("created_at",{ascending:false});
+ if(error){console.error("Merch catalog error",error);grid.innerHTML='<div class="empty"><strong>WE COULD NOT LOAD THE COLLECTION.</strong>Please try again. <button type="button" class="outline" id="retryStoreLoad">RETRY</button></div>';$("retryStoreLoad")?.addEventListener("click",loadProducts);return}
  const categoryResult=await supabaseClient.from("merch_store_categories").select("id,parent_id,name,slug,is_active,sort_order").eq("is_active",true).order("sort_order",{ascending:true}).order("name",{ascending:true});
  if(categoryResult.error){console.error("Shop category navigation error",categoryResult.error);shopCategories=[]}else shopCategories=categoryResult.data||[];
  products=data||[];renderProducts();
@@ -153,7 +162,11 @@ async function loadProducts(){
 function shopCategoryDescendants(id){const found=new Set([String(id)]);let changed=true;while(changed){changed=false;shopCategories.forEach(category=>{if(category.parent_id!=null&&found.has(String(category.parent_id))&&!found.has(String(category.id))){found.add(String(category.id));changed=true}})}return found}
 function categoryProductCount(id){const descendants=shopCategoryDescendants(id);return products.filter(product=>product.category_id!=null&&descendants.has(String(product.category_id))).length}
 function categoryProductPath(product){if(product.category_id==null)return product.category||"FSB";const category=shopCategories.find(item=>String(item.id)===String(product.category_id));if(!category)return product.category||"FSB";const parent=category.parent_id==null?null:shopCategories.find(item=>String(item.id)===String(category.parent_id));return parent?parent.name+" · "+category.name:category.name}
-function filteredShopProducts(){if(activeShopCategory==="all")return products;const ids=shopCategoryDescendants(activeShopCategory);return products.filter(product=>product.category_id!=null&&ids.has(String(product.category_id)))}
+function productsInActiveAisle(){if(activeShopCategory==="all")return products;const ids=shopCategoryDescendants(activeShopCategory);return products.filter(product=>product.category_id!=null&&ids.has(String(product.category_id)))}
+function productSizes(product){return [...new Set([...(Array.isArray(product.sizes)?product.sizes:[]),...(Array.isArray(product.variants)?product.variants.map(variant=>variant.size||variant.name):[])].map(value=>String(value||"").trim()).filter(Boolean))]}
+function productColors(product){return [...new Set([...(Array.isArray(product.colors)?product.colors:[]),...(Array.isArray(product.variants)?product.variants.map(variant=>variant.color):[])].map(value=>String(value||"").trim()).filter(Boolean))]}
+function updateShopFilterOptions(){const base=productsInActiveAisle(),sizeSelect=$("shopSizeFilter"),colorSelect=$("shopColorFilter"),oldSize=sizeSelect.value,oldColor=colorSelect.value;const sizes=[...new Set(base.flatMap(productSizes))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})),colors=[...new Set(base.flatMap(productColors))].sort((a,b)=>a.localeCompare(b));sizeSelect.innerHTML='<option value="">All sizes</option>'+sizes.map(value=>'<option value="'+safe(value)+'">'+safe(value)+'</option>').join("");colorSelect.innerHTML='<option value="">All colors</option>'+colors.map(value=>'<option value="'+safe(value)+'">'+safe(value)+'</option>').join("");if(sizes.includes(oldSize))sizeSelect.value=oldSize;if(colors.includes(oldColor))colorSelect.value=oldColor}
+function filteredShopProducts(){const query=$("shopSearch").value.trim().toLocaleLowerCase(),size=$("shopSizeFilter").value.toLocaleLowerCase(),color=$("shopColorFilter").value.toLocaleLowerCase(),sort=$("shopSort").value;let list=productsInActiveAisle().filter(product=>(!query||[product.name,product.description,categoryProductPath(product)].some(value=>String(value||"").toLocaleLowerCase().includes(query)))&&(!size||productSizes(product).some(value=>value.toLocaleLowerCase()===size))&&(!color||productColors(product).some(value=>value.toLocaleLowerCase()===color)));if(sort==="price-asc")list.sort((a,b)=>Number(a.price)-Number(b.price));else if(sort==="price-desc")list.sort((a,b)=>Number(b.price)-Number(a.price));else if(sort==="newest")list.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));return list}
 function chooseShopCategory(id){activeShopCategory=id;renderProducts()}
 function renderShopSidebar(){
  const host=$("shopSidebar");if(!host)return;
@@ -168,13 +181,14 @@ function renderShopSidebar(){
 }
 function renderProducts(){
  renderShopSidebar();
+ updateShopFilterOptions();
  const filtered=filteredShopProducts();
  const active=shopCategories.find(category=>String(category.id)===String(activeShopCategory));
  $("shopCollectionTitle").textContent=active?active.name:"ALL PIECES";
  $("shopProductCount").textContent=filtered.length+(filtered.length===1?" ITEM":" ITEMS");
  const grid=$("productGrid");
- if(!filtered.length){grid.innerHTML='<div class="empty"><strong>NO ITEMS IN THIS AISLE YET.</strong>Choose another aisle to keep browsing FSB.</div>';return}
- grid.innerHTML=filtered.map(p=>'<article class="product" tabindex="0" role="button" data-id="'+p.id+'" aria-label="View '+safe(p.name)+'"><div class="product-image"><img loading="lazy" src="'+safe(productImage(p))+'" alt="'+safe(p.name)+'">'+(p.featured?'<span class="flag">Featured</span>':'')+'</div><div class="product-info"><div><div class="product-name">'+safe(p.name)+'</div><div class="product-category">'+safe(categoryProductPath(p))+'</div></div><div class="price">'+money(p.price)+'</div></div></article>').join("");
+ if(!filtered.length){const hasFilters=$("shopSearch").value||$("shopSizeFilter").value||$("shopColorFilter").value;grid.innerHTML='<div class="empty"><strong>'+(hasFilters?'NO MATCHING PIECES.':'NO ITEMS IN THIS AISLE YET.')+'</strong>'+(hasFilters?'Try changing your search or filters.':'Choose another aisle to keep browsing FSB.')+(hasFilters?' <button type="button" class="outline" id="clearShopFilters">CLEAR FILTERS</button>':'')+'</div>';$("clearShopFilters")?.addEventListener("click",()=>{$("shopSearch").value="";$("shopSizeFilter").value="";$("shopColorFilter").value="";$("shopSort").value="featured";renderProducts()});return}
+ grid.innerHTML=filtered.map(p=>{const soldOut=p.track_inventory&&p.fulfillment_method==="own_inventory"&&(productSizes(p).length?productSizes(p).every(size=>productColors(p).length?productColors(p).every(color=>productVariantSoldOut(p,size,color)):productVariantSoldOut(p,size,"")):Number(p.stock_quantity)<=0);const price=Number(p.price)||0,compare=Number(p.compare_at_price)||0;return '<article class="product" tabindex="0" role="button" data-id="'+p.id+'" aria-label="View '+safe(p.name)+'"><div class="product-image"><img loading="lazy" src="'+safe(productImage(p))+'" alt="'+safe(p.name)+'" onerror="this.onerror=null;this.src=\'flysincebirthchrome.PNG\'">'+(p.featured?'<span class="flag">Featured</span>':'')+(soldOut?'<span class="stock-flag">Sold out</span>':'')+'</div><div class="product-info"><div><div class="product-name">'+safe(p.name)+'</div><div class="product-category">'+safe(categoryProductPath(p))+'</div></div><div class="price">'+(compare>price?'<del>'+money(compare)+'</del>':'')+'<span class="current-price">'+money(price)+'</span></div></div></article>'}).join("");
  grid.querySelectorAll(".product").forEach(el=>{const open=()=>showProduct(Number(el.dataset.id));el.addEventListener("click",open);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}})});
 }
 function showProduct(id){
@@ -182,7 +196,7 @@ function showProduct(id){
  try{const key="fsbRecentlyViewedProducts",ids=JSON.parse(localStorage.getItem(key)||"[]"),idText=String(selectedProduct.id);localStorage.setItem(key,JSON.stringify([idText,...ids.map(String).filter(x=>x!==idText)].slice(0,20)))}catch(e){}
  selectedSize="";selectedColor="";productGalleryImages=productImages(selectedProduct);productGalleryIndex=0;
  renderProductGallery();
- $("modalCategory").textContent=selectedProduct.category||"FSB";$("modalName").textContent=selectedProduct.name;$("modalPrice").textContent=money(selectedProduct.price);$("modalDescription").textContent=selectedProduct.description||"";
+ $("modalCategory").textContent=categoryProductPath(selectedProduct);$("modalName").textContent=selectedProduct.name;$("modalPrice").textContent=money(selectedProduct.price)+(Number(selectedProduct.compare_at_price)>Number(selectedProduct.price)?" · Was "+money(selectedProduct.compare_at_price):"");$("modalDescription").textContent=selectedProduct.description||"";
  const wrap=$("modalOptions");wrap.innerHTML="";
  const sizes=selectedProduct.sizes||[],colors=selectedProduct.colors||[];
  if(sizes.length){const label=document.createElement("span");label.className="field-label";label.textContent="SELECT SIZE";wrap.appendChild(label);const row=document.createElement("div");row.className="options";sizes.forEach(size=>{const b=document.createElement("button");b.className="size-option";b.dataset.option=size;b.textContent=size;b.onclick=()=>{if(selectedSize===size){selectedSize="";b.classList.remove("selected")}else{selectedSize=size;if(selectedColor&&productVariantSoldOut(selectedProduct,selectedSize,selectedColor)){selectedColor="";document.querySelectorAll("#modalOptions .color-option").forEach(x=>x.classList.remove("selected"))}row.querySelectorAll("button").forEach(x=>x.classList.toggle("selected",x===b))}updateAddToBagAvailability()};row.appendChild(b)});wrap.appendChild(row)}
@@ -199,8 +213,10 @@ function renderCart(){$("cartCount").textContent=cart.reduce((n,x)=>n+x.quantity
 $("openCart").onclick=()=>$("cartPanel").classList.add("open");$("closeCart").onclick=()=>$("cartPanel").classList.remove("open");$("cartPanel").addEventListener("click",e=>{if(e.target===$("cartPanel"))$("cartPanel").classList.remove("open")});
 $("checkoutButton").onclick=()=>notify("Secure checkout is not connected yet. No payment has been taken.");
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("productModal").classList.remove("open");$("cartPanel").classList.remove("open")}});
-renderCart();loadProducts().then(()=>Promise.all([resumePendingCartAdd(),resumePendingSavedProduct()]));
+$("shopSearch").addEventListener("input",renderProducts);$("shopSizeFilter").addEventListener("change",renderProducts);$("shopColorFilter").addEventListener("change",renderProducts);$("shopSort").addEventListener("change",renderProducts);
+renderCart();loadProducts().then(()=>Promise.all([resumePendingCartAdd(),resumePendingSavedProduct()])).catch(error=>{console.error("Store initialization failed",error);$("productGrid").innerHTML='<div class="empty"><strong>THE STORE COULD NOT START.</strong>Please try again. <button type="button" class="outline" id="retryStoreLoad">RETRY</button></div>';$("retryStoreLoad")?.addEventListener("click",loadProducts)});
 </script>
 <script src="shared-nav.js?v=1"></script>
 </body>
 </html>
+
