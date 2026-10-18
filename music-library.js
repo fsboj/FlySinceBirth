@@ -34,7 +34,6 @@
   const $ = (id) => document.getElementById(id);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   let currentUser = null;
-  let playlistCache = [];
   let favoriteIds = new Set();
   let allSongs = [];
   try { localStorage.removeItem("fsbGuestFavoriteSongs"); } catch (_) {}
@@ -261,7 +260,6 @@
           .select("id,name")
           .single();
         if (error) throw error;
-        playlistCache = [...playlists, playlist];
         setBusy(false);
         await saveSongToPlaylist(playlist);
       } catch (error) {
@@ -342,25 +340,12 @@
 
   async function renderLibrary() {
     if (!currentUser || !$("favoriteSongs")) return;
-    const [favoritesResult, playlistsResult] = await Promise.all([
-      supabaseClient.from("customer_favorite_songs").select("song_id").eq("user_id", currentUser.id),
-      supabaseClient.from("customer_playlists").select("id,name,created_at").eq("user_id", currentUser.id).order("created_at", { ascending: true })
-    ]);
+    const favoritesResult = await supabaseClient.from("customer_favorite_songs").select("song_id").eq("user_id", currentUser.id);
     if (favoritesResult.error) throw favoritesResult.error;
-    if (playlistsResult.error) throw playlistsResult.error;
     favoriteIds = new Set((favoritesResult.data || []).map((row) => String(row.song_id)));
-    playlistCache = playlistsResult.data || [];
     const songMap = new Map(allSongs.map((song) => [String(song.id), song]));
     const favoriteSongs = [...favoriteIds].map((id) => songMap.get(id)).filter(Boolean);
     $("favoriteSongs").innerHTML = favoriteSongs.length ? favoriteSongs.map((song) => `<div class="music-library-song"><a href="music.html?song_id=${encodeURIComponent(song.id)}">${esc(songTitle(song))}</a><button class="secondary music-library-remove" type="button" data-remove-favorite="${esc(song.id)}">REMOVE</button></div>`).join("") : '<p class="empty">Favorite a song on an artist page and it will show up here.</p>';
-    if (!playlistCache.length) $("playlistCards").innerHTML = '<p class="empty">Create your first playlist above.</p>';
-    else {
-      const { data: items, error } = await supabaseClient.from("customer_playlist_songs").select("playlist_id,song_id").in("playlist_id", playlistCache.map((p) => p.id));
-      if (error) throw error;
-      const byPlaylist = new Map(playlistCache.map((p) => [p.id, []]));
-      (items || []).forEach((item) => { const song = songMap.get(String(item.song_id)); if (song) byPlaylist.get(item.playlist_id)?.push(song); });
-      $("playlistCards").innerHTML = playlistCache.map((p) => `<article class="music-library-playlist"><div class="music-library-playlist-head"><h3>${esc(p.name)}</h3><a class="secondary music-library-remove" href="music.html?playlist=${encodeURIComponent(p.id)}">PLAY</a><button class="secondary music-library-remove" type="button" data-delete-playlist="${esc(p.id)}">DELETE</button></div>${byPlaylist.get(p.id).length ? byPlaylist.get(p.id).map((song) => `<div class="music-library-song"><a href="music.html?song_id=${encodeURIComponent(song.id)}">${esc(songTitle(song))}</a><button class="secondary music-library-remove" type="button" data-remove-song="${esc(p.id)}:${esc(song.id)}">REMOVE</button></div>`).join("") : '<p class="empty">No songs in this playlist yet.</p>'}</article>`).join("");
-    }
     document.querySelectorAll("[data-fsb-favorite]").forEach((button) => updateFavoriteButtons(button.dataset.fsbFavorite));
   }
 
@@ -371,7 +356,8 @@
       status.textContent = error.message || "Could not load your music library.";
       if (/sign in/i.test(status.textContent)) { $("musicLibraryContent").hidden = true; $("musicLibrarySignIn").hidden = false; }
     });
-    $("createPlaylistForm").addEventListener("submit", async (event) => {
+    const createPlaylistForm = $("createPlaylistForm");
+    createPlaylistForm?.addEventListener("submit", async (event) => {
       event.preventDefault(); const input = $("newPlaylistName"), button = event.currentTarget.querySelector("button[type=submit]"); button.disabled = true; status.textContent = "Creating playlist…";
       try { const user = currentUser || await signedInUser(); const { error } = await supabaseClient.from("customer_playlists").insert({ user_id: user.id, name: input.value.trim() }); if (error) throw error; input.value = ""; status.textContent = "Playlist created."; await renderLibrary(); }
       catch (error) { status.textContent = error.message || "Could not create playlist."; } finally { button.disabled = false; }
