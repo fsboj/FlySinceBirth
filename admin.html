@@ -947,16 +947,13 @@ body {
         <div class="form-group"><label>PRICE (USD)</label><input id="merchProductPrice" type="number" min="0" step="0.01" placeholder="55.00"></div>
         <div class="form-group"><label>COMPARE-AT PRICE (OPTIONAL)</label><input id="merchProductComparePrice" type="number" min="0" step="0.01" placeholder="65.00"></div>
         <div class="form-group full"><label>DESCRIPTION</label><textarea id="merchProductDescription" placeholder="Product details, fit, materials, care..."></textarea></div>
-        <div class="form-group full"><label>PRODUCT IMAGE URLS (ONE PER LINE)</label><textarea id="merchProductImages" placeholder="https://.../front.jpg&#10;https://.../back.jpg"></textarea></div>
-        <div class="form-group"><label>SIZES (COMMA SEPARATED)</label><input id="merchProductSizes" placeholder="S, M, L, XL"></div>
+        <div class="form-group full"><label>PRODUCT IMAGES</label><input id="merchProductImageFiles" type="file" accept="image/*" multiple><div class="item-meta" style="margin-top:7px">Choose one or more images from your device. Uploaded images are added to this product.</div><textarea id="merchProductImages" aria-label="Product image URLs" placeholder="Optional image URLs, one per line" style="margin-top:10px"></textarea></div>
+        <div class="form-group full"><label>SIZE INVENTORY</label><div id="merchProductVariants" class="merch-size-inventory"></div><button class="button" type="button" id="addMerchProductVariant">+ ADD SIZE</button><div class="item-meta" style="margin-top:7px">Set a separate inventory count for every size. Leave sizes empty for products without size options.</div></div>
         <div class="form-group"><label>COLORS (COMMA SEPARATED)</label><input id="merchProductColors" placeholder="Black, White"></div>
         <div class="form-group"><label>FULFILLMENT METHOD</label><select id="merchProductFulfillment"><option value="printful">Printful</option><option value="supplier">Other supplier / store</option><option value="own_inventory" selected>My own inventory</option></select></div>
-        <div class="form-group"><label>SUPPLIER NAME</label><input id="merchProductSupplier" placeholder="Supplier or store name"></div>
-        <div class="form-group"><label>SUPPLIER PRODUCT ID (OPTIONAL)</label><input id="merchProductSupplierId" placeholder="Supplier SKU / product ID"></div>
-        <div class="form-group"><label>SUPPLIER PRODUCT URL (OPTIONAL)</label><input id="merchProductSupplierUrl" type="url" placeholder="https://..."></div>
-        <div class="form-group"><label>PRINTFUL PRODUCT ID (OPTIONAL)</label><input id="merchProductPrintfulId" placeholder="Connect Printful later"></div>
-        <div class="form-group"><label>PRINTFUL VARIANT ID (OPTIONAL)</label><input id="merchProductPrintfulVariant" placeholder="Variant ID"></div>
-        <div class="form-group"><label>OWN INVENTORY STOCK</label><input id="merchProductStock" type="number" min="0" value="0"></div>
+        <div class="form-group"><label>FULFILLMENT IDS</label><button class="button" type="button" id="openMerchFulfillmentModal">SUPPLIER & PRINTFUL DETAILS</button><div class="item-meta" style="margin-top:7px">Optional supplier and Printful product identifiers.</div></div>
+        <div id="merchFulfillmentFields" class="form-grid" style="display:none"><div class="form-group"><label>SUPPLIER NAME</label><input id="merchProductSupplier" placeholder="Supplier or store name"></div><div class="form-group"><label>SUPPLIER PRODUCT ID (OPTIONAL)</label><input id="merchProductSupplierId" placeholder="Supplier SKU / product ID"></div><div class="form-group"><label>PRINTFUL PRODUCT ID (OPTIONAL)</label><input id="merchProductPrintfulId" placeholder="Connect Printful later"></div><div class="form-group"><label>PRINTFUL VARIANT ID (OPTIONAL)</label><input id="merchProductPrintfulVariant" placeholder="Variant ID"></div></div>
+        <div class="form-group"><label>GENERAL STOCK (NO SIZE OPTIONS)</label><input id="merchProductStock" type="number" min="0" value="0"></div>
         <div class="form-group"><label>DISPLAY ORDER</label><input id="merchProductSort" type="number" value="0"></div>
         <div class="form-group full" style="display:flex;flex-direction:row;gap:24px;flex-wrap:wrap;">
           <label style="display:flex;align-items:center;gap:10px;letter-spacing:1px;"><input id="merchProductTrackStock" type="checkbox" checked> TRACK MY INVENTORY</label>
@@ -6865,7 +6862,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261016-support-tab"></script>
+<script src="admin-tabs-fix.js?v=20261018-store-editor"></script>
 
 <script>
 /* STORE TAB DISPLAY FIX */
