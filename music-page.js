@@ -1,4 +1,4 @@
-const musicSupabase = window.supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co", "sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
+const musicSupabase = window.supabaseClient || window.supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co", "sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
 const musicById = new Map();
 let hubUser = null;
 let playQueue = [];
@@ -249,11 +249,33 @@ function renderVideo(video, artistName, featuredIds, artistNames) {
 function renderHubFavoriteSongs(favoriteSongs) {
   const favoritesNode = document.getElementById("hubFavorites");
   favoritesNode.replaceChildren();
-  if (!favoriteSongs.length) favoritesNode.innerHTML = '<p class="empty">Favorite songs on the site and they will show up here.</p>';
+  if (!favoriteSongs.length) favoritesNode.innerHTML = '<p class="empty">Sign in and favorite songs to see them here.</p>';
   favoriteSongs.forEach(song => {
     const row = document.createElement("div");
-    row.className = "hub-fav";
-    row.appendChild(songCard(song));
+    row.className = "hub-fav hub-fav-row";
+    const info = document.createElement("div");
+    info.className = "hub-fav-info";
+    const link = document.createElement("a");
+    link.href = "artist.html?id=" + encodeURIComponent(song.artist_id);
+    link.textContent = song.title || "Untitled";
+    const artist = document.createElement("small");
+    artist.textContent = song.artist_name || "FLY SINCE BIRTH";
+    info.append(link, artist);
+    const play = document.createElement("button");
+    play.type = "button";
+    play.className = "hub-play hub-fav-play";
+    play.textContent = song.audio_url ? "PLAY" : "UNAVAILABLE";
+    play.disabled = !song.audio_url;
+    play.addEventListener("click", () => startSong(song));
+    const favorite = document.createElement("button");
+    favorite.type = "button";
+    favorite.className = "fsb-song-action fsb-song-favorite";
+    favorite.dataset.fsbFavorite = String(song.id);
+    favorite.setAttribute("aria-label", `Remove ${song.title || "song"} from favorites`);
+    favorite.setAttribute("aria-pressed", "true");
+    favorite.textContent = "♥";
+    favorite.title = "Remove from favorites";
+    row.append(info, play, favorite);
     favoritesNode.appendChild(row);
   });
 }
@@ -270,12 +292,9 @@ async function loadHubLibrary(user) {
     const login = document.getElementById("libraryLogin");
     login.hidden = false;
     login.innerHTML = '<a href="account.html?return=' + encodeURIComponent(location.pathname + location.search + location.hash) + '">Sign in or create an account</a> to make and manage playlists.';
-    let guestIds = [];
-    try { guestIds = [...new Set((JSON.parse(localStorage.getItem("fsbGuestFavoriteSongs") || "[]") || []).map(String))]; } catch (_) {}
-    const favoriteSongs = guestIds.map(id => musicById.get(id)).filter(Boolean);
-    renderHubFavoriteSongs(favoriteSongs);
+    renderHubFavoriteSongs([]);
     playlistsNode.innerHTML = '<p class="empty">Sign in or create an account to make playlists.</p>';
-    return { songIds: new Set(favoriteSongs.map(song => String(song.id))), artistIds: new Set(favoriteSongs.map(song => String(song.artist_id)).filter(Boolean)) };
+    return { songIds: new Set(), artistIds: new Set() };
   }
   hubUser = user;
   const [fav, lists] = await Promise.all([
@@ -284,9 +303,7 @@ async function loadHubLibrary(user) {
   ]);
   if (fav.error) throw fav.error;
   if (lists.error) throw lists.error;
-  let guestIds = [];
-  try { guestIds = (JSON.parse(localStorage.getItem("fsbGuestFavoriteSongs") || "[]") || []).map(String); } catch (_) {}
-  const favoriteIds = [...new Set([...(fav.data || []).map((row) => String(row.song_id)), ...guestIds])];
+  const favoriteIds = [...new Set((fav.data || []).map((row) => String(row.song_id)))];
   const favoriteSongs = favoriteIds.map(id => musicById.get(id)).filter(Boolean);
   renderHubFavoriteSongs(favoriteSongs);
   const playlistIds = (lists.data || []).map((p) => p.id);

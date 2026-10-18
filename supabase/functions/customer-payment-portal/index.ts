@@ -61,21 +61,6 @@ async function authenticatedUser(request: Request) {
   if (!user.id || !user.email || user.email_confirmed_at == null) {
     throw new Error("Confirm your account email before managing payment methods.");
   }
-  const payload = token.split(".")[1];
-  let claims: Record<string, unknown> = {};
-  try { claims = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/"))); } catch (_) {
-    throw new Error("Your sign-in could not be verified. Sign in again.");
-  }
-  if (claims.aal !== "aal2") {
-    const factorsResponse = await fetch(`${supabaseUrl}/auth/v1/factors`, {
-      headers: { apikey: publishableKey, Authorization: `Bearer ${token}` },
-    });
-    if (!factorsResponse.ok) throw new Error("Could not verify your two-step security status.");
-    const factors = await factorsResponse.json();
-    if ((factors.totp || []).some((factor: Record<string, unknown>) => factor.status === "verified")) {
-      throw new Error("Complete two-step verification before managing your payment methods. Sign out and sign in again.");
-    }
-  }
   return { id: String(user.id), email: String(user.email), name: String(user.user_metadata?.display_name || "") };
 }
 

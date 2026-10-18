@@ -1,7 +1,7 @@
 /* Customer-owned FSB playlists and favorites. Requires the page's Supabase client. */
 (() => {
   const styles = document.createElement("style");
-  styles.textContent = `.fsb-song-actions{display:inline-flex;align-items:center;gap:5px;margin-left:10px}.fsb-song-action{width:30px;height:30px;border:1px solid #555;background:#111;color:#fff;border-radius:50%;font-size:18px;line-height:1;cursor:pointer}.fsb-song-action[aria-pressed="true"]{color:#ff6b86;border-color:#a84b5e}.fsb-song-action:hover{border-color:#fff}.music-library-song{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid #333;font-size:13px}.music-library-song a{min-width:0;overflow-wrap:anywhere}.music-library-playlist{padding:18px 0;border-top:1px solid #333}.music-library-playlist-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.music-library-playlist h3{font-size:15px;margin:0}.music-library-remove{padding:9px 11px!important;font-size:9px!important;white-space:nowrap}.music-library-create,.music-library-add{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}.music-library-create input,.music-library-add select{min-width:180px;max-width:100%;padding:12px;background:#090909;border:1px solid #444;color:#fff}.music-library-add select{flex:1}.music-library-section{margin-top:20px;padding-top:18px;border-top:1px solid #333}.music-library-section h3{margin:0 0 8px;font-size:14px}.music-library-status{min-height:20px}`;
+  styles.textContent = `.fsb-song-actions{display:inline-flex;align-items:center;gap:5px;margin-left:10px}.fsb-song-action{width:22px;height:22px;border:1px solid #555;background:#111;color:#fff;border-radius:50%;font-size:13px;line-height:1;cursor:pointer;padding:0}.fsb-song-action[hidden]{display:none!important}.fsb-song-action[aria-pressed="true"]{color:#ff6b86;border-color:#a84b5e}.fsb-song-action:hover{border-color:#fff}.music-library-song{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid #333;font-size:13px}.music-library-song a{min-width:0;overflow-wrap:anywhere}.music-library-playlist{padding:18px 0;border-top:1px solid #333}.music-library-playlist-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.music-library-playlist h3{font-size:15px;margin:0}.music-library-remove{padding:9px 11px!important;font-size:9px!important;white-space:nowrap}.music-library-create,.music-library-add{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}.music-library-create input,.music-library-add select{min-width:180px;max-width:100%;padding:12px;background:#090909;border:1px solid #444;color:#fff}.music-library-add select{flex:1}.music-library-section{margin-top:20px;padding-top:18px;border-top:1px solid #333}.music-library-section h3{margin:0 0 8px;font-size:14px}.music-library-status{min-height:20px}`;
   document.head.appendChild(styles);
   styles.textContent += `
     .fsb-playlist-overlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.78);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
@@ -37,17 +37,13 @@
   let playlistCache = [];
   let favoriteIds = new Set();
   let allSongs = [];
-  const guestFavoriteStorageKey = "fsbGuestFavoriteSongs";
+  try { localStorage.removeItem("fsbGuestFavoriteSongs"); } catch (_) {}
 
-  function readGuestFavoriteIds() {
-    try { return [...new Set((JSON.parse(localStorage.getItem(guestFavoriteStorageKey) || "[]") || []).map(String))]; }
-    catch (_) { return []; }
-  }
-
-  function saveGuestFavoriteIds(ids) {
-    const uniqueIds = [...new Set(ids.map(String))];
-    try { localStorage.setItem(guestFavoriteStorageKey, JSON.stringify(uniqueIds)); } catch (_) {}
-    return uniqueIds;
+  function syncFavoriteControls() {
+    document.querySelectorAll("[data-fsb-favorite]").forEach((button) => {
+      button.hidden = !currentUser;
+      button.disabled = !currentUser;
+    });
   }
 
   function accountReturnHref() {
@@ -86,6 +82,8 @@
     favorite.setAttribute("aria-label", `Favorite ${song.title || "song"}`);
     favorite.setAttribute("aria-pressed", String(favoriteIds.has(String(song.id))));
     favorite.textContent = favoriteIds.has(String(song.id)) ? "♥" : "♡";
+    favorite.hidden = !currentUser;
+    favorite.disabled = !currentUser;
     const add = document.createElement("button");
     add.type = "button";
     add.className = "fsb-song-action fsb-song-add";
@@ -99,21 +97,12 @@
   };
 
   async function toggleFavorite(songId) {
-    if (!currentUser) {
-      const { data, error } = await supabaseClient.auth.getSession();
-      if (error) throw error;
-      currentUser = data?.session?.user || null;
-    }
+    currentUser = currentUser || await signedInUser();
     const id = String(songId);
-    if (!currentUser) {
-      const guestIds = readGuestFavoriteIds();
-      const nextIds = guestIds.includes(id) ? guestIds.filter((item) => item !== id) : [...guestIds, id];
-      favoriteIds = new Set(saveGuestFavoriteIds(nextIds));
-    } else if (favoriteIds.has(id)) {
+    if (favoriteIds.has(id)) {
       const { error } = await supabaseClient.from("customer_favorite_songs").delete().eq("user_id", currentUser.id).eq("song_id", songId);
       if (error) throw error;
       favoriteIds.delete(id);
-      saveGuestFavoriteIds(readGuestFavoriteIds().filter((item) => item !== id));
     } else {
       const { error } = await supabaseClient.from("customer_favorite_songs").insert({ user_id: currentUser.id, song_id: songId });
       if (error) throw error;
@@ -359,7 +348,7 @@
     ]);
     if (favoritesResult.error) throw favoritesResult.error;
     if (playlistsResult.error) throw playlistsResult.error;
-    favoriteIds = new Set([...(favoritesResult.data || []).map((row) => String(row.song_id)), ...readGuestFavoriteIds()]);
+    favoriteIds = new Set((favoritesResult.data || []).map((row) => String(row.song_id)));
     playlistCache = playlistsResult.data || [];
     const songMap = new Map(allSongs.map((song) => [String(song.id), song]));
     const favoriteSongs = [...favoriteIds].map((id) => songMap.get(id)).filter(Boolean);
@@ -396,20 +385,20 @@
         if (removeFavorite) result = await supabaseClient.from("customer_favorite_songs").delete().eq("user_id", currentUser.id).eq("song_id", removeFavorite.dataset.removeFavorite);
         else if (removeSong) { const [playlistId, songId] = removeSong.dataset.removeSong.split(":"); result = await supabaseClient.from("customer_playlist_songs").delete().eq("playlist_id", playlistId).eq("song_id", songId); }
         else result = await supabaseClient.from("customer_playlists").delete().eq("id", deletePlaylist.dataset.deletePlaylist).eq("user_id", currentUser.id);
-        if (result.error) throw result.error; if (removeFavorite) saveGuestFavoriteIds(readGuestFavoriteIds().filter((id) => id !== String(removeFavorite.dataset.removeFavorite))); announceFavoriteChange(); await renderLibrary();
+        if (result.error) throw result.error; announceFavoriteChange(); await renderLibrary();
       } catch (error) { status.textContent = error.message || "Could not update your music library."; } finally { button.disabled = false; }
     });
   }
 
   window.fsbMusicLibraryReady = supabaseClient.auth.getSession().then(async ({ data }) => {
     currentUser = data?.session?.user || null;
-    favoriteIds = new Set(readGuestFavoriteIds());
     if (currentUser) {
       const { data: rows, error } = await supabaseClient.from("customer_favorite_songs").select("song_id").eq("user_id", currentUser.id);
       if (!error) {
-        favoriteIds = new Set([...(rows || []).map((row) => String(row.song_id)), ...readGuestFavoriteIds()]);
+        favoriteIds = new Set((rows || []).map((row) => String(row.song_id)));
       }
     }
+    syncFavoriteControls();
     document.querySelectorAll("[data-fsb-favorite]").forEach((button) => updateFavoriteButtons(button.dataset.fsbFavorite));
     let pendingPlaylist = null;
     try { pendingPlaylist = JSON.parse(sessionStorage.getItem("fsbPendingPlaylistSong") || "null"); } catch (_) {}
@@ -417,6 +406,14 @@
       sessionStorage.removeItem("fsbPendingPlaylistSong");
       setTimeout(() => addToPlaylist(pendingPlaylist.songId).catch((error) => showLibraryNotice(error.message || "Could not open your playlists.")), 0);
     }
+  });
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    currentUser = session?.user || null;
+    if (!currentUser) favoriteIds.clear();
+    syncFavoriteControls();
+    if (currentUser) supabaseClient.from("customer_favorite_songs").select("song_id").eq("user_id", currentUser.id).then(({ data: rows, error }) => {
+      if (!error) { favoriteIds = new Set((rows || []).map((row) => String(row.song_id))); syncFavoriteControls(); document.querySelectorAll("[data-fsb-favorite]").forEach((button) => updateFavoriteButtons(button.dataset.fsbFavorite)); }
+    });
   });
 })();
 
