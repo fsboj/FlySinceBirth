@@ -47,13 +47,19 @@ async function rest(path: string, init: RequestInit = {}) {
   return data;
 }
 
-function checkoutEnabled() {
+function checkoutStatus() {
   const stripe = Deno.env.get("STRIPE_SECRET_KEY") || "";
   const webhook = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
   const printful = Deno.env.get("PRINTFUL_API_TOKEN") || "";
   const test = stripe.startsWith("sk_test_");
   const live = stripe.startsWith("sk_live_") && Deno.env.get("MERCH_LIVE_CHECKOUT_ENABLED") === "true";
-  return Deno.env.get("MERCH_CHECKOUT_ENABLED") === "true" && !!webhook && !!printful && (test || live);
+  const missing: string[] = [];
+  if (!test && !stripe.startsWith("sk_live_")) missing.push("STRIPE_SECRET_KEY (test key)");
+  if (stripe.startsWith("sk_live_") && !live) missing.push("MERCH_LIVE_CHECKOUT_ENABLED (keep off until ready for real sales)");
+  if (!webhook) missing.push("STRIPE_WEBHOOK_SECRET");
+  if (!printful) missing.push("PRINTFUL_API_TOKEN");
+  if (Deno.env.get("MERCH_CHECKOUT_ENABLED") !== "true") missing.push("MERCH_CHECKOUT_ENABLED");
+  return { enabled: Deno.env.get("MERCH_CHECKOUT_ENABLED") === "true" && !!webhook && !!printful && (test || live), missing, mode: live ? "live" : "test" };
 }
 
 async function customerFromRequest(request: Request) {
@@ -167,8 +173,8 @@ Deno.serve(async (request: Request) => {
   try {
     if (!supabaseUrl) throw new Error("Supabase URL is not configured.");
     const body = await request.json();
-    if (body.action === "status") return response({ enabled: checkoutEnabled(), provider: "stripe", fulfillment: "printful" });
-    if (!checkoutEnabled()) return response({ error: "FSB checkout is not configured yet. No order or charge will be created." }, 503);
+    if (body.action === "status") return response({ ...checkoutStatus(), provider: "stripe", fulfillment: "printful" });
+    if (!checkoutStatus().enabled) return response({ error: "FSB checkout is not configured yet. No order or charge will be created." }, 503);
     const customer = await customerFromRequest(request);
 
     if (body.action === "quote") {
@@ -218,6 +224,7 @@ Deno.serve(async (request: Request) => {
       form.set("expires_at", String(Math.floor(Date.now() / 1000) + 30 * 60));
       form.set("client_reference_id", String(order.id));
       form.set("metadata[order_id]", String(order.id));
+      form.set("metadata[order_type]", "merch");
       saved.quote.lines.forEach((line, index) => {
         form.set(`line_items[${index}][price_data][currency]`, "usd");
         form.set(`line_items[${index}][price_data][unit_amount]`, String(Math.round(line.unit_price * 100)));
