@@ -225,7 +225,8 @@ async function loadEvents() {
 
     if (error) {
         console.error("Could not load events:", error);
-        upcomingContainer.innerHTML = '<p class="event-empty">EVENTS COULD NOT BE LOADED.</p>';
+        upcomingContainer.innerHTML = '<div class="event-empty" role="status">EVENTS COULD NOT BE LOADED. <button type="button" class="event-action" id="retryEvents">TRY AGAIN</button></div>';
+        document.getElementById("retryEvents").addEventListener("click", loadEvents);
         return;
     }
 
@@ -365,10 +366,10 @@ async function loadEvents() {
         const detailsButton = document.createElement("button");
         detailsButton.className = "event-action";
         detailsButton.type = "button";
-        detailsButton.textContent = "VIEW EVENT DETAILS";
+        detailsButton.textContent = event.ticket_sales_mode === "on_site" ? "BUY TICKETS" : "VIEW EVENT DETAILS";
         detailsButton.addEventListener("click", function() { showEventDetails(event); });
         actions.appendChild(detailsButton);
-        const ticketLink = event.ticket_sales_mode === "on_site" ? null : makeLink(event.link, "MORE INFO / TICKETS");
+        const ticketLink = event.ticket_sales_mode === "on_site" ? null : makeLink(event.link, "BUY TICKETS / EVENT INFO");
         const videoLink = makeLink(event.video_link, "WATCH EVENT VIDEOS");
         if (ticketLink) actions.appendChild(ticketLink);
         if (videoLink) actions.appendChild(videoLink);
@@ -392,6 +393,7 @@ async function loadEvents() {
 
 </script><script src="event-ticketing.js?v=2"></script><script>loadEvents();</script><script src="shared-nav.js?v=1"></script>
 </body></html>
+
 
 
 
