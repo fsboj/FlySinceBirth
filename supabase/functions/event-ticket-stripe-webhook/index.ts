@@ -87,6 +87,18 @@ Deno.serve(async (request: Request) => {
     if (!['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'checkout.session.expired'].includes(event.type)) {
       return Response.json({ received: true });
     }
+    if (session.metadata?.order_type === "merch") {
+      const forwarded = await fetch(`${supabaseUrl}/functions/v1/merch-stripe-webhook`, {
+        method: "POST",
+        headers: { "stripe-signature": request.headers.get("stripe-signature") || "" },
+        body: payload,
+      });
+      if (!forwarded.ok) {
+        console.error("Merch webhook processor returned", forwarded.status);
+        return new Response("Merch payment confirmation is processing. Stripe will retry.", { status: 500 });
+      }
+      return Response.json({ received: true });
+    }
     const orderId = String(session.metadata?.order_id || session.client_reference_id || "");
     if (!/^[0-9a-f-]{36}$/i.test(orderId)) return new Response("Invalid ticket order reference", { status: 400 });
     const order = await loadOrder(orderId);
