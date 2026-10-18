@@ -54,16 +54,29 @@
   async function refreshAvailability() {
     checkoutButton.disabled = true;
     checkoutButton.textContent = "CHECKOUT SETUP REQUIRED";
+    let configuration = {};
     try {
-      const status = await invoke({ action: "status" });
-      checkoutAvailable = status.enabled === true;
+      configuration = await invoke({ action: "status" });
+      checkoutAvailable = configuration.enabled === true;
     } catch (_) { checkoutAvailable = false; }
     if (checkoutAvailable) {
       note.innerHTML = "Shipping options are calculated for the Printful items in your bag. Stripe will show any applicable tax and your final amount before payment.";
       checkoutButton.textContent = "CONTINUE TO CHECKOUT";
       checkoutButton.disabled = !Array.isArray(cart) || cart.length === 0;
     } else {
-      note.innerHTML = "<strong>Checkout setup is still in progress.</strong> You can build a bag, but no order or charge will be created yet.";
+      note.replaceChildren();
+      const heading = document.createElement("strong");
+      heading.textContent = "Checkout setup is still in progress.";
+      note.append(heading, document.createTextNode(" You can build a bag, but no order or charge will be created yet."));
+      try {
+        if (configuration.missing?.length) {
+          const details = document.createElement("span");
+          details.style.display = "block";
+          details.style.marginTop = "8px";
+          details.textContent = `Setup needed in Supabase Secrets: ${configuration.missing.join(", ")}.`;
+          note.appendChild(details);
+        }
+      } catch (_) { /* keep the setup message generic */ }
     }
   }
 
@@ -117,7 +130,7 @@
     } catch (error) { setStatus(error.message || "Could not start checkout."); button.disabled = false; button.textContent = "CONTINUE TO SECURE PAYMENT"; }
   });
 
-  document.querySelectorAll("[data-open-policy]").forEach((button) => button.addEventListener("click", () => $("storePolicy")?.classList.add("open")));
+  form.querySelector("[data-open-policy]")?.addEventListener("click", () => $("storePolicy")?.classList.add("open"));
   const params = new URLSearchParams(location.search);
   if (params.has("checkout_cancelled")) { notify("Checkout was cancelled. No payment was taken."); history.replaceState({}, "", location.pathname); }
   if (params.has("store_order")) { notify("Stripe is confirming your payment. Check Your Account → Store Orders for the latest status."); history.replaceState({}, "", location.pathname); }
