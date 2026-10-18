@@ -1,6 +1,8 @@
 const musicSupabase = window.supabaseClient || window.supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co", "sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
 const musicById = new Map();
 let hubUser = null;
+let savedProductIds = new Set();
+let activeMerchProducts = [];
 let playQueue = [];
 let playIndex = -1;
 const musicParams = new URLSearchParams(location.search);
@@ -90,6 +92,7 @@ function merchImage(product) {
 async function loadMerchRecommendations(user) {
   const host = document.getElementById("merchRecommendations");
   if (!host) return;
+  const savedHost = document.getElementById("hubBuyLater");
   try {
     const result = await musicSupabase.from("merch_products")
       .select("id,name,category,description,price,images,sizes,colors,featured,sort_order")
@@ -99,6 +102,14 @@ async function loadMerchRecommendations(user) {
       .limit(40);
     if (result.error) throw result.error;
     const products = result.data || [];
+    activeMerchProducts = products;
+    savedProductIds = new Set();
+    if (user) {
+      const saved = await musicSupabase.from("customer_saved_products").select("product_id").eq("user_id", user.id);
+      if (saved.error) throw saved.error;
+      savedProductIds = new Set((saved.data || []).map(row => String(row.product_id)));
+    }
+    renderBuyLater(user);
     if (!products.length) {
       host.innerHTML = '<p class="empty">No clothing is available right now. New FSB pieces will appear here.</p>';
       return;
@@ -184,8 +195,10 @@ async function loadMerchRecommendations(user) {
       : "Featured FSB clothing picks. Browse items to tailor future picks.";
     host.appendChild(note);
     ranked.forEach(({ product }) => {
+      const card = document.createElement("article");
+      card.className = "merch-pick";
       const link = document.createElement("a");
-      link.className = "merch-pick";
+      link.className = "merch-pick-link";
       link.href = "merch.html?product=" + encodeURIComponent(product.id);
       link.setAttribute("aria-label", "View " + (product.name || "FSB clothing"));
       const image = document.createElement("img");
@@ -196,14 +209,90 @@ async function loadMerchRecommendations(user) {
       info.className = "merch-pick-info";
       info.innerHTML = "<small>" + merchEsc(product.category || "FSB clothing") + "</small><strong>" + merchEsc(product.name || "FSB apparel") + "</strong><span>$" + (Number(product.price) || 0).toFixed(2) + "</span>";
       link.append(image, info);
-      host.appendChild(link);
+      const save = document.createElement("button");
+      save.type = "button";
+      save.className = "merch-save-button";
+      save.dataset.saveProduct = String(product.id);
+      save.textContent = user ? (savedProductIds.has(String(product.id)) ? "SAVED FOR LATER · REMOVE" : "SAVE FOR LATER") : "SIGN IN TO SAVE FOR LATER";
+      save.setAttribute("aria-pressed", String(savedProductIds.has(String(product.id))));
+      save.addEventListener("click", () => toggleSavedProduct(product, user));
+      card.append(link, save);
+      host.appendChild(card);
     });
+    if (savedHost && !user) savedHost.innerHTML = '<p class="empty">Buy Later is saved to your account. <a href="account.html?return=music.html">Sign in or create an account</a> to use it.</p>';
   } catch (error) {
     console.error("Could not load clothing recommendations:", error);
     host.innerHTML = '<p class="empty">FSB clothing picks could not be loaded right now.</p>';
   }
 }
 const merchEsc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function renderBuyLater(user = hubUser) {
+  const host = document.getElementById("hubBuyLater");
+  if (!host) return;
+  if (!user) {
+    host.innerHTML = '<p class="empty">Buy Later is saved to your account. <a href="account.html?return=music.html">Sign in or create an account</a> to use it.</p>';
+    return;
+  }
+  const products = [...savedProductIds].map(id => activeMerchProducts.find(product => String(product.id) === id)).filter(Boolean);
+  host.replaceChildren();
+  if (!products.length) {
+    host.innerHTML = '<p class="empty">Products you save from the Shop will appear here.</p>';
+    return;
+  }
+  products.forEach(product => {
+    const row = document.createElement("div");
+    row.className = "buy-later-row";
+    const image = document.createElement("img");
+    image.src = merchEsc(merchImage(product));
+    image.alt = "";
+    const info = document.createElement("div");
+    info.className = "buy-later-info";
+    const link = document.createElement("a");
+    link.href = "merch.html?product=" + encodeURIComponent(product.id);
+    link.textContent = product.name || "FSB clothing";
+    const price = document.createElement("small");
+    price.textContent = "$" + (Number(product.price) || 0).toFixed(2);
+    info.append(link, price);
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "buy-later-remove";
+    remove.textContent = "REMOVE";
+    remove.addEventListener("click", () => toggleSavedProduct(product, user, remove));
+    row.append(image, info, remove);
+    host.appendChild(row);
+  });
+}
+
+async function toggleSavedProduct(product, user = hubUser, trigger = null) {
+  const id = String(product.id);
+  if (!user) {
+    location.assign("account.html?return=" + encodeURIComponent("music.html"));
+    return;
+  }
+  const buttons = [...document.querySelectorAll("[data-save-product]")].filter(button => button.dataset.saveProduct === id);
+  if (trigger) buttons.push(trigger);
+  buttons.forEach(button => { button.disabled = true; });
+  try {
+    const existing = savedProductIds.has(id);
+    const result = existing
+      ? await musicSupabase.from("customer_saved_products").delete().eq("user_id", user.id).eq("product_id", product.id)
+      : await musicSupabase.from("customer_saved_products").insert({ user_id: user.id, product_id: product.id });
+    if (result.error) throw result.error;
+    if (existing) savedProductIds.delete(id); else savedProductIds.add(id);
+    renderBuyLater(user);
+    document.querySelectorAll("[data-save-product]").forEach(button => {
+      const saved = savedProductIds.has(button.dataset.saveProduct);
+      button.textContent = saved ? "SAVED FOR LATER · REMOVE" : "SAVE FOR LATER";
+      button.setAttribute("aria-pressed", String(saved));
+    });
+  } catch (error) {
+    console.error("Could not update Buy Later:", error);
+    window.alert(error.message || "Could not update Buy Later. Please try again.");
+  } finally {
+    buttons.forEach(button => { button.disabled = false; });
+  }
+}
 
 function artistCreditLinks(primaryId, primaryName, featuredIds, artistNames, externalCredits) {
   const ids = [...new Set([primaryId, ...(featuredIds || [])].filter(Boolean).map(String))];

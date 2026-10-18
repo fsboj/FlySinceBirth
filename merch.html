@@ -58,7 +58,7 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
 .options{display:flex;gap:8px;flex-wrap:wrap}
 .options button{background:transparent;border:1px solid #3a3a3a;color:#ddd;padding:10px 12px;cursor:pointer;font-size:11px}
 .options button.selected{background:#fff;color:#000;border-color:#fff}
-.add{margin-top:28px;width:100%;padding:16px;background:#f5f5f5;color:#000;border:1px solid #fff;font-size:10px;letter-spacing:3px;cursor:pointer}
+#saveForLaterButton{display:block;width:100%;margin-top:18px}#saveForLaterButton[aria-pressed="true"]{border-color:#fff;color:#fff}.add{margin-top:12px;width:100%;padding:16px;background:#f5f5f5;color:#000;border:1px solid #fff;font-size:10px;letter-spacing:3px;cursor:pointer}
 .add:disabled{opacity:.35;cursor:not-allowed}
 .cart-panel{position:fixed;inset:0;z-index:30;display:none;background:rgba(0,0,0,.75);justify-content:flex-end}
 .cart-panel.open{display:flex}
@@ -92,7 +92,7 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
 </section>
 <section class="statement"><p>MORE THAN CLOTHING.<br>IT'S FSB.</p><small>FLY SINCE BIRTH · FSB WORLDWIDE</small></section>
 <footer><span>© 2026 FLY SINCE BIRTH</span><span>FSB WORLDWIDE</span><a href="index.html">BACK TO HOME</a></footer>
-<div class="modal-backdrop" id="productModal" role="dialog" aria-modal="true" aria-label="Product details"><div class="modal"><button class="close" id="closeProduct" aria-label="Close">×</button><div class="modal-image"><img id="modalImage" alt=""></div><div class="modal-info"><div class="cat" id="modalCategory"></div><h2 id="modalName"></h2><div class="modal-price" id="modalPrice"></div><p class="modal-desc" id="modalDescription"></p><div id="modalOptions"></div><button class="add" id="addToBag">ADD TO BAG</button></div></div></div>
+<div class="modal-backdrop" id="productModal" role="dialog" aria-modal="true" aria-label="Product details"><div class="modal"><button class="close" id="closeProduct" aria-label="Close">×</button><div class="modal-image"><img id="modalImage" alt=""></div><div class="modal-info"><div class="cat" id="modalCategory"></div><h2 id="modalName"></h2><div class="modal-price" id="modalPrice"></div><p class="modal-desc" id="modalDescription"></p><div id="modalOptions"></div><button class="outline" id="saveForLaterButton" type="button">SAVE FOR LATER</button><button class="add" id="addToBag">ADD TO BAG</button></div></div></div>
 <div class="cart-panel" id="cartPanel"><div class="cart-inner"><div class="cart-head"><h2>YOUR BAG (<span id="cartCount2">0</span>)</h2><button class="close" id="closeCart" aria-label="Close bag">×</button></div><div class="cart-items" id="cartItems"></div><div class="cart-total"><span>Subtotal</span><strong id="cartTotal">$0.00</strong></div><p class="cart-note">Shipping and taxes are calculated at checkout. Checkout will be enabled once secure payments and fulfillment integrations are connected.</p><button class="add" id="checkoutButton">CHECKOUT — COMING SOON</button></div></div>
 <div class="notice" id="notice" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -100,7 +100,7 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
 const SUPABASE_URL="https://ccvhvxugoebdqwxxankl.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-let products=[],activeCategory="all",selectedProduct=null,selectedSize="",selectedColor="";
+let products=[],activeCategory="all",selectedProduct=null,selectedSize="",selectedColor="",savedProductUser=null;
 let cart=[];
 try{cart=JSON.parse(sessionStorage.getItem("fsbCart")||"[]")}catch(e){cart=[]}
 const $=id=>document.getElementById(id);
@@ -110,6 +110,9 @@ function notify(message){const n=$("notice");n.textContent=message;n.style.displ
 function accountSignInUrl(){return "account.html?return="+encodeURIComponent(location.pathname+location.search+location.hash)}
 async function resumePendingCartAdd(){let pending=null;try{pending=JSON.parse(sessionStorage.getItem("fsbPendingCartAdd")||"null")}catch(_){}if(!pending)return;let sessionResult;try{sessionResult=await supabaseClient.auth.getSession()}catch(_){return}if(sessionResult.error||!sessionResult.data?.session?.user)return;const product=products.find(p=>String(p.id)===String(pending.id));sessionStorage.removeItem("fsbPendingCartAdd");if(!product){notify("That item is no longer available.");return}showProduct(Number(product.id));const optionRows=$("modalOptions").querySelectorAll(".options");const choose=(rowIndex,value)=>{if(!value)return;const button=[...(optionRows[rowIndex]?.querySelectorAll("button")||[])].find(item=>item.textContent===value);button?.click()};choose(0,pending.size);choose((product.sizes||[]).length?1:0,pending.color);$("addToBag").click()}
 function productImage(p){return (p.images||[]).find(Boolean)||"flysincebirthchrome.PNG"}
+async function updateSaveForLaterButton(){const button=$("saveForLaterButton");if(!button||!selectedProduct)return;button.disabled=true;button.textContent="CHECKING…";try{const session=await supabaseClient.auth.getSession();if(session.error)throw session.error;savedProductUser=session.data?.session?.user||null;if(!savedProductUser){button.textContent="SIGN IN TO SAVE FOR LATER";button.setAttribute("aria-pressed","false");return}const result=await supabaseClient.from("customer_saved_products").select("product_id").eq("user_id",savedProductUser.id).eq("product_id",selectedProduct.id).maybeSingle();if(result.error)throw result.error;const saved=!!result.data;button.dataset.saved=saved?"true":"false";button.textContent=saved?"SAVED FOR LATER · REMOVE":"SAVE FOR LATER";button.setAttribute("aria-pressed",String(saved))}catch(error){button.textContent="SAVE FOR LATER";notify(error.message||"Could not check your Buy Later list.")}finally{button.disabled=false}}
+$("saveForLaterButton").addEventListener("click",async()=>{if(!selectedProduct)return;const button=$("saveForLaterButton");let session;try{session=await supabaseClient.auth.getSession()}catch(error){notify(error.message||"Could not verify your sign-in.");return}if(session.error){notify(session.error.message||"Could not verify your sign-in.");return}const user=session.data?.session?.user;if(!user){try{sessionStorage.setItem("fsbPendingSavedProduct",String(selectedProduct.id))}catch(_){}location.assign(accountSignInUrl());return}button.disabled=true;try{const saved=button.dataset.saved==="true";const result=saved?await supabaseClient.from("customer_saved_products").delete().eq("user_id",user.id).eq("product_id",selectedProduct.id):await supabaseClient.from("customer_saved_products").insert({user_id:user.id,product_id:selectedProduct.id});if(result.error)throw result.error;button.dataset.saved=saved?"false":"true";button.textContent=saved?"SAVE FOR LATER":"SAVED FOR LATER · REMOVE";button.setAttribute("aria-pressed",String(!saved));notify(saved?"Removed from Buy Later.":"Saved to Buy Later.")}catch(error){notify(error.message||"Could not update Buy Later.")}finally{button.disabled=false}});
+async function resumePendingSavedProduct(){let id="";try{id=sessionStorage.getItem("fsbPendingSavedProduct")||""}catch(_){}if(!id)return;let session;try{session=await supabaseClient.auth.getSession()}catch(_){return}const user=session.data?.session?.user;if(!user)return;const product=products.find(item=>String(item.id)===id);if(!product){sessionStorage.removeItem("fsbPendingSavedProduct");return}const result=await supabaseClient.from("customer_saved_products").insert({user_id:user.id,product_id:product.id});if(result.error&&result.error.code!=="23505"){notify(result.error.message||"Could not save this product for later.");return}sessionStorage.removeItem("fsbPendingSavedProduct");notify("Saved to Buy Later.");if(selectedProduct?.id===product.id)updateSaveForLaterButton()}
 async function loadProducts(){
  const grid=$("productGrid");
  const {data,error}=await supabaseClient.from("merch_products").select("id,name,slug,description,category,price,compare_at_price,images,sizes,colors,variants,fulfillment_method,stock_quantity,track_inventory,active,featured,sort_order").eq("active",true).order("featured",{ascending:false}).order("sort_order",{ascending:true}).order("created_at",{ascending:false});
@@ -138,7 +141,7 @@ function showProduct(id){
  if(colors.length){const label=document.createElement("span");label.className="field-label";label.textContent="SELECT COLOR";wrap.appendChild(label);const row=document.createElement("div");row.className="options";colors.forEach(color=>{const b=document.createElement("button");b.textContent=color;b.onclick=()=>{selectedColor=color;row.querySelectorAll("button").forEach(x=>x.classList.toggle("selected",x===b))};row.appendChild(b)});wrap.appendChild(row)}
  const outOfStock=selectedProduct.track_inventory&&selectedProduct.fulfillment_method==="own_inventory"&&Number(selectedProduct.stock_quantity)<=0;
  $("addToBag").disabled=!!outOfStock;$("addToBag").textContent=outOfStock?"SOLD OUT":"ADD TO BAG";
- $("productModal").classList.add("open");
+ $("productModal").classList.add("open");updateSaveForLaterButton();
 }
 $("closeProduct").onclick=()=>$("productModal").classList.remove("open");
 $("productModal").addEventListener("click",e=>{if(e.target===$("productModal"))$("productModal").classList.remove("open")});
@@ -148,7 +151,7 @@ function renderCart(){$("cartCount").textContent=cart.reduce((n,x)=>n+x.quantity
 $("openCart").onclick=()=>$("cartPanel").classList.add("open");$("closeCart").onclick=()=>$("cartPanel").classList.remove("open");$("cartPanel").addEventListener("click",e=>{if(e.target===$("cartPanel"))$("cartPanel").classList.remove("open")});
 $("checkoutButton").onclick=()=>notify("Secure checkout is not connected yet. No payment has been taken.");
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("productModal").classList.remove("open");$("cartPanel").classList.remove("open")}});
-renderCart();loadProducts().then(resumePendingCartAdd);
+renderCart();loadProducts().then(()=>Promise.all([resumePendingCartAdd(),resumePendingSavedProduct()]));
 </script>
 <script src="shared-nav.js?v=1"></script>
 </body>
