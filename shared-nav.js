@@ -20,6 +20,20 @@
     });
   }
 
+  function addSupportLink() {
+    document.querySelectorAll("footer").forEach(function (footer) {
+      if (footer.querySelector("[data-fsb-support-link]")) return;
+      const link = document.createElement("a");
+      link.href = "mailto:fsbsupport@flysbirth.com?subject=FSB%20Website%20Question";
+      link.textContent = "CONTACT FSB SUPPORT";
+      link.setAttribute("data-fsb-support-link", "true");
+      link.style.color = "inherit";
+      link.style.textDecoration = "underline";
+      link.style.textUnderlineOffset = "3px";
+      footer.appendChild(link);
+    });
+  }
+
   async function loadNavigationLabels() {
     const client = typeof supabaseClient !== "undefined" ? supabaseClient :
       (typeof musicSupabase !== "undefined" ? musicSupabase : null);
@@ -41,5 +55,7 @@
   }
 
   markCurrentPage();
+  addSupportLink();
   loadNavigationLabels();
 })();
+
