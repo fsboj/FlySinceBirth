@@ -594,7 +594,23 @@ window.addEvent = async function(){
   const colors=[...new Set([...list($('merchProductColors').value),...variants.map(v=>v.color).filter(Boolean)])];
   const categoryValue=$('merchProductCategory').value;if(!categoryValue){setStatus('Choose a shop aisle or category before saving.',true);return}const selectedStoreCategory=(window.fsbStoreCategories||[]).find(category=>String(category.id)===categoryValue);const legacyCategory=categoryValue.startsWith('legacy:')?categoryValue.slice(7):'';const categoryLabel=selectedStoreCategory?(window.fsbMerchCategoryPath?window.fsbMerchCategoryPath(selectedStoreCategory.id):selectedStoreCategory.name):legacyCategory;const payload={name,slug:slug(name),category:categoryLabel||'Apparel',category_id:selectedStoreCategory?Number(selectedStoreCategory.id):null,price,compare_at_price:comparePrice,description:$('merchProductDescription').value.trim(),images,sizes,variants,colors,fulfillment_method:method,supplier_name:$('merchProductSupplier').value.trim()||null,supplier_product_id:$('merchProductSupplierId').value.trim()||null,printful_product_id:$('merchProductPrintfulId').value.trim()||null,printful_variant_id:$('merchProductPrintfulVariant').value.trim()||null,stock_quantity:stockQuantity,sort_order:sortOrder,track_inventory:$('merchProductTrackStock').checked,featured:$('merchProductFeatured').checked,active:$('merchProductActive').checked,updated_at:new Date().toISOString()};
   const id=$('merchProductId').value;const button=document.querySelector('[onclick="saveMerchProduct()"]');if(button){button.disabled=true;button.textContent='SAVING…'}
-  try{for(const file of files){const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_'),path='merch-products/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'-'+safeName;const upload=await db().storage.from('site-images').upload(path,file,{upsert:false,contentType:file.type});if(upload.error)throw upload.error;images.push(db().storage.from('site-images').getPublicUrl(path).data.publicUrl)}payload.images=images;let q;if(id)q=await db().from('merch_products').update(payload).eq('id',id);else q=await db().from('merch_products').insert(payload);if(q.error)throw q.error;setStatus('Product saved.',false);reset();await window.loadMerchProductsAdmin()}catch(e){console.error('Product save failed',e);setStatus('Could not save product: '+(e.message||e)+'. If this is a permission error, secure admin access must be configured before writes are enabled.',true)}finally{if(button){button.disabled=false;button.textContent=$('merchProductId').value?'UPDATE PRODUCT':'SAVE PRODUCT'}}
+  const uploadedPaths=[];let productSaved=false;
+  try{
+   const sessionResult=await db().auth.getSession();if(sessionResult.error)throw sessionResult.error;
+   const user=sessionResult.data?.session?.user;if(!user)throw new Error('Your admin sign-in expired. Sign in again, then retry saving this product.');
+   const adminResult=await db().from('fsb_store_admins').select('user_id,email').eq('user_id',user.id).maybeSingle();
+   if(adminResult.error)throw adminResult.error;
+   if(!adminResult.data||String(adminResult.data.email||'').toLowerCase()!==String(user.email||'').toLowerCase())throw new Error('Admin access could not be verified for this session. Sign in again or contact FSB support.');
+   for(const file of files){const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_'),path='merch-products/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'-'+safeName;const upload=await db().storage.from('site-images').upload(path,file,{upsert:false,contentType:file.type});if(upload.error)throw upload.error;uploadedPaths.push(path);images.push(db().storage.from('site-images').getPublicUrl(path).data.publicUrl)}
+   payload.images=images;
+   const query=id?db().from('merch_products').update(payload).eq('id',id).select('id').maybeSingle():db().from('merch_products').insert(payload).select('id').single();
+   const saved=await query;if(saved.error)throw saved.error;
+   if(!saved.data?.id)throw new Error('Supabase did not confirm an updated product row. Your admin write permission may have expired; sign in again and retry.');
+   productSaved=true;setStatus('Product saved.',false);reset();await window.loadMerchProductsAdmin()
+  }catch(e){
+   if(!productSaved&&uploadedPaths.length){try{const cleanup=await db().storage.from('site-images').remove(uploadedPaths);if(cleanup.error)console.warn('Could not remove unused product images after a failed save:',cleanup.error.message)}catch(cleanupError){console.warn('Could not remove unused product images after a failed save:',cleanupError.message)}}
+   console.error(productSaved?'Product saved but list refresh failed':'Product save failed',e);setStatus(productSaved?'Product saved, but the list could not refresh. Reload the Shop tab to confirm.':'Could not save product: '+(e.message||e),true)
+  }finally{if(button){button.disabled=false;button.textContent=$('merchProductId').value?'UPDATE PRODUCT':'SAVE PRODUCT'}}
  };
  async function removeProduct(id,rows){const p=rows.find(x=>String(x.id)===String(id));if(!p||!confirm('Delete "'+p.name+'" from the store?'))return;try{const r=await db().from('merch_products').delete().eq('id',id);if(r.error)throw r.error;setStatus('Product deleted.',false);await window.loadMerchProductsAdmin()}catch(e){setStatus('Could not delete product: '+(e.message||e),true)}}
  function init(){if(!$('merchProductsAdminList'))return;window.loadMerchProductsAdmin();$('addMerchProductVariant')?.addEventListener('click',()=>addSizeRow('',0,''));$('merchProductImageFiles')?.addEventListener('change',event=>queueProductImages(event.currentTarget));const tab=document.querySelector('.admin-nav button');if(tab&&!tab.dataset.fsbMerchLoadBound){tab.dataset.fsbMerchLoadBound='1';document.querySelectorAll('.main-page-tabs button').forEach(b=>b.addEventListener('click',()=>{if((b.getAttribute('onclick')||'').includes("'merch'"))window.loadMerchProductsAdmin()}))}}
@@ -613,8 +629,6 @@ window.addEvent = async function(){
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,0),{once:true});else setTimeout(init,0);
 })();
-
-
 
 /* Artist admin dialogs: keep the existing Supabase-backed controls, but host
    each workflow in a focused modal instead of a long inline form. */
@@ -717,3 +731,4 @@ window.addEvent = async function(){
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(setup,0),{once:true});else setTimeout(setup,0);
 })();
+
