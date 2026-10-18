@@ -219,6 +219,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("productModal").c
 $("shopSearch").addEventListener("input",renderProducts);$("shopSizeFilter").addEventListener("change",renderProducts);$("shopColorFilter").addEventListener("change",renderProducts);$("shopSort").addEventListener("change",renderProducts);
 renderCart();loadProducts().then(()=>Promise.all([resumePendingCartAdd(),resumePendingSavedProduct()])).catch(error=>{console.error("Store initialization failed",error);$("productGrid").innerHTML='<div class="empty"><strong>THE STORE COULD NOT START.</strong>Please try again. <button type="button" class="outline" id="retryStoreLoad">RETRY</button></div>';$("retryStoreLoad")?.addEventListener("click",loadProducts)});
 </script>
+<script src="merch-checkout-ui.js?v=1"></script>
 <script src="shared-nav.js?v=1"></script>
 </body>
 </html>
