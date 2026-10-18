@@ -75,6 +75,28 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
 .notice{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#f5f5f5;color:#000;padding:13px 20px;font-size:11px;z-index:40;display:none;max-width:90vw}
 @media(max-width:800px){header{height:76px;padding:0 5vw}.brand img{width:115px}.nav{gap:12px}.nav a{display:none}.hero{padding:70px 5vw;min-height:320px}.toolbar{padding:28px 5vw;align-items:flex-start;flex-direction:column}.grid{padding:10px 5vw 70px;grid-template-columns:repeat(2,minmax(0,1fr));gap:25px 12px}.product-name{font-size:12px}.modal{grid-template-columns:1fr;max-height:92vh}.modal-image{min-height:250px;height:40vh}.modal-info{padding:25px 20px}.modal-info h2{font-size:26px}footer{padding:24px 5vw;font-size:8px}}
 @media(max-width:420px){.grid{grid-template-columns:1fr 1fr}.product-info{flex-direction:column;gap:7px}.hero h1{font-size:56px}.cart-button{padding:11px}}
+.shop-layout{padding:30px 6vw 100px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:34px;align-items:start}
+.shop-sidebar{position:sticky;top:18px;padding-right:20px;border-right:1px solid var(--line);max-height:calc(100vh - 36px);overflow:auto}
+.shop-sidebar-heading{font-size:10px;letter-spacing:3px;color:#888;margin:0 0 17px}
+.shop-sidebar-list{display:grid;gap:5px}
+.shop-nav-all,.shop-aisle-link,.shop-aisle-toggle,.shop-subcategory-link{border:0;background:transparent;color:#bbb;text-align:left;cursor:pointer}
+.shop-nav-all{width:100%;padding:12px 10px;margin-bottom:8px;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:1.5px}
+.shop-nav-all:hover,.shop-nav-all.selected,.shop-aisle-link:hover,.shop-aisle-link.selected,.shop-subcategory-link:hover,.shop-subcategory-link.selected{color:#fff}
+.shop-aisle{min-width:0}
+.shop-aisle-head{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.shop-aisle-link{flex:1;padding:12px 8px;font-size:11px;letter-spacing:1.2px;text-transform:uppercase}
+.shop-aisle-toggle{width:32px;height:32px;color:#888;font-size:17px}
+.shop-aisle-toggle:hover{color:#fff}
+.shop-subcategories{display:grid;gap:2px;padding:0 0 8px 10px}
+.shop-subcategories[hidden]{display:none}
+.shop-subcategory-link{padding:9px 8px;font-size:11px;color:#888}
+.shop-content{min-width:0}
+.shop-content .toolbar{padding:15px 0 22px;align-items:end}
+.shop-content .toolbar h2{font-size:25px}
+.shop-count{font-size:10px;color:#777;letter-spacing:1.5px}
+.shop-content .grid{padding:0 0 70px}
+@media(max-width:800px){.shop-layout{grid-template-columns:175px minmax(0,1fr);gap:20px;padding:26px 5vw 70px}.shop-sidebar{position:static;max-height:none}.shop-content .toolbar{padding:12px 0 18px;flex-direction:row;align-items:end}.shop-content .grid{padding:0 0 60px}}
+@media(max-width:600px){.shop-layout{grid-template-columns:1fr;gap:0}.shop-sidebar{border-right:0;border-bottom:1px solid var(--line);padding:0 0 14px;margin-bottom:8px}.shop-sidebar-heading{margin-bottom:8px}.shop-sidebar-list{display:flex;gap:8px;overflow:visible;align-items:flex-start}.shop-nav-all{width:auto;flex:0 0 auto;margin:0;padding:11px 10px;border:1px solid var(--line)}.shop-aisle{position:relative;flex:0 0 auto}.shop-aisle-head{border:1px solid var(--line)}.shop-aisle-link{white-space:nowrap;padding:11px 8px}.shop-aisle-toggle{height:36px}.shop-subcategories{position:absolute;z-index:5;top:100%;left:0;min-width:175px;max-height:55vh;overflow:auto;background:#101010;border:1px solid #333;box-shadow:0 15px 35px #000;padding:7px}.shop-content .toolbar{padding:15px 0 20px}.shop-content .grid{padding:0 0 55px}}
 </style>
 <link rel="stylesheet" href="public-polish.css?v=5">
 </head>
@@ -87,8 +109,7 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
   <p>Clothing, accessories, and limited releases from FSB. A uniform for those who move differently.</p>
 </section>
 <section id="shop">
-  <div class="toolbar"><h2>THE COLLECTION</h2><div class="filters" id="filters"><button class="active" data-category="all">ALL PIECES</button><button data-category="Apparel">APPAREL</button><button data-category="Headwear">HEADWEAR</button><button data-category="Accessories">ACCESSORIES</button></div></div>
-  <div class="grid" id="productGrid"><div class="empty"><strong>THE FIRST DROP IS COMING.</strong>FSB pieces will appear here as they are added in the store admin.</div></div>
+  <div class="shop-layout"><aside class="shop-sidebar" aria-label="Shop categories"><div class="shop-sidebar-heading">SHOP BY AISLE</div><nav class="shop-sidebar-list" id="shopSidebar" aria-label="Product categories"><button type="button" class="shop-nav-all selected" data-shop-category="all">ALL PIECES</button></nav></aside><main class="shop-content"><div class="toolbar"><h2 id="shopCollectionTitle">ALL PIECES</h2><span id="shopProductCount" class="shop-count"></span></div><div class="grid" id="productGrid"><div class="empty"><strong>THE FIRST DROP IS COMING.</strong>FSB pieces will appear here as they are added in the store admin.</div></div></main></div>
 </section>
 <section class="statement"><p>MORE THAN CLOTHING.<br>IT'S FSB.</p><small>FLY SINCE BIRTH · FSB WORLDWIDE</small></section>
 <footer><span>© 2026 FLY SINCE BIRTH</span><span>FSB WORLDWIDE</span><a href="index.html">BACK TO HOME</a></footer>
@@ -100,7 +121,7 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
 const SUPABASE_URL="https://ccvhvxugoebdqwxxankl.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-let products=[],activeCategory="all",selectedProduct=null,selectedSize="",selectedColor="",savedProductUser=null;
+let products=[],shopCategories=[],activeShopCategory="all",openShopAisles=new Set(),selectedProduct=null,selectedSize="",selectedColor="",savedProductUser=null;
 let productGalleryImages=[],productGalleryIndex=0;
 let cart=[];
 try{cart=JSON.parse(sessionStorage.getItem("fsbCart")||"[]")}catch(e){cart=[]}
@@ -121,20 +142,41 @@ $("saveForLaterButton").addEventListener("click",async()=>{if(!selectedProduct)r
 async function resumePendingSavedProduct(){let id="";try{id=sessionStorage.getItem("fsbPendingSavedProduct")||""}catch(_){}if(!id)return;let session;try{session=await supabaseClient.auth.getSession()}catch(_){return}const user=session.data?.session?.user;if(!user)return;const product=products.find(item=>String(item.id)===id);if(!product){sessionStorage.removeItem("fsbPendingSavedProduct");return}const result=await supabaseClient.from("customer_saved_products").insert({user_id:user.id,product_id:product.id});if(result.error&&result.error.code!=="23505"){notify(result.error.message||"Could not save this product for later.");return}sessionStorage.removeItem("fsbPendingSavedProduct");notify("Saved to Buy Later.");if(selectedProduct?.id===product.id)updateSaveForLaterButton()}
 async function loadProducts(){
  const grid=$("productGrid");
- const {data,error}=await supabaseClient.from("merch_products").select("id,name,slug,description,category,price,compare_at_price,images,sizes,colors,variants,fulfillment_method,stock_quantity,track_inventory,active,featured,sort_order").eq("active",true).order("featured",{ascending:false}).order("sort_order",{ascending:true}).order("created_at",{ascending:false});
+ const {data,error}=await supabaseClient.from("merch_products").select("id,name,slug,description,category,category_id,price,compare_at_price,images,sizes,colors,variants,fulfillment_method,stock_quantity,track_inventory,active,featured,sort_order").eq("active",true).order("featured",{ascending:false}).order("sort_order",{ascending:true}).order("created_at",{ascending:false});
  if(error){console.error("Merch catalog error",error);grid.innerHTML='<div class="empty"><strong>THE COLLECTION IS LOADING.</strong>Please refresh in a moment.</div>';return}
+ const categoryResult=await supabaseClient.from("merch_store_categories").select("id,parent_id,name,slug,is_active,sort_order").eq("is_active",true).order("sort_order",{ascending:true}).order("name",{ascending:true});
+ if(categoryResult.error){console.error("Shop category navigation error",categoryResult.error);shopCategories=[]}else shopCategories=categoryResult.data||[];
  products=data||[];renderProducts();
  const requestedProduct=new URLSearchParams(location.search).get("product");
  if(requestedProduct && products.some(p=>String(p.id)===requestedProduct))showProduct(Number(requestedProduct));
 }
+function shopCategoryDescendants(id){const found=new Set([String(id)]);let changed=true;while(changed){changed=false;shopCategories.forEach(category=>{if(category.parent_id!=null&&found.has(String(category.parent_id))&&!found.has(String(category.id))){found.add(String(category.id));changed=true}})}return found}
+function categoryProductCount(id){const descendants=shopCategoryDescendants(id);return products.filter(product=>product.category_id!=null&&descendants.has(String(product.category_id))).length}
+function categoryProductPath(product){if(product.category_id==null)return product.category||"FSB";const category=shopCategories.find(item=>String(item.id)===String(product.category_id));if(!category)return product.category||"FSB";const parent=category.parent_id==null?null:shopCategories.find(item=>String(item.id)===String(category.parent_id));return parent?parent.name+" · "+category.name:category.name}
+function filteredShopProducts(){if(activeShopCategory==="all")return products;const ids=shopCategoryDescendants(activeShopCategory);return products.filter(product=>product.category_id!=null&&ids.has(String(product.category_id)))}
+function chooseShopCategory(id){activeShopCategory=id;renderProducts()}
+function renderShopSidebar(){
+ const host=$("shopSidebar");if(!host)return;
+ const roots=shopCategories.filter(category=>category.parent_id==null&&category.is_active&&categoryProductCount(category.id)>0);
+ host.innerHTML='<button type="button" class="shop-nav-all'+(activeShopCategory==="all"?" selected":"")+'" data-shop-category="all">ALL PIECES</button>'+roots.map(root=>{
+  const children=shopCategories.filter(category=>String(category.parent_id)===String(root.id)&&category.is_active&&categoryProductCount(category.id)>0);
+  const isOpen=openShopAisles.has(String(root.id))||activeShopCategory!=="all"&&shopCategoryDescendants(root.id).has(String(activeShopCategory));
+  return '<section class="shop-aisle"><div class="shop-aisle-head"><button type="button" class="shop-aisle-link'+(activeShopCategory===String(root.id)?" selected":"")+'" data-shop-category="'+root.id+'">'+safe(root.name)+'</button>'+(children.length?'<button type="button" class="shop-aisle-toggle" data-toggle-aisle="'+root.id+'" aria-label="Show '+safe(root.name)+' categories" aria-expanded="'+isOpen+'">'+(isOpen?"−":"+")+ '</button>':'')+'</div>'+(children.length?'<div class="shop-subcategories"'+(isOpen?'':' hidden')+'>'+children.map(child=>'<button type="button" class="shop-subcategory-link'+(activeShopCategory===String(child.id)?" selected":"")+'" data-shop-category="'+child.id+'">'+safe(child.name)+'</button>').join("")+'</div>':'')+'</section>'
+ }).join("");
+ host.querySelectorAll("[data-shop-category]").forEach(button=>button.addEventListener("click",()=>{chooseShopCategory(button.dataset.shopCategory);const root=shopCategories.find(item=>String(item.id)===button.dataset.shopCategory);if(root&&root.parent_id==null){const children=shopCategories.filter(item=>String(item.parent_id)===String(root.id)&&item.is_active&&categoryProductCount(item.id)>0);if(children.length){openShopAisles.add(String(root.id));renderShopSidebar()}}}));
+ host.querySelectorAll("[data-toggle-aisle]").forEach(button=>button.addEventListener("click",()=>{const id=String(button.dataset.toggleAisle);if(openShopAisles.has(id))openShopAisles.delete(id);else openShopAisles.add(id);renderShopSidebar()}));
+}
 function renderProducts(){
- const filtered=activeCategory==="all"?products:products.filter(p=>p.category===activeCategory);
+ renderShopSidebar();
+ const filtered=filteredShopProducts();
+ const active=shopCategories.find(category=>String(category.id)===String(activeShopCategory));
+ $("shopCollectionTitle").textContent=active?active.name:"ALL PIECES";
+ $("shopProductCount").textContent=filtered.length+(filtered.length===1?" ITEM":" ITEMS");
  const grid=$("productGrid");
- if(!filtered.length){grid.innerHTML='<div class="empty"><strong>THE FIRST DROP IS COMING.</strong>New FSB pieces will be added here soon.</div>';return}
- grid.innerHTML=filtered.map(p=>'<article class="product" tabindex="0" role="button" data-id="'+p.id+'" aria-label="View '+safe(p.name)+'"><div class="product-image"><img loading="lazy" src="'+safe(productImage(p))+'" alt="'+safe(p.name)+'">'+(p.featured?'<span class="flag">Featured</span>':'')+'</div><div class="product-info"><div><div class="product-name">'+safe(p.name)+'</div><div class="product-category">'+safe(p.category||"FSB")+'</div></div><div class="price">'+money(p.price)+'</div></div></article>').join("");
+ if(!filtered.length){grid.innerHTML='<div class="empty"><strong>NO ITEMS IN THIS AISLE YET.</strong>Choose another aisle to keep browsing FSB.</div>';return}
+ grid.innerHTML=filtered.map(p=>'<article class="product" tabindex="0" role="button" data-id="'+p.id+'" aria-label="View '+safe(p.name)+'"><div class="product-image"><img loading="lazy" src="'+safe(productImage(p))+'" alt="'+safe(p.name)+'">'+(p.featured?'<span class="flag">Featured</span>':'')+'</div><div class="product-info"><div><div class="product-name">'+safe(p.name)+'</div><div class="product-category">'+safe(categoryProductPath(p))+'</div></div><div class="price">'+money(p.price)+'</div></div></article>').join("");
  grid.querySelectorAll(".product").forEach(el=>{const open=()=>showProduct(Number(el.dataset.id));el.addEventListener("click",open);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}})});
 }
-$("filters").addEventListener("click",e=>{const b=e.target.closest("button[data-category]");if(!b)return;activeCategory=b.dataset.category;$("filters").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x===b));renderProducts()});
 function showProduct(id){
  selectedProduct=products.find(p=>Number(p.id)===id);if(!selectedProduct)return;
  try{const key="fsbRecentlyViewedProducts",ids=JSON.parse(localStorage.getItem(key)||"[]"),idText=String(selectedProduct.id);localStorage.setItem(key,JSON.stringify([idText,...ids.map(String).filter(x=>x!==idText)].slice(0,20)))}catch(e){}
