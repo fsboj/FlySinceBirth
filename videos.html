@@ -12,6 +12,7 @@ a{color:inherit;text-decoration:none}.navbar{display:flex;justify-content:space-
 .video-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 18px}
 .video-card{min-width:0;cursor:pointer;outline:none}.video-card:focus-visible{outline:1px solid #fff;outline-offset:5px}.video-thumbnail{width:100%;aspect-ratio:16/9;background:#111;overflow:hidden;border:1px solid #242424}.video-thumbnail img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .25s}.video-card:hover .video-thumbnail img{opacity:.75}
 .video-artist{margin-top:12px;color:#fff;font-size:13px;font-weight:800;letter-spacing:1px}.video-title{margin-top:5px;font-size:16px;font-weight:700;line-height:1.35}.status{color:#777;font-size:12px;letter-spacing:1px}
+.video-actions{display:flex;justify-content:flex-end;margin-top:8px}.video-actions .fsb-video-favorite{width:34px;height:34px;font-size:18px}
 footer{padding:35px 6%;border-top:1px solid #202020;color:#555;font-size:9px;letter-spacing:3px;display:flex;justify-content:space-between}
 @media(max-width:800px){.video-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 12px}.page{width:92%;margin-top:35px}}
 @media(max-width:520px){.video-grid{grid-template-columns:1fr}.navbar{padding:16px 4%}.heading{letter-spacing:3px}}
@@ -28,6 +29,7 @@ footer{padding:35px 6%;border-top:1px solid #202020;color:#555;font-size:9px;let
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseClient = supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co","sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
+</script><script src="music-library.js?v=6"></script><script>
 async function loadVideos(){
  const grid=document.getElementById("videoGrid");
  const [videoResult,songVideoResult]=await Promise.all([
@@ -65,7 +67,7 @@ async function loadVideos(){
  }
  grid.innerHTML="";
  items.forEach(item=>{
-  const card=document.createElement("article");card.className="video-card";card.tabIndex=0;card.setAttribute("role","link");card.setAttribute("aria-label","Watch "+(item.title||"video"));
+  const card=document.createElement("article");card.className="video-card";card.dataset.fsbVideoFavoriteType=item.itemType;card.dataset.fsbVideoFavoriteId=String(item.id);card.tabIndex=0;card.setAttribute("role","link");card.setAttribute("aria-label","Watch "+(item.title||"video"));
   const thumb=document.createElement("div");thumb.className="video-thumbnail";
   const img=document.createElement("img");img.src=item.image||"fsblogo.PNG";img.alt=(item.title||"Video")+" thumbnail";img.loading="lazy";thumb.appendChild(img);card.appendChild(thumb);
   const artist=document.createElement("div");artist.className="video-artist";
@@ -89,6 +91,9 @@ async function loadVideos(){
   if(!creditCount)artist.textContent=item.artist||"";
   card.appendChild(artist);
   const title=document.createElement("div");title.className="video-title";title.textContent=item.title||"Untitled Video";card.appendChild(title);
+  const actions=document.createElement("div");actions.className="video-actions";
+  const favorite=window.fsbCreateVideoFavoriteButton?.(item.itemType,item.id,item.title);
+  if(favorite){favorite.addEventListener("click",event=>event.stopPropagation());actions.appendChild(favorite);card.appendChild(actions)}
   const open=()=>window.location.href="video.html?"+(item.itemType==="song"?"song_id=":"video_id=")+encodeURIComponent(item.id)+"&v=70a51fd5";
   card.addEventListener("click",e=>{if(e.target.closest(".video-artist a"))return;open();});
   card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){if(e.target.closest(".video-artist a"))return;e.preventDefault();open();}});
@@ -98,7 +103,9 @@ async function loadVideos(){
 loadVideos();
 </script>
 <script src="shared-nav.js?v=1"></script>
+<script src="video-favorites.js?v=1"></script>
 </body>
 </html>
+
 
 
