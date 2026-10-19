@@ -57,7 +57,7 @@ async function loadPage(){
  const favoriteType=currentVideo.song_id?"song":"video";
  const favoriteId=currentVideo.song_id||currentVideo.id;
  const favoriteButton=window.fsbCreateVideoFavoriteButton?.(favoriteType,favoriteId,currentVideo.title);
- if(favoriteButton){favoriteButton.setAttribute("aria-label","Favorite video: "+(currentVideo.title||"Untitled Video"));document.getElementById("videoFavoriteHost").appendChild(favoriteButton)}
+ if(favoriteButton&&!document.getElementById("videoFavoriteHost").querySelector("button")){favoriteButton.setAttribute("aria-label","Favorite video: "+(currentVideo.title||"Untitled Video"));document.getElementById("videoFavoriteHost").appendChild(favoriteButton)}
  videoPlayer(currentVideo.link,currentVideo.title);
  let artist=null,release=null;
  if(currentVideo.artist_id){
