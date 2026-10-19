@@ -14,12 +14,14 @@
 <div id="playerHost"><div class="empty">LOADING VIDEO...</div></div>
 <h1 class="video-title" id="videoTitle"></h1>
 <div class="video-byline" id="videoByline"></div>
+<div id="videoFavoriteHost" class="video-byline"></div>
 <section><h2 class="section-heading">UP NEXT · MORE FROM THIS ARTIST</h2><div class="next-grid" id="nextVideos"><div class="empty">LOADING VIDEOS...</div></div></section>
 </main>
 <footer><div>© 2026 FLY SINCE BIRTH</div><div>FSB WORLDWIDE</div></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseClient=supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co","sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
+</script><script src="music-library.js?v=6"></script><script>
 const params=new URLSearchParams(location.search);
 const videoId=params.get("video_id");
 const songId=params.get("song_id");
@@ -52,6 +54,10 @@ async function loadPage(){
  }
  document.title=(currentVideo.title||"Video")+" | Fly Since Birth";
  document.getElementById("videoTitle").textContent=currentVideo.title||"Untitled Video";
+ const favoriteType=currentVideo.song_id?"song":"video";
+ const favoriteId=currentVideo.song_id||currentVideo.id;
+ const favoriteButton=window.fsbCreateVideoFavoriteButton?.(favoriteType,favoriteId,currentVideo.title);
+ if(favoriteButton){favoriteButton.setAttribute("aria-label","Favorite video: "+(currentVideo.title||"Untitled Video"));document.getElementById("videoFavoriteHost").appendChild(favoriteButton)}
  videoPlayer(currentVideo.link,currentVideo.title);
  let artist=null,release=null;
  if(currentVideo.artist_id){
@@ -114,7 +120,9 @@ loadPage().catch(function(error){
 });
 </script>
 <script src="shared-nav.js?v=1"></script>
+<script src="video-favorites.js?v=1"></script>
 </body>
 </html>
+
 
 
