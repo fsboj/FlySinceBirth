@@ -201,9 +201,10 @@
     const requestedUserId = currentUser?.id || null;
     host.setAttribute("aria-busy", "true");
 
-    const [{ data: videos, error }, { data: songVideos, error: songVideoError }] = await Promise.all([
+    const [{ data: videos, error }, { data: songVideos, error: songVideoError }, { data: releaseVideos, error: releaseVideoError }] = await Promise.all([
       client.from("videos").select("*").order("sort_order", { ascending: true }),
-      client.from("artist_songs").select("id,title,artist_id,video_url,image_url").not("video_url", "is", null)
+      client.from("artist_songs").select("id,title,artist_id,video_url,image_url,release_id").not("video_url", "is", null),
+      client.from("artist_releases").select("id,title,artist_id,video_url,artwork_url,type").not("video_url", "is", null)
     ]);
     if (requestId !== recommendationRequestId) return;
     if (error) {
@@ -213,23 +214,30 @@
       return;
     }
     if (songVideoError) console.warn("Album and song videos could not be loaded:", songVideoError);
+    if (releaseVideoError) console.warn("EP and album release videos could not be loaded:", releaseVideoError);
 
     const standaloneVideos = videos || [];
     const attachedSongVideos = songVideos || [];
+    const attachedReleaseVideos = releaseVideos || [];
     knownVideos = new Map(standaloneVideos.map(video => [String(video.id), video]));
 
     const artistIds = new Set();
     const favoriteVideoIds = new Set();
     const favoriteSongIds = new Set();
+    const favoriteReleaseIds = new Set();
     let tasteSongIds = [];
     if (requestedUserId) {
       const [favoriteSongs, playlists, favoriteVideos] = await Promise.all([
         client.from("customer_favorite_songs").select("song_id").eq("user_id", requestedUserId),
         client.from("customer_playlists").select("id").eq("user_id", requestedUserId),
-        client.from("customer_favorite_videos").select("content_id").eq("user_id", requestedUserId).eq("content_type", "video")
+        client.from("customer_favorite_videos").select("content_type,content_id").eq("user_id", requestedUserId)
       ]);
       (favoriteSongs.data || []).forEach(row => favoriteSongIds.add(String(row.song_id)));
-      (favoriteVideos.data || []).forEach(row => favoriteVideoIds.add(String(row.content_id)));
+      (favoriteVideos.data || []).forEach(row => {
+        if (row.content_type === "video") favoriteVideoIds.add(String(row.content_id));
+        if (row.content_type === "song") favoriteSongIds.add(String(row.content_id));
+        if (row.content_type === "release") favoriteReleaseIds.add(String(row.content_id));
+      });
       const playlistIds = (playlists.data || []).map(row => row.id);
       const playlistSongs = playlistIds.length
         ? await client.from("customer_playlist_songs").select("song_id").in("playlist_id", playlistIds)
@@ -279,6 +287,13 @@
       if (video.artist_id) artistIds.add(String(video.artist_id));
       (creators.get(String(video.id)) || []).forEach(id => artistIds.add(id));
     });
+    attachedSongVideos.filter(song => favoriteSongIds.has(String(song.id))).forEach(song => {
+      if (song.artist_id) artistIds.add(String(song.artist_id));
+      (songCreators.get(String(song.id)) || []).forEach(id => artistIds.add(id));
+    });
+    attachedReleaseVideos.filter(release => favoriteReleaseIds.has(String(release.id))).forEach(release => {
+      if (release.artist_id) artistIds.add(String(release.artist_id));
+    });
 
     const normalizeUrl = value => {
       if (!value) return "";
@@ -289,14 +304,20 @@
         return String(value).trim().toLowerCase();
       }
     };
-    const attachedUrls = new Set(attachedSongVideos.map(song => normalizeUrl(song.video_url)).filter(Boolean));
+    const albumAssetUrls = new Set([
+      ...attachedSongVideos.map(song => song.video_url),
+      ...attachedReleaseVideos.map(release => release.video_url)
+    ].map(normalizeUrl).filter(Boolean));
     const candidates = [
       ...standaloneVideos
-        .filter(video => !favoriteVideoIds.has(String(video.id)) && !attachedUrls.has(normalizeUrl(video.link)))
+        .filter(video => !favoriteVideoIds.has(String(video.id)) && !albumAssetUrls.has(normalizeUrl(video.link)))
         .map(video => ({ ...video, recommendationType: "video", recommendationId: String(video.id), recommendationUrl: video.link, recommendationImage: video.image, recommendationArtists: [video.artist_id, ...(creators.get(String(video.id)) || [])] })),
       ...attachedSongVideos
         .filter(song => !favoriteSongIds.has(String(song.id)))
-        .map(song => ({ ...song, recommendationType: "song", recommendationId: String(song.id), recommendationUrl: song.video_url, recommendationImage: song.image_url, recommendationArtists: [song.artist_id, ...(songCreators.get(String(song.id)) || [])] }))
+        .map(song => ({ ...song, recommendationType: "song", recommendationId: String(song.id), recommendationUrl: song.video_url, recommendationImage: song.image_url, recommendationArtists: [song.artist_id, ...(songCreators.get(String(song.id)) || [])] })),
+      ...attachedReleaseVideos
+        .filter(release => !favoriteReleaseIds.has(String(release.id)))
+        .map(release => ({ ...release, recommendationType: "release", recommendationId: String(release.id), recommendationUrl: release.video_url, recommendationImage: release.artwork_url, recommendationArtists: [release.artist_id] }))
     ];
     const seenUrls = new Set();
     const uniqueCandidates = candidates.filter(item => {
@@ -313,7 +334,7 @@
       (artists.some(id => artistIds.has(id)) ? matching : other).push(item);
     });
 
-    // Mix standalone videos with videos attached to songs and album tracks.
+    // Mix standalone videos with music video uploads and album/EP release videos.
     // Prefer artists connected to liked songs, playlists, or liked videos, then
     // fill the remaining slots with random picks. Already-liked videos are excluded.
     const picks = [...randomize(matching), ...randomize(other)].slice(0, 6);
@@ -329,9 +350,8 @@
       const info = document.createElement("div"); info.className = "hub-video-info";
       const title = document.createElement("strong"); title.textContent = item.title || "Untitled video";
       const button = document.createElement("a"); button.className = "hub-video-play";
-      button.href = item.recommendationType === "song"
-        ? `video.html?song_id=${encodeURIComponent(item.recommendationId)}`
-        : `video.html?video_id=${encodeURIComponent(item.recommendationId)}`;
+      const param = item.recommendationType === "song" ? "song_id" : item.recommendationType === "release" ? "release_id" : "video_id";
+      button.href = `video.html?${param}=${encodeURIComponent(item.recommendationId)}`;
       button.textContent = "WATCH VIDEO";
       const actions = document.createElement("div"); actions.className = "hub-video-actions"; actions.appendChild(button);
       const favorite = makeButton(item.recommendationType, item.recommendationId, item.title); if (favorite) actions.appendChild(favorite);
