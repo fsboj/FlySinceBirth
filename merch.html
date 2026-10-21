@@ -111,7 +111,7 @@ footer{padding:28px 6vw;display:flex;justify-content:space-between;gap:15px;colo
 </head>
 <body>
 <div class="topline"></div>
-<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="music.html">Your music</a><a id="topnavArtist" href="artists.html">Artist</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav><button class="cart-button" id="openCart">Bag (<span id="cartCount">0</span>)</button></header>
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="music.html">My FSB</a><a id="topnavArtist" href="artists.html">Artist</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav><button class="cart-button" id="openCart">Bag (<span id="cartCount">0</span>)</button></header>
 <section class="hero">
   <div class="kicker">FLY SINCE BIRTH <span> / </span> OFFICIAL STORE</div>
   <h1>BUILT TO<br>STAND OUT.</h1>
@@ -220,7 +220,7 @@ $("shopSearch").addEventListener("input",renderProducts);$("shopSizeFilter").add
 renderCart();loadProducts().then(()=>Promise.all([resumePendingCartAdd(),resumePendingSavedProduct()])).catch(error=>{console.error("Store initialization failed",error);$("productGrid").innerHTML='<div class="empty"><strong>THE STORE COULD NOT START.</strong>Please try again. <button type="button" class="outline" id="retryStoreLoad">RETRY</button></div>';$("retryStoreLoad")?.addEventListener("click",loadProducts)});
 </script>
 <script src="merch-checkout-ui.js?v=2"></script>
-<script src="shared-nav.js?v=2"></script>
+<script src="shared-nav.js?v=3"></script>
 </body>
 </html>
 
