@@ -518,36 +518,24 @@ async function loadHubLibrary(user) {
 }
 
 async function loadMusicHub() {
-  const [{ data: songs, error: songError }, { data: videos, error: videoError }, { data: sessionData }] = await Promise.all([
+  const [{ data: songs, error: songError }, { data: sessionData }] = await Promise.all([
     musicSupabase.from("artist_songs").select("id,title,artist_id,audio_url,image_url,release_id,track_number,external_features").order("created_at", { ascending: false }),
-    musicSupabase.from("videos").select("*").order("sort_order", { ascending: true }),
     musicSupabase.auth.getSession()
   ]);
   if (songError) throw songError;
-  if (videoError) throw videoError;
-  const [songFeatureResult, videoFeatureResult] = await Promise.all([
-    (songs || []).length ? musicSupabase.from("artist_song_features").select("song_id,artist_id,sort_order").in("song_id", songs.map(song => song.id)).order("sort_order") : Promise.resolve({data:[],error:null}),
-    (videos || []).length ? musicSupabase.from("video_artist_features").select("video_id,artist_id,sort_order").in("video_id", videos.map(video => video.id)).order("sort_order") : Promise.resolve({data:[],error:null})
-  ]);
+  const songFeatureResult = (songs || []).length
+    ? await musicSupabase.from("artist_song_features").select("song_id,artist_id,sort_order").in("song_id", songs.map(song => song.id)).order("sort_order")
+    : { data: [], error: null };
   if (songFeatureResult.error) console.warn("Featured song credits could not be loaded:", songFeatureResult.error);
-  if (videoFeatureResult.error) console.warn("Featured video credits could not be loaded:", videoFeatureResult.error);
   const featureArtistsBySong = new Map();
   (songFeatureResult.data || []).forEach(row => {
     const key = String(row.song_id);
     if (!featureArtistsBySong.has(key)) featureArtistsBySong.set(key, []);
     featureArtistsBySong.get(key).push(String(row.artist_id));
   });
-  const featureArtistsByVideo = new Map();
-  (videoFeatureResult.data || []).forEach(row => {
-    const key = String(row.video_id);
-    if (!featureArtistsByVideo.has(key)) featureArtistsByVideo.set(key, []);
-    featureArtistsByVideo.get(key).push(String(row.artist_id));
-  });
   const allArtistIds = [...new Set([
     ...(songs || []).map(song => song.artist_id),
-    ...(videos || []).map(video => video.artist_id),
-    ...(songFeatureResult.data || []).map(row => row.artist_id),
-    ...(videoFeatureResult.data || []).map(row => row.artist_id)
+    ...(songFeatureResult.data || []).map(row => row.artist_id)
   ].filter(Boolean).map(String))];
   const names = new Map();
   if (allArtistIds.length) {
@@ -563,8 +551,6 @@ async function loadMusicHub() {
   }));
   catalog.forEach(song => musicById.set(String(song.id), song));
   const catalogNode = document.getElementById("songCatalog");
-  const videoNode = document.getElementById("videoCatalog");
-  const byVideoId = new Map((videos || []).map(video => [String(video.id), video]));
   const bySongId = new Map(catalog.map(song => [String(song.id), song]));
   const user = sessionData?.session?.user || null;
   const taste = await loadHubLibrary(user);
@@ -604,13 +590,6 @@ async function loadMusicHub() {
   };
   renderCatalog();
   document.getElementById("songSearch").addEventListener("input", renderCatalog);
-  videoNode.innerHTML = "";
-  if (!videos?.length) videoNode.innerHTML = '<p class="empty">No videos available yet.</p>';
-  (videos || []).forEach(video => videoNode.appendChild(renderVideo(video, names.get(String(video.artist_id)) || video.artist || "", featureArtistsByVideo.get(String(video.id)) || [], names)));
-  videoNode.addEventListener("click", event => {
-    const button = event.target.closest("[data-hub-play-video]");
-    if (button) playVideo(byVideoId.get(button.dataset.hubPlayVideo));
-  });
   document.addEventListener("click", event => {
     const button = event.target.closest("[data-hub-play-song]");
     if (button) startSong(bySongId.get(button.dataset.hubPlaySong));
@@ -619,7 +598,7 @@ async function loadMusicHub() {
   const requestedSong = musicParams.get("song_id");
   if (requestedSong && bySongId.has(requestedSong)) { startSong(bySongId.get(requestedSong)); window.scrollTo({ top: 0, behavior: "smooth" }); }
   const requestedVideo = musicParams.get("video_id");
-  if (requestedVideo && byVideoId.has(requestedVideo)) {
+  if (requestedVideo) {
     window.location.replace("video.html?video_id=" + encodeURIComponent(requestedVideo));
     return;
   }
