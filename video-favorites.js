@@ -68,24 +68,48 @@
     if (!host) return;
     host.hidden = !authReady;
     if (!authReady) return;
-    host.querySelectorAll(".hub-video, .video-card").forEach(card => {
+    host.querySelectorAll(".hub-video:not(.favorite-song-video), .video-card").forEach(card => {
       const play = card.querySelector("[data-hub-play-video]");
       const id = card.dataset.fsbVideoFavoriteId || card.dataset.videoId || play?.dataset.hubPlayVideo;
-      if (!currentUser || !favorites.has(keyOf("video", id))) card.remove();
+      card.hidden = !currentUser || !favorites.has(keyOf("video", id));
     });
-    if (!host.querySelector(".hub-video, .video-card") && !host.querySelector(".empty")) {
-      const empty = document.createElement("p"); empty.className = "empty";
+    const visible = [...host.querySelectorAll(".hub-video, .video-card")].some(card => !card.hidden);
+    let empty = host.querySelector(".vision-empty");
+    if (!visible) {
+      if (!empty) { empty = document.createElement("p"); empty.className = "empty vision-empty"; host.appendChild(empty); }
       empty.textContent = currentUser ? "Like a video to add it to Your Vision." : "Sign in to see the videos you have liked.";
-      host.appendChild(empty);
+    } else empty?.remove();
+  }
+
+  async function renderSongFavoriteCards() {
+    const host = document.getElementById("videoCatalog");
+    if (!host) return;
+    const ids = [...favorites].filter(key => key.startsWith("song:")).map(key => key.slice(5));
+    host.querySelectorAll(".favorite-song-video").forEach(card => { if (!favorites.has(card.dataset.favoriteKey)) card.remove(); });
+    if (!currentUser || !ids.length) return;
+    const { data, error } = await client.from("artist_songs").select("id,title,video_url,image_url").in("id", ids);
+    if (error) { console.error("Saved song videos could not be loaded:", error); return; }
+    for (const song of (data || []).filter(item => item.video_url)) {
+      const key = keyOf("song", song.id);
+      if (host.querySelector(`[data-favorite-key="${CSS.escape(key)}"]`)) continue;
+      const card = document.createElement("article"); card.className = "hub-video favorite-song-video"; card.dataset.favoriteKey = key;
+      const image = document.createElement("img"); image.src = song.image_url || "fsblogo.PNG"; image.alt = (song.title || "Video") + " thumbnail"; image.loading = "lazy";
+      const info = document.createElement("div"); info.className = "hub-video-info";
+      const title = document.createElement("strong"); title.textContent = song.title || "Untitled video";
+      const actions = document.createElement("div"); actions.className = "hub-video-actions";
+      const watch = document.createElement("a"); watch.className = "hub-video-play"; watch.href = `video.html?song_id=${encodeURIComponent(song.id)}`; watch.textContent = "WATCH VIDEO";
+      const favorite = makeButton("song", song.id, song.title); if (favorite) actions.appendChild(favorite);
+      actions.prepend(watch); info.append(title, actions); card.append(image, info); host.appendChild(card);
     }
   }
 
   async function loadFavorites() {
-    if (!currentUser) { favorites.clear(); updateButtons(); renderFavoriteList([]); return; }
+    if (!currentUser) { favorites.clear(); updateButtons(); await renderSongFavoriteCards(); filterVisionCatalog(); renderFavoriteList([]); return; }
     const { data, error } = await client.from("customer_favorite_videos").select("content_type,content_id").eq("user_id", currentUser.id);
     if (error) throw error;
     favorites = new Set((data || []).map(row => keyOf(row.content_type, row.content_id)));
     updateButtons();
+    await renderSongFavoriteCards();
     filterVisionCatalog();
     await renderFavoriteList(data || []);
   }
@@ -222,6 +246,7 @@
   });
   window.addEventListener("fsb:favorites-changed", event => {
     if (Array.isArray(event.detail?.videoIds)) favorites = new Set(event.detail.videoIds);
+    renderSongFavoriteCards();
     filterVisionCatalog();
   });
 })();
