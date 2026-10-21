@@ -15,7 +15,7 @@
 <h1 class="video-title" id="videoTitle"></h1>
 <div class="video-byline" id="videoByline"></div>
 <div id="videoFavoriteHost" class="video-byline"></div>
-<section><h2 class="section-heading">UP NEXT · MORE FROM THIS ARTIST</h2><div class="next-grid" id="nextVideos"><div class="empty">LOADING VIDEOS...</div></div></section>
+<section><h2 class="section-heading">UP NEXT</h2><div class="next-grid" id="nextVideos"><div class="empty">LOADING VIDEOS...</div></div></section>
 </main>
 <footer><div>© 2026 FLY SINCE BIRTH</div><div>FSB WORLDWIDE</div></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -25,6 +25,7 @@ const supabaseClient=supabase.createClient("https://ccvhvxugoebdqwxxankl.supabas
 const params=new URLSearchParams(location.search);
 const videoId=params.get("video_id");
 const songId=params.get("song_id");
+const releaseId=params.get("release_id");
 let currentVideo=null;
 let artistVideos=[];
 function safeText(value){return value==null?"":String(value)}
@@ -42,8 +43,12 @@ function videoPlayer(url,title){
  const frame=document.createElement("iframe");frame.className="video-player";frame.src=embed;frame.title=title||"Video player";frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";frame.allowFullscreen=true;frame.referrerPolicy="strict-origin-when-cross-origin";host.appendChild(frame);
 }
 async function loadPage(){
- if(!videoId&&!songId){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
- if(songId){
+ if(!videoId&&!songId&&!releaseId){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
+ if(releaseId){
+  const result=await supabaseClient.from("artist_releases").select("id,title,type,video_url,artist_id,artwork_url").eq("id",releaseId).single();
+  if(result.error||!result.data||!result.data.video_url){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
+  currentVideo={id:"release-"+result.data.id,release_id:result.data.id,title:result.data.title,link:result.data.video_url,artist_id:result.data.artist_id,image:result.data.artwork_url};
+ }else if(songId){
   const result=await supabaseClient.from("artist_songs").select("id,title,video_url,artist_id,external_features").eq("id",songId).single();
   if(result.error||!result.data||!result.data.video_url){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
   currentVideo={id:"song-"+result.data.id,song_id:result.data.id,title:result.data.title,link:result.data.video_url,artist_id:result.data.artist_id,external_features:result.data.external_features||[]};
@@ -89,26 +94,41 @@ async function loadPage(){
 async function loadNextVideos(){
  const host=document.getElementById("nextVideos");
  if(!currentVideo||!currentVideo.artist_id){host.innerHTML='<div class="empty">NO OTHER VIDEOS AVAILABLE</div>';return}
- let query=supabaseClient.from("videos").select("*").eq("artist_id",currentVideo.artist_id);
- if(!currentVideo.song_id)query=query.neq("id",currentVideo.id);
- const result=await query;
- if(result.error){host.innerHTML='<div class="empty">COULD NOT LOAD VIDEOS</div>';return}
- artistVideos=(result.data||[]);
- for(let i=artistVideos.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[artistVideos[i],artistVideos[j]]=[artistVideos[j],artistVideos[i]]}
- artistVideos=artistVideos.slice(0,9);
+ const [videoResult,songResult,releaseResult]=await Promise.all([
+  supabaseClient.from("videos").select("id,title,image,link,artist_id").eq("artist_id",currentVideo.artist_id),
+  supabaseClient.from("artist_songs").select("id,title,image_url,video_url,artist_id").eq("artist_id",currentVideo.artist_id).not("video_url","is",null),
+  supabaseClient.from("artist_releases").select("id,title,artwork_url,video_url,artist_id,type").eq("artist_id",currentVideo.artist_id).not("video_url","is",null)
+ ]);
+ if(videoResult.error&&songResult.error&&releaseResult.error){host.innerHTML='<div class="empty">COULD NOT LOAD VIDEOS</div>';return}
+ const candidates=[
+  ...(videoResult.data||[]).map(item=>({...item,itemType:"video",playUrl:item.link,imageUrl:item.image})),
+  ...(songResult.data||[]).map(item=>({...item,itemType:"song",playUrl:item.video_url,imageUrl:item.image_url})),
+  ...(releaseResult.data||[]).map(item=>({...item,itemType:"release",playUrl:item.video_url,imageUrl:item.artwork_url}))
+ ];
+ const normalize=value=>{try{const u=new URL(value,location.href);return(u.origin+u.pathname).toLowerCase()}catch(_){return String(value||"").trim().toLowerCase()}};
+ const currentUrl=normalize(currentVideo.link),seen=new Set(currentUrl?[currentUrl]:[]);
+ const unique=candidates.filter(item=>{
+  if(!item.playUrl)return false;
+  if(currentVideo.song_id&&item.itemType==="song"&&String(item.id)===String(currentVideo.song_id))return false;
+  if(currentVideo.release_id&&item.itemType==="release"&&String(item.id)===String(currentVideo.release_id))return false;
+  if(!currentVideo.song_id&&!currentVideo.release_id&&item.itemType==="video"&&String(item.id)===String(params.get("video_id")))return false;
+  const url=normalize(item.playUrl);if(!url||seen.has(url))return false;seen.add(url);return true;
+ });
+ for(let i=unique.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[unique[i],unique[j]]=[unique[j],unique[i]]}
+ const picks=unique.slice(0,9);
  host.innerHTML="";
- if(!artistVideos.length){host.innerHTML='<div class="empty">NO OTHER VIDEOS AVAILABLE</div>';return}
- artistVideos.forEach(function(video){
+ if(!picks.length){host.innerHTML='<div class="empty">NO OTHER VIDEOS AVAILABLE</div>';return}
+ picks.forEach(function(item){
   const card=document.createElement("article");card.className="next-card";card.tabIndex=0;
-  const image=document.createElement("img");image.src=video.image||"fsblogo.PNG";image.alt=video.title||"Video thumbnail";image.loading="lazy";card.appendChild(image);
-  const title=document.createElement("div");title.className="next-title";title.textContent=video.title||"Untitled Video";card.appendChild(title);
+  const image=document.createElement("img");image.src=item.imageUrl||"fsblogo.PNG";image.alt=item.title||"Video thumbnail";image.loading="lazy";card.appendChild(image);
+  const title=document.createElement("div");title.className="next-title";title.textContent=item.title||"Untitled Video";card.appendChild(title);
   const artist=document.createElement("div");artist.className="next-artist";artist.textContent="PLAY NEXT";card.appendChild(artist);
-  function open(){location.href="video.html?video_id="+encodeURIComponent(video.id) + "&v=70a51fd5"}
+  const param=item.itemType==="song"?"song_id":item.itemType==="release"?"release_id":"video_id";
+  function open(){location.href="video.html?"+param+"="+encodeURIComponent(item.id)+"&v=70a51fd5"}
   card.addEventListener("click",open);card.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}});
   host.appendChild(card);
  });
 }
-
 loadPage().catch(function(error){
  console.error("Video page load failed:",error);
  const playerHost=document.getElementById("playerHost");
@@ -120,7 +140,7 @@ loadPage().catch(function(error){
 });
 </script>
 <script src="shared-nav.js?v=3"></script>
-<script src="video-favorites.js?v=6"></script>
+<script src="video-favorites.js?v=7"></script>
 </body>
 </html>
 
