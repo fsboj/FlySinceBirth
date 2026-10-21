@@ -1,0 +1,2 @@
+alter table public.customer_favorite_videos drop constraint customer_favorite_videos_content_type_check;
+alter table public.customer_favorite_videos add constraint customer_favorite_videos_content_type_check check (content_type in ('video', 'song', 'release'));
