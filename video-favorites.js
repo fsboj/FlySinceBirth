@@ -6,6 +6,7 @@
   style.textContent = ".fsb-video-favorite{display:inline-grid;place-items:center;width:34px;height:34px;border:1px solid #555;border-radius:50%;background:#111;color:#fff;font-size:18px;line-height:1;cursor:pointer}.fsb-video-favorite[aria-pressed=true]{color:#ff6b86;border-color:#a84b5e}.fsb-video-favorite:hover{border-color:#fff}.fsb-video-favorite[hidden]{display:none!important}";
   document.head.appendChild(style);
   let currentUser = null;
+  let authReady = false;
   let favorites = new Set();
   let knownVideos = new Map();
   const keyOf = (type, id) => `${type}:${id}`;
@@ -62,12 +63,30 @@
     });
   }
 
+  function filterVisionCatalog() {
+    const host = document.getElementById("videoCatalog");
+    if (!host) return;
+    host.hidden = !authReady;
+    if (!authReady) return;
+    host.querySelectorAll(".hub-video, .video-card").forEach(card => {
+      const play = card.querySelector("[data-hub-play-video]");
+      const id = card.dataset.fsbVideoFavoriteId || card.dataset.videoId || play?.dataset.hubPlayVideo;
+      if (!currentUser || !favorites.has(keyOf("video", id))) card.remove();
+    });
+    if (!host.querySelector(".hub-video, .video-card") && !host.querySelector(".empty")) {
+      const empty = document.createElement("p"); empty.className = "empty";
+      empty.textContent = currentUser ? "Like a video to add it to Your Vision." : "Sign in to see the videos you have liked.";
+      host.appendChild(empty);
+    }
+  }
+
   async function loadFavorites() {
     if (!currentUser) { favorites.clear(); updateButtons(); renderFavoriteList([]); return; }
     const { data, error } = await client.from("customer_favorite_videos").select("content_type,content_id").eq("user_id", currentUser.id);
     if (error) throw error;
     favorites = new Set((data || []).map(row => keyOf(row.content_type, row.content_id)));
     updateButtons();
+    filterVisionCatalog();
     await renderFavoriteList(data || []);
   }
 
@@ -177,7 +196,10 @@
   }, true);
 
   const observer = new MutationObserver(() => attachControls());
+  const catalogObserver = new MutationObserver(() => { attachControls(); filterVisionCatalog(); });
   observer.observe(document.body, { childList: true, subtree: true });
+  const visionCatalog = document.getElementById("videoCatalog");
+  if (visionCatalog) catalogObserver.observe(visionCatalog, { childList: true, subtree: true });
   const params = new URLSearchParams(location.search);
   const videoType = params.has("song_id") ? "song" : "video";
   const videoId = params.get(videoType === "song" ? "song_id" : "video_id");
@@ -188,13 +210,19 @@
   document.querySelectorAll(".video-card[data-fsb-video-favorite-type]").forEach(card => addFavoriteToCard(card, card.dataset.fsbVideoFavoriteType, card.dataset.fsbVideoFavoriteId, card.querySelector(".video-title")?.textContent));
   client.auth.getSession().then(({ data }) => {
     currentUser = data?.session?.user || null;
+    authReady = true;
     updateButtons();
-    return Promise.all([loadFavorites(), loadRecommendations()]);
+    return Promise.all([loadFavorites(), loadRecommendations()]).then(filterVisionCatalog);
   }).catch(error => console.error("Video favorites are unavailable:", error));
   client.auth.onAuthStateChange((_event, session) => {
     currentUser = session?.user || null;
+    authReady = true;
     updateButtons();
-    loadFavorites().then(loadRecommendations).catch(error => console.error("Video favorites are unavailable:", error));
+    loadFavorites().then(loadRecommendations).then(filterVisionCatalog).catch(error => console.error("Video favorites are unavailable:", error));
+  });
+  window.addEventListener("fsb:favorites-changed", event => {
+    if (Array.isArray(event.detail?.videoIds)) favorites = new Set(event.detail.videoIds);
+    filterVisionCatalog();
   });
 })();
 
