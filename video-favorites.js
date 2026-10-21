@@ -305,26 +305,31 @@
     finally { button.disabled = !currentUser; }
   }, true);
 
-  const pendingVideoCards = new Set();
-  let attachFrame = 0;
-  const observer = new MutationObserver(records => {
-    records.forEach(record => record.addedNodes.forEach(node => {
-      if (node.nodeType !== 1) return;
-      const closestCard = node.matches?.(videoCardSelector) ? node : node.closest?.(videoCardSelector);
-      if (closestCard) pendingVideoCards.add(closestCard);
-      node.querySelectorAll?.(videoCardSelector).forEach(card => pendingVideoCards.add(card));
-    }));
-    if (pendingVideoCards.size && !attachFrame) attachFrame = requestAnimationFrame(() => {
-      attachFrame = 0;
-      const cards = [...pendingVideoCards]; pendingVideoCards.clear();
-      cards.forEach(card => attachControls(card));
+  const visionPage = Boolean(document.getElementById("videosForYou"));
+  if (!visionPage) {
+    const pendingVideoCards = new Set();
+    let attachFrame = 0;
+    const observer = new MutationObserver(records => {
+      records.forEach(record => record.addedNodes.forEach(node => {
+        if (node.nodeType !== 1) return;
+        const closestCard = node.matches?.(videoCardSelector) ? node : node.closest?.(videoCardSelector);
+        if (closestCard) pendingVideoCards.add(closestCard);
+        node.querySelectorAll?.(videoCardSelector).forEach(card => pendingVideoCards.add(card));
+      }));
+      if (pendingVideoCards.size && !attachFrame) attachFrame = requestAnimationFrame(() => {
+        attachFrame = 0;
+        const cards = [...pendingVideoCards]; pendingVideoCards.clear();
+        cards.forEach(card => attachControls(card));
+      });
     });
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-  attachControls();
-  const catalogObserver = new MutationObserver(() => filterVisionCatalog());
+    observer.observe(document.body, { childList: true, subtree: true });
+    attachControls();
+  }
   const visionCatalog = document.getElementById("videoCatalog");
-  if (visionCatalog) catalogObserver.observe(visionCatalog, { childList: true, subtree: true });
+  if (visionCatalog && !visionPage) {
+    const catalogObserver = new MutationObserver(() => filterVisionCatalog());
+    catalogObserver.observe(visionCatalog, { childList: true, subtree: true });
+  }
   const params = new URLSearchParams(location.search);
   const videoType = params.has("song_id") ? "song" : "video";
   const videoId = params.get(videoType === "song" ? "song_id" : "video_id");
