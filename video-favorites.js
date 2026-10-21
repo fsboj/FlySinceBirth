@@ -201,7 +201,10 @@
     const requestedUserId = currentUser?.id || null;
     host.setAttribute("aria-busy", "true");
 
-    const { data: videos, error } = await client.from("videos").select("*").order("sort_order", { ascending: true });
+    const [{ data: videos, error }, { data: songVideos, error: songVideoError }] = await Promise.all([
+      client.from("videos").select("*").order("sort_order", { ascending: true }),
+      client.from("artist_songs").select("id,title,artist_id,video_url,image_url").not("video_url", "is", null)
+    ]);
     if (requestId !== recommendationRequestId) return;
     if (error) {
       host.innerHTML = '<p class="empty">Videos could not be loaded.</p>';
@@ -209,36 +212,37 @@
       console.error("More Visuals could not load videos:", error);
       return;
     }
-    knownVideos = new Map((videos || []).map(video => [String(video.id), video]));
-    if (!videos?.length) {
-      host.innerHTML = '<p class="empty">No videos available yet.</p>';
-      host.removeAttribute("aria-busy");
-      return;
-    }
+    if (songVideoError) console.warn("Album and song videos could not be loaded:", songVideoError);
+
+    const standaloneVideos = videos || [];
+    const attachedSongVideos = songVideos || [];
+    knownVideos = new Map(standaloneVideos.map(video => [String(video.id), video]));
 
     const artistIds = new Set();
     const favoriteVideoIds = new Set();
-    let songIds = [];
+    const favoriteSongIds = new Set();
+    let tasteSongIds = [];
     if (requestedUserId) {
       const [favoriteSongs, playlists, favoriteVideos] = await Promise.all([
         client.from("customer_favorite_songs").select("song_id").eq("user_id", requestedUserId),
         client.from("customer_playlists").select("id").eq("user_id", requestedUserId),
         client.from("customer_favorite_videos").select("content_id").eq("user_id", requestedUserId).eq("content_type", "video")
       ]);
+      (favoriteSongs.data || []).forEach(row => favoriteSongIds.add(String(row.song_id)));
       (favoriteVideos.data || []).forEach(row => favoriteVideoIds.add(String(row.content_id)));
       const playlistIds = (playlists.data || []).map(row => row.id);
       const playlistSongs = playlistIds.length
         ? await client.from("customer_playlist_songs").select("song_id").in("playlist_id", playlistIds)
         : { data: [], error: null };
-      songIds = [...new Set([
+      tasteSongIds = [...new Set([
         ...(favoriteSongs.data || []).map(row => row.song_id),
         ...(playlistSongs.data || []).map(row => row.song_id)
       ].map(String))];
 
-      if (songIds.length) {
+      if (tasteSongIds.length) {
         const [songs, songFeatures] = await Promise.all([
-          client.from("artist_songs").select("id,artist_id").in("id", songIds),
-          client.from("artist_song_features").select("song_id,artist_id").in("song_id", songIds)
+          client.from("artist_songs").select("id,artist_id").in("id", tasteSongIds),
+          client.from("artist_song_features").select("song_id,artist_id").in("song_id", tasteSongIds)
         ]);
         if (songs.error) console.warn("Favorite or playlist song artists could not be loaded:", songs.error);
         if (songFeatures.error) console.warn("Featured song artists could not be loaded:", songFeatures.error);
@@ -247,34 +251,71 @@
       }
     }
 
-    const featured = videos.length
-      ? await client.from("video_artist_features").select("video_id,artist_id").in("video_id", videos.map(video => video.id))
+    const featured = standaloneVideos.length
+      ? await client.from("video_artist_features").select("video_id,artist_id").in("video_id", standaloneVideos.map(video => video.id))
+      : { data: [], error: null };
+    const songIdsWithVideos = attachedSongVideos.map(song => String(song.id));
+    const songFeatures = songIdsWithVideos.length
+      ? await client.from("artist_song_features").select("song_id,artist_id").in("song_id", songIdsWithVideos)
       : { data: [], error: null };
     if (requestId !== recommendationRequestId || requestedUserId !== (currentUser?.id || null)) return;
     if (featured.error) console.warn("Featured video artists could not be loaded:", featured.error);
+    if (songFeatures.error) console.warn("Featured album video artists could not be loaded:", songFeatures.error);
+
     const creators = new Map();
     (featured.data || []).forEach(row => {
       const id = String(row.video_id);
       if (!creators.has(id)) creators.set(id, []);
       creators.get(id).push(String(row.artist_id));
     });
+    const songCreators = new Map();
+    (songFeatures.data || []).forEach(row => {
+      const id = String(row.song_id);
+      if (!songCreators.has(id)) songCreators.set(id, []);
+      songCreators.get(id).push(String(row.artist_id));
+    });
 
-    (videos || []).filter(video => favoriteVideoIds.has(String(video.id))).forEach(video => {
+    standaloneVideos.filter(video => favoriteVideoIds.has(String(video.id))).forEach(video => {
       if (video.artist_id) artistIds.add(String(video.artist_id));
       (creators.get(String(video.id)) || []).forEach(id => artistIds.add(id));
     });
 
-    const candidates = videos.filter(video => !favoriteVideoIds.has(String(video.id)));
-    const matching = [];
-    const other = [];
-    candidates.forEach(video => {
-      const artists = [video.artist_id, ...(creators.get(String(video.id)) || [])].filter(Boolean).map(String);
-      (artists.some(id => artistIds.has(id)) ? matching : other).push(video);
+    const normalizeUrl = value => {
+      if (!value) return "";
+      try {
+        const url = new URL(value, window.location.href);
+        return (url.origin + url.pathname).toLowerCase();
+      } catch (_) {
+        return String(value).trim().toLowerCase();
+      }
+    };
+    const attachedUrls = new Set(attachedSongVideos.map(song => normalizeUrl(song.video_url)).filter(Boolean));
+    const candidates = [
+      ...standaloneVideos
+        .filter(video => !favoriteVideoIds.has(String(video.id)) && !attachedUrls.has(normalizeUrl(video.link)))
+        .map(video => ({ ...video, recommendationType: "video", recommendationId: String(video.id), recommendationUrl: video.link, recommendationImage: video.image, recommendationArtists: [video.artist_id, ...(creators.get(String(video.id)) || [])] })),
+      ...attachedSongVideos
+        .filter(song => !favoriteSongIds.has(String(song.id)))
+        .map(song => ({ ...song, recommendationType: "song", recommendationId: String(song.id), recommendationUrl: song.video_url, recommendationImage: song.image_url, recommendationArtists: [song.artist_id, ...(songCreators.get(String(song.id)) || [])] }))
+    ];
+    const seenUrls = new Set();
+    const uniqueCandidates = candidates.filter(item => {
+      const key = normalizeUrl(item.recommendationUrl);
+      if (!key || seenUrls.has(key)) return false;
+      seenUrls.add(key);
+      return true;
     });
 
+    const matching = [];
+    const other = [];
+    uniqueCandidates.forEach(item => {
+      const artists = item.recommendationArtists.filter(Boolean).map(String);
+      (artists.some(id => artistIds.has(id)) ? matching : other).push(item);
+    });
+
+    // Mix standalone videos with videos attached to songs and album tracks.
     // Prefer artists connected to liked songs, playlists, or liked videos, then
-    // fill the remaining slots with random videos. With no taste data, all picks
-    // are random. Videos already liked are excluded from More Visuals.
+    // fill the remaining slots with random picks. Already-liked videos are excluded.
     const picks = [...randomize(matching), ...randomize(other)].slice(0, 6);
     host.replaceChildren();
     if (!picks.length) {
@@ -282,14 +323,18 @@
       host.removeAttribute("aria-busy");
       return;
     }
-    picks.forEach(video => {
+    picks.forEach(item => {
       const card = document.createElement("article"); card.className = "hub-video";
-      const image = document.createElement("img"); image.src = video.image || "fsblogo.PNG"; image.alt = (video.title || "Video") + " thumbnail"; image.loading = "lazy";
+      const image = document.createElement("img"); image.src = item.recommendationImage || "fsblogo.PNG"; image.alt = (item.title || "Video") + " thumbnail"; image.loading = "lazy";
       const info = document.createElement("div"); info.className = "hub-video-info";
-      const title = document.createElement("strong"); title.textContent = video.title || "Untitled video";
-      const button = document.createElement("a"); button.className = "hub-video-play"; button.href = `video.html?video_id=${encodeURIComponent(video.id)}`; button.textContent = "WATCH VIDEO";
+      const title = document.createElement("strong"); title.textContent = item.title || "Untitled video";
+      const button = document.createElement("a"); button.className = "hub-video-play";
+      button.href = item.recommendationType === "song"
+        ? `video.html?song_id=${encodeURIComponent(item.recommendationId)}`
+        : `video.html?video_id=${encodeURIComponent(item.recommendationId)}`;
+      button.textContent = "WATCH VIDEO";
       const actions = document.createElement("div"); actions.className = "hub-video-actions"; actions.appendChild(button);
-      const favorite = makeButton("video", video.id, video.title); if (favorite) actions.appendChild(favorite);
+      const favorite = makeButton(item.recommendationType, item.recommendationId, item.title); if (favorite) actions.appendChild(favorite);
       info.append(title, actions); card.append(image, info); host.appendChild(card);
     });
     attachControls(); updateButtons();
