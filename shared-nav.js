@@ -24,7 +24,7 @@
     document.querySelectorAll("footer").forEach(function (footer) {
       if (footer.querySelector("[data-fsb-support-link]")) return;
       const link = document.createElement("a");
-      link.href = "mailto:fsbsupport@flysbirth.com?subject=FSB%20Website%20Question";
+      link.href = "account.html#supportForm";
       link.textContent = "CONTACT FSB SUPPORT";
       link.setAttribute("data-fsb-support-link", "true");
       link.style.color = "inherit";
