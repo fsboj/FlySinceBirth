@@ -20,7 +20,7 @@
 <header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="music.html">My FSB</a><a id="topnavArtist" href="artists.html">Artist</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav></header>
 <main class="account-wrap"><h1 id="pageTitle">YOUR FSB<br>ACCOUNT.</h1>
 <section class="auth-grid" id="authPanel">
-<form class="card" id="signinForm"><h2>Sign in</h2><div class="field"><label for="signinEmail">Email</label><input id="signinEmail" type="email" autocomplete="email" required></div><div class="field"><label for="signinPassword">Password</label><div class="password-input-wrap"><input id="signinPassword" type="password" autocomplete="current-password" required><button class="password-toggle" type="button" data-password-toggle="signinPassword" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path class="eye-slash" d="m4 4 16 16"></path></svg></button></div></div><button class="primary" type="submit">SIGN IN</button><button class="auth-create" id="openSignupModal" type="button">Create an account</button></form>
+<form class="card" id="signinForm"><h2>Sign in</h2><div class="field"><label for="signinEmail">Email</label><input id="signinEmail" type="email" autocomplete="email" required></div><div class="field"><label for="signinPassword">Password</label><div class="password-input-wrap"><input id="signinPassword" type="password" autocomplete="current-password" required><button class="password-toggle" type="button" data-password-toggle="signinPassword" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path class="eye-slash" d="m4 4 16 16"></path></svg></button></div></div><button class="primary" type="submit">SIGN IN</button><button class="auth-create" id="openSignupModal" type="button">Create an account</button><button class="auth-create" id="openPasswordReset" type="button">Forgot password?</button></form>
 </section>
 <div class="account-modal" id="signupModal" hidden>
 <div class="account-modal-backdrop"></div>
@@ -29,7 +29,16 @@
 <p class="eyebrow">JOIN FSB</p><h2 id="signupModalTitle">Create your account</h2>
 <form id="signupForm"><div class="field"><label for="signupName">Name</label><input id="signupName" autocomplete="name" maxlength="120" required></div><div class="field"><label for="signupEmail">Email</label><input id="signupEmail" type="email" autocomplete="email" required></div><div class="field"><label for="signupPassword">Password</label><div class="password-input-wrap"><input id="signupPassword" type="password" autocomplete="new-password" minlength="8" required><button class="password-toggle" type="button" data-password-toggle="signupPassword" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path class="eye-slash" d="m4 4 16 16"></path></svg></button></div></div><button class="primary" type="submit">CREATE ACCOUNT</button><p class="small">We’ll use your account email for order receipts and ticket records.</p><p id="signupStatus" class="status" role="status" aria-live="polite"></p></form>
 </section>
-</div><p id="authStatus" class="status" role="status" aria-live="polite"></p>
+</div><div class="account-modal" id="passwordResetModal" hidden>
+<div class="account-modal-backdrop"></div>
+<section class="account-modal-panel" role="dialog" aria-modal="true" aria-labelledby="passwordResetTitle" tabindex="-1">
+<button class="account-modal-close" type="button" data-close-password-reset aria-label="Close">×</button>
+<p class="eyebrow">ACCOUNT ACCESS</p><h2 id="passwordResetTitle">Reset your password</h2>
+<form id="passwordResetRequestForm"><div class="field"><label for="passwordResetEmail">Account email</label><input id="passwordResetEmail" type="email" autocomplete="email" required></div><button class="primary" type="submit">EMAIL RESET LINK</button><p class="small">If an account exists for this email, we’ll send a link to reset its password.</p><p class="status" id="passwordResetRequestStatus" role="status" aria-live="polite"></p></form>
+<form id="passwordResetCompletionForm" hidden><p class="small">Choose a new password for your FSB account.</p><div class="field"><label for="resetNewPassword">New password</label><input id="resetNewPassword" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="resetConfirmPassword">Confirm new password</label><input id="resetConfirmPassword" type="password" autocomplete="new-password" minlength="8" required></div><button class="primary" type="submit">SAVE NEW PASSWORD</button><p class="status" id="passwordResetCompletionStatus" role="status" aria-live="polite"></p></form>
+</section>
+</div>
+<p id="authStatus" class="status" role="status" aria-live="polite"></p>
 
 <section class="account-dashboard" id="dashboard">
 <div class="dashboard-top"><div class="account-identity"><div class="eyebrow">YOUR FSB ACCOUNT</div><div class="account-identity-name" id="accountName">FSB Member</div><button class="secondary" id="accountSettingsToggle" type="button" aria-expanded="false" aria-controls="accountSettingsPanel">CHANGE EMAIL</button></div><button class="secondary" id="signoutButton" type="button">SIGN OUT</button></div>
@@ -75,7 +84,50 @@ function openSignupModal(){signupModal.hidden=false;document.body.classList.add(
 signupTrigger.addEventListener("click",openSignupModal);
 signupModal.querySelector("[data-close-signup]").addEventListener("click",closeSignupModal);
 signupModal.querySelector(".account-modal-backdrop").addEventListener("click",closeSignupModal);
-document.addEventListener("keydown",event=>{if(!signupModal.hidden&&event.key==="Escape"){event.preventDefault();closeSignupModal()}});
+
+const passwordResetModal=$("passwordResetModal"),passwordResetTrigger=$("openPasswordReset");
+const passwordResetRequestForm=$("passwordResetRequestForm"),passwordResetCompletionForm=$("passwordResetCompletionForm");
+function closePasswordResetModal(){passwordResetModal.hidden=true;document.body.classList.remove("signup-modal-open");passwordResetTrigger.focus()}
+function openPasswordResetModal(){
+ passwordResetModal.hidden=false;document.body.classList.add("signup-modal-open");
+ $("passwordResetTitle").textContent="Reset your password";passwordResetRequestForm.hidden=false;passwordResetCompletionForm.hidden=true;
+ $("passwordResetEmail").value=$("signinEmail").value.trim();$("passwordResetRequestStatus").textContent="";passwordResetRequestForm.querySelector("input").focus();
+}
+function openPasswordResetCompletion(){
+ passwordResetModal.hidden=false;document.body.classList.add("signup-modal-open");
+ $("passwordResetTitle").textContent="Choose a new password";passwordResetRequestForm.hidden=true;passwordResetCompletionForm.hidden=false;
+ $("passwordResetCompletionStatus").textContent="";$("resetNewPassword").focus();
+}
+passwordResetTrigger.addEventListener("click",openPasswordResetModal);
+passwordResetModal.querySelector("[data-close-password-reset]").addEventListener("click",closePasswordResetModal);
+passwordResetModal.querySelector(".account-modal-backdrop").addEventListener("click",closePasswordResetModal);
+document.addEventListener("keydown",event=>{
+ if(event.key!=="Escape")return;
+ if(!signupModal.hidden){event.preventDefault();closeSignupModal()}
+ else if(!passwordResetModal.hidden){event.preventDefault();closePasswordResetModal()}
+});
+passwordResetRequestForm.addEventListener("submit",async event=>{
+ event.preventDefault();const status=$("passwordResetRequestStatus"),button=passwordResetRequestForm.querySelector('button[type="submit"]');
+ button.disabled=true;status.textContent="Sending reset instructions…";
+ try{
+  const email=$("passwordResetEmail").value.trim();const redirectTo=new URL("account.html?password_reset=1",window.location.href).href;
+  const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo});if(error)throw error;
+  status.textContent="If an account exists for that email, password reset instructions have been sent.";
+ }catch(error){status.textContent=error.message||"Could not send password reset instructions."}
+ finally{button.disabled=false}
+});
+passwordResetCompletionForm.addEventListener("submit",async event=>{
+ event.preventDefault();const status=$("passwordResetCompletionStatus"),button=passwordResetCompletionForm.querySelector('button[type="submit"]');
+ const password=$("resetNewPassword").value;if(password!==$("resetConfirmPassword").value){status.textContent="The new passwords do not match.";return}
+ button.disabled=true;status.textContent="Updating your password…";
+ try{
+  const {data:{user},error:userError}=await supabaseClient.auth.getUser();if(userError||!user)throw userError||new Error("This reset link may have expired. Request a new one.");
+  const {error}=await supabaseClient.auth.updateUser({password});if(error)throw error;
+  passwordResetCompletionForm.reset();passwordResetModal.hidden=true;document.body.classList.remove("signup-modal-open");history.replaceState(null,"",location.pathname);
+  message("Your password was reset. You can continue using your FSB account.");
+ }catch(error){status.textContent=error.message||"Could not reset your password."}
+ finally{button.disabled=false}
+});
 document.querySelectorAll("[data-password-toggle]").forEach(toggle=>toggle.addEventListener("click",()=>{const input=$(toggle.dataset.passwordToggle),visible=input.type==="password";input.type=visible?"text":"password";toggle.setAttribute("aria-pressed",String(visible));toggle.setAttribute("aria-label",visible?"Hide password":"Show password")}));
 $("signupForm").addEventListener("submit",async e=>{e.preventDefault();const status=$("signupStatus"),submit=$("signupForm").querySelector('button[type="submit"]');submit.disabled=true;status.textContent="Creating your account…";try{const {data,error}=await supabaseClient.auth.signUp({email:$("signupEmail").value.trim(),password:$("signupPassword").value,options:{data:{display_name:$("signupName").value.trim()},emailRedirectTo:(()=>{const url=new URL("account.html",location.href),returnPath=new URLSearchParams(location.search).get("return");if(returnPath)url.searchParams.set("return",returnPath);return url.href})()}});if(error)throw error;if(data.session&&data.user){closeSignupModal();try{await routeSignedInUser(data.user);message("Account created.")}catch(err){message(err.message)}}else status.textContent="Check your email to confirm your account, then sign in here."}catch(err){status.textContent=err.message||"Could not create your account."}finally{submit.disabled=false}});
 $("signinForm").addEventListener("submit",async e=>{e.preventDefault();message("Signing in…");const {data,error}=await supabaseClient.auth.signInWithPassword({email:$("signinEmail").value.trim(),password:$("signinPassword").value});if(error){message(error.message);return}try{await routeSignedInUser(data.user)}catch(err){message("Signed in, but verification could not continue: "+err.message)}});
@@ -85,6 +137,10 @@ $("passwordChangeForm").addEventListener("submit",async e=>{e.preventDefault();c
 $("accountDetailsForm").addEventListener("submit",async e=>{e.preventDefault();const status=$("accountDetailsStatus"),button=e.currentTarget.querySelector('button[type="submit"]');button.disabled=true;status.textContent="Saving account details…";try{const {data:{user},error:userError}=await supabaseClient.auth.getUser();if(userError||!user)throw userError||new Error("Please sign in again.");const displayName=$("profileName").value.trim(),phone=$("profilePhone").value.trim(),newEmail=$("newAccountEmail").value.trim();const {error:profileError}=await supabaseClient.from("customer_profiles").upsert({user_id:user.id,display_name:displayName,phone,updated_at:new Date().toISOString()},{onConflict:"user_id"});if(profileError)throw profileError;$("accountName").textContent=displayName||"FSB Member";if(!newEmail){status.textContent="Your name and contact phone were saved.";return}if(newEmail.toLowerCase()===(user.email||"").toLowerCase()){status.textContent="Your name and contact phone were saved. Enter a different email address to change it.";return}const {error:emailError}=await supabaseClient.auth.updateUser({email:newEmail},{emailRedirectTo:new URL("./account.html",window.location.href).href});if(emailError)throw emailError;status.textContent="Your name and contact phone were saved. Confirmation email(s) were sent; the sign-in email changes after you confirm."}catch(error){status.textContent=error.message||"Could not save account details."}finally{button.disabled=false}});
 $("signoutButton").addEventListener("click",async()=>{await supabaseClient.auth.signOut();location.reload()});
 $("supportForm").addEventListener("submit",async e=>{e.preventDefault();const status=$("supportStatus");const form=$("supportForm");const submit=form.querySelector('button[type="submit"]');status.textContent='Sending your request…';submit.disabled=true;const {data:{user},error:userError}=await supabaseClient.auth.getUser();if(userError||!user){status.textContent='Please sign in again to send a support request.';submit.disabled=false;return}const relation=$("supportOrder").value;const payload={customer_id:user.id,customer_email:user.email,topic:$("supportTopic").value,subject:$("supportSubject").value.trim(),message:$("supportMessage").value.trim(),related_ticket_order_id:relation.startsWith('ticket:')?relation.slice(7)||null:null,related_store_order_id:relation.startsWith('store:')?Number(relation.slice(6))||null:null};const {data:request,error}=await supabaseClient.from('customer_support_requests').insert(payload).select('id').single();if(error){status.textContent='Could not send your request: '+error.message;submit.disabled=false;return}form.reset();const {error:notificationError}=await supabaseClient.functions.invoke('customer-support-email',{body:{requestId:request.id}});status.textContent=notificationError?'Your request was saved, but FSB email notification could not be sent. It is still available in your account.':'Your request was sent to FSB Support. FSB will reply to your account email.';submit.disabled=false});
+const resetUrlParams=new URLSearchParams(location.search),resetHashParams=new URLSearchParams(location.hash.replace(/^#/,""));
+const hasPasswordRecovery=resetUrlParams.get("password_reset")==="1"||resetHashParams.get("type")==="recovery";
+if(hasPasswordRecovery)openPasswordResetCompletion();
+supabaseClient.auth.onAuthStateChange(event=>{if(event==="PASSWORD_RECOVERY")openPasswordResetCompletion()});
 supabaseClient.auth.getSession().then(({data,error})=>{if(error)message(error.message);else if(data.session?.user)routeSignedInUser(data.session.user).catch(err=>message("Your account could not load: "+err.message))});
 </script><script src="shared-nav.js?v=3"></script><script src="video-favorites.js?v=7"></script>
 </body></html>
