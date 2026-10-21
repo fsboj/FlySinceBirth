@@ -9,6 +9,9 @@
     topnav_account: "topnavAccount"
   };
 
+  const musicLink = document.getElementById("topnavMusic");
+  if (musicLink) musicLink.textContent = "My FSB";
+
   function markCurrentPage() {
     const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
     const aliases = { "artist.html": "artists.html", "epalbum.html": "music.html", "video.html": "videos.html" };
