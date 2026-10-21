@@ -176,7 +176,7 @@ async function sendSupportEmail(item: SupportRequest) {
       "A customer sent a new support request through the FSB website.",
       "",
       `Customer: ${item.customer_email}`,
-      `Topic: ${item.topic}`,
+      `Topic: ${{ account: "Account help", feature_collaboration: "Feature / Collaboration Support", ticket: "Tickets", order: "Store order", payment: "Payment", other: "Other" }[item.topic] || item.topic}`,
       `Subject: ${item.subject}`,
       orderReference,
       `Submitted: ${item.created_at}`,
