@@ -73,10 +73,11 @@
     if (!host) return;
     host.hidden = !authReady;
     if (!authReady) return;
-    host.querySelectorAll(".hub-video:not(.favorite-song-video), .video-card").forEach(card => {
+    host.querySelectorAll(".hub-video:not(.favorite-song-video):not(.favorite-release-video), .video-card").forEach(card => {
       const play = card.querySelector("[data-hub-play-video]");
+      const type = card.dataset.favoriteKey?.split(":")[0] || card.dataset.fsbVideoFavoriteType || card.dataset.videoType || "video";
       const id = card.dataset.fsbVideoFavoriteId || card.dataset.videoId || play?.dataset.hubPlayVideo;
-      card.hidden = !currentUser || !favorites.has(keyOf("video", id));
+      card.hidden = !currentUser || !favorites.has(keyOf(type, id));
     });
     host.querySelectorAll(".empty:not(.vision-empty)").forEach(node => node.remove());
     const visible = [...host.querySelectorAll(".hub-video, .video-card")].some(card => !card.hidden);
