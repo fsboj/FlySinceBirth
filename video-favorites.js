@@ -9,6 +9,7 @@
   let authReady = false;
   let favorites = new Set();
   let knownVideos = new Map();
+  let recommendationRequestId = 0;
   const keyOf = (type, id) => `${type}:${id}`;
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const randomize = rows => {
@@ -165,38 +166,92 @@
 
   async function loadRecommendations() {
     const host = document.getElementById("videosForYou");
-    if (!host || host.querySelector(".hub-video")) return;
+    if (!host) return;
+    const requestId = ++recommendationRequestId;
+    const requestedUserId = currentUser?.id || null;
+    host.setAttribute("aria-busy", "true");
+
     const { data: videos, error } = await client.from("videos").select("*").order("sort_order", { ascending: true });
-    if (error) { host.innerHTML = '<p class="empty">Videos could not be loaded.</p>'; return; }
-    knownVideos = new Map((videos || []).map(video => [String(video.id), video]));
-    if (!videos?.length) { host.innerHTML = '<p class="empty">No videos available yet.</p>'; return; }
-    let artistIds = new Set();
-    if (currentUser) {
-      const [fav, lists] = await Promise.all([
-        client.from("customer_favorite_songs").select("song_id").eq("user_id", currentUser.id),
-        client.from("customer_playlists").select("id").eq("user_id", currentUser.id)
-      ]);
-      const playlistIds = (lists.data || []).map(row => row.id);
-      const playlistSongs = playlistIds.length ? await client.from("customer_playlist_songs").select("song_id").in("playlist_id", playlistIds) : { data: [], error: null };
-      const songIds = [...new Set([...(fav.data || []).map(row => row.song_id), ...(playlistSongs.data || []).map(row => row.song_id)])];
-      if (songIds.length) {
-        const songs = await client.from("artist_songs").select("id,artist_id").in("id", songIds);
-        (songs.data || []).forEach(song => { if (song.artist_id) artistIds.add(String(song.artist_id)); });
-      }
-      const favoriteVideoRows = await client.from("customer_favorite_videos").select("content_id").eq("user_id", currentUser.id).eq("content_type", "video");
-      const favoriteVideoIds = (favoriteVideoRows.data || []).map(row => row.content_id);
-      (videos || []).filter(video => favoriteVideoIds.includes(String(video.id)) && video.artist_id).forEach(video => artistIds.add(String(video.artist_id)));
+    if (requestId !== recommendationRequestId) return;
+    if (error) {
+      host.innerHTML = '<p class="empty">Videos could not be loaded.</p>';
+      host.removeAttribute("aria-busy");
+      console.error("More Visuals could not load videos:", error);
+      return;
     }
-    const featured = videos.length ? await client.from("video_artist_features").select("video_id,artist_id").in("video_id", videos.map(video => video.id)) : { data: [], error: null };
+    knownVideos = new Map((videos || []).map(video => [String(video.id), video]));
+    if (!videos?.length) {
+      host.innerHTML = '<p class="empty">No videos available yet.</p>';
+      host.removeAttribute("aria-busy");
+      return;
+    }
+
+    const artistIds = new Set();
+    const favoriteVideoIds = new Set();
+    let songIds = [];
+    if (requestedUserId) {
+      const [favoriteSongs, playlists, favoriteVideos] = await Promise.all([
+        client.from("customer_favorite_songs").select("song_id").eq("user_id", requestedUserId),
+        client.from("customer_playlists").select("id").eq("user_id", requestedUserId),
+        client.from("customer_favorite_videos").select("content_id").eq("user_id", requestedUserId).eq("content_type", "video")
+      ]);
+      (favoriteVideos.data || []).forEach(row => favoriteVideoIds.add(String(row.content_id)));
+      const playlistIds = (playlists.data || []).map(row => row.id);
+      const playlistSongs = playlistIds.length
+        ? await client.from("customer_playlist_songs").select("song_id").in("playlist_id", playlistIds)
+        : { data: [], error: null };
+      songIds = [...new Set([
+        ...(favoriteSongs.data || []).map(row => row.song_id),
+        ...(playlistSongs.data || []).map(row => row.song_id)
+      ].map(String))];
+
+      if (songIds.length) {
+        const [songs, songFeatures] = await Promise.all([
+          client.from("artist_songs").select("id,artist_id").in("id", songIds),
+          client.from("artist_song_features").select("song_id,artist_id").in("song_id", songIds)
+        ]);
+        if (songs.error) console.warn("Favorite or playlist song artists could not be loaded:", songs.error);
+        if (songFeatures.error) console.warn("Featured song artists could not be loaded:", songFeatures.error);
+        (songs.data || []).forEach(song => { if (song.artist_id) artistIds.add(String(song.artist_id)); });
+        (songFeatures.data || []).forEach(row => { if (row.artist_id) artistIds.add(String(row.artist_id)); });
+      }
+    }
+
+    const featured = videos.length
+      ? await client.from("video_artist_features").select("video_id,artist_id").in("video_id", videos.map(video => video.id))
+      : { data: [], error: null };
+    if (requestId !== recommendationRequestId || requestedUserId !== (currentUser?.id || null)) return;
+    if (featured.error) console.warn("Featured video artists could not be loaded:", featured.error);
     const creators = new Map();
-    (featured.data || []).forEach(row => { const id = String(row.video_id); if (!creators.has(id)) creators.set(id, []); creators.get(id).push(String(row.artist_id)); });
-    const matching = [], other = [];
-    videos.forEach(video => {
+    (featured.data || []).forEach(row => {
+      const id = String(row.video_id);
+      if (!creators.has(id)) creators.set(id, []);
+      creators.get(id).push(String(row.artist_id));
+    });
+
+    (videos || []).filter(video => favoriteVideoIds.has(String(video.id))).forEach(video => {
+      if (video.artist_id) artistIds.add(String(video.artist_id));
+      (creators.get(String(video.id)) || []).forEach(id => artistIds.add(id));
+    });
+
+    const candidates = videos.filter(video => !favoriteVideoIds.has(String(video.id)));
+    const matching = [];
+    const other = [];
+    candidates.forEach(video => {
       const artists = [video.artist_id, ...(creators.get(String(video.id)) || [])].filter(Boolean).map(String);
       (artists.some(id => artistIds.has(id)) ? matching : other).push(video);
     });
+
+    // Prefer artists connected to liked songs, playlists, or liked videos, then
+    // fill the remaining slots with random videos. With no taste data, all picks
+    // are random. Videos already liked are excluded from More Visuals.
     const picks = [...randomize(matching), ...randomize(other)].slice(0, 6);
     host.replaceChildren();
+    if (!picks.length) {
+      host.innerHTML = '<p class="empty">No other videos available right now.</p>';
+      host.removeAttribute("aria-busy");
+      return;
+    }
     picks.forEach(video => {
       const card = document.createElement("article"); card.className = "hub-video";
       const image = document.createElement("img"); image.src = video.image || "fsblogo.PNG"; image.alt = (video.title || "Video") + " thumbnail"; image.loading = "lazy";
@@ -208,6 +263,7 @@
       info.append(title, actions); card.append(image, info); host.appendChild(card);
     });
     attachControls(); updateButtons();
+    host.removeAttribute("aria-busy");
   }
 
   document.addEventListener("click", async event => {
