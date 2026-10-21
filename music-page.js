@@ -409,7 +409,7 @@ async function loadHubTickets(user) {
       const title = document.createElement("strong");
       title.textContent = event.title || "FSB Event";
       const meta = document.createElement("span");
-      meta.textContent = [event.date, ticket.quantity + (Number(ticket.quantity) === 1 ? " ticket" : " tickets"), money(Number(ticket.quantity) * Number(ticket.unit_price))].filter(Boolean).join(" · ");
+      meta.textContent = [event.date, ticket.quantity + (Number(ticket.quantity) === 1 ? " ticket" : " tickets"), new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(ticket.quantity) * Number(ticket.unit_price))].filter(Boolean).join(" · ");
       details.append(title, meta);
       if (event.location) {
         const location = document.createElement("small");
