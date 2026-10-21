@@ -134,13 +134,35 @@
     }
   }
 
+  async function renderFavoriteReleaseCards() {
+    const host = document.getElementById("videoCatalog");
+    if (!host) return;
+    const ids = [...favorites].filter(key => key.startsWith("release:")).map(key => key.slice(8));
+    host.querySelectorAll(".favorite-release-video").forEach(card => { if (!favorites.has(card.dataset.favoriteKey)) card.remove(); });
+    if (!currentUser || !ids.length) return;
+    const { data, error } = await client.from("artist_releases").select("id,title,video_url,artwork_url").in("id", ids);
+    if (error) { console.error("Saved EP and album videos could not be loaded:", error); return; }
+    for (const release of (data || []).filter(item => item.video_url)) {
+      const key = keyOf("release", release.id);
+      if (host.querySelector(`[data-favorite-key="${CSS.escape(key)}"]`)) continue;
+      const card = document.createElement("article"); card.className = "hub-video favorite-release-video"; card.dataset.favoriteKey = key; card.dataset.videoType = "release"; card.dataset.videoId = release.id;
+      const image = document.createElement("img"); image.src = release.artwork_url || "fsblogo.PNG"; image.alt = (release.title || "Release video") + " thumbnail"; image.loading = "lazy";
+      const info = document.createElement("div"); info.className = "hub-video-info";
+      const title = document.createElement("strong"); title.textContent = release.title || "Untitled release";
+      const actions = document.createElement("div"); actions.className = "hub-video-actions";
+      const watch = document.createElement("a"); watch.className = "hub-video-play"; watch.href = `video.html?release_id=${encodeURIComponent(release.id)}`; watch.textContent = "WATCH VIDEO";
+      const favorite = makeButton("release", release.id, release.title); if (favorite) actions.appendChild(favorite);
+      actions.prepend(watch); info.append(title, actions); card.append(image, info); host.appendChild(card);
+    }
+  }
+
   async function loadFavorites() {
-    if (!currentUser) { favorites.clear(); updateButtons(); await Promise.all([renderFavoriteVideoCards(), renderSongFavoriteCards()]); filterVisionCatalog(); renderFavoriteList([]); return; }
+    if (!currentUser) { favorites.clear(); updateButtons(); await Promise.all([renderFavoriteVideoCards(), renderSongFavoriteCards(), renderFavoriteReleaseCards()]); filterVisionCatalog(); renderFavoriteList([]); return; }
     const { data, error } = await client.from("customer_favorite_videos").select("content_type,content_id").eq("user_id", currentUser.id);
     if (error) throw error;
     favorites = new Set((data || []).map(row => keyOf(row.content_type, row.content_id)));
     updateButtons();
-    await Promise.all([renderFavoriteVideoCards(), renderSongFavoriteCards()]);
+    await Promise.all([renderFavoriteVideoCards(), renderSongFavoriteCards(), renderFavoriteReleaseCards()]);
     filterVisionCatalog();
     await renderFavoriteList(data || []);
   }
@@ -148,15 +170,19 @@
   async function rowsForFavorites(rows) {
     const videoIds = rows.filter(row => row.content_type === "video").map(row => row.content_id);
     const songIds = rows.filter(row => row.content_type === "song").map(row => row.content_id);
-    const [videos, songs] = await Promise.all([
+    const releaseIds = rows.filter(row => row.content_type === "release").map(row => row.content_id);
+    const [videos, songs, releases] = await Promise.all([
       videoIds.length ? client.from("videos").select("id,title,artist").in("id", videoIds) : Promise.resolve({ data: [], error: null }),
-      songIds.length ? client.from("artist_songs").select("id,title,artist_id,video_url").in("id", songIds) : Promise.resolve({ data: [], error: null })
+      songIds.length ? client.from("artist_songs").select("id,title,artist_id,video_url").in("id", songIds) : Promise.resolve({ data: [], error: null }),
+      releaseIds.length ? client.from("artist_releases").select("id,title,video_url").in("id", releaseIds) : Promise.resolve({ data: [], error: null })
     ]);
     if (videos.error) throw videos.error;
     if (songs.error) throw songs.error;
+    if (releases.error) throw releases.error;
     return [
       ...(videos.data || []).map(video => ({ video, type: "video" })),
-      ...(songs.data || []).filter(song => song.video_url).map(song => ({ video: { ...song, link: song.video_url }, type: "song" }))
+      ...(songs.data || []).filter(song => song.video_url).map(song => ({ video: { ...song, link: song.video_url }, type: "song" })),
+      ...(releases.data || []).filter(release => release.video_url).map(release => ({ video: { ...release, link: release.video_url }, type: "release" }))
     ];
   }
 
@@ -170,7 +196,7 @@
       if (!entries.length) { host.innerHTML = '<p class="empty">Favorite a video and it will show up here.</p>'; return; }
       entries.forEach(({ video, type }) => {
         const row = document.createElement("div"); row.className = "hub-fav hub-fav-row music-library-song";
-        const link = document.createElement("a"); link.href = `video.html?${type === "song" ? "song_id" : "video_id"}=${encodeURIComponent(video.id)}`; link.textContent = video.title || "Untitled video";
+        const link = document.createElement("a"); link.href = `video.html?${type === "song" ? "song_id" : type === "release" ? "release_id" : "video_id"}=${encodeURIComponent(video.id)}`; link.textContent = video.title || "Untitled video";
         const remove = document.createElement("button"); remove.className = "secondary music-library-remove"; remove.type = "button"; remove.dataset.videoFavoriteAction = `${type}:${video.id}`; remove.textContent = "♥"; remove.title = "Remove video from favorites"; remove.setAttribute("aria-label", `Remove ${video.title || "video"} from favorites`); remove.setAttribute("aria-pressed", "true");
         row.append(link, remove); host.appendChild(row);
       });
