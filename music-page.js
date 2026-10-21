@@ -373,7 +373,63 @@ window.addEventListener("fsb:favorites-changed", event => {
   renderHubFavoriteSongs(ids.map(id => musicById.get(String(id))).filter(Boolean));
 });
 
+async function loadHubTickets(user) {
+  const host = document.getElementById("hubTickets");
+  if (!host) return;
+  if (!user) {
+    host.innerHTML = '<p class="empty">Sign in to view event tickets you have purchased.</p>';
+    return;
+  }
+  host.innerHTML = '<p class="empty">Loading your tickets…</p>';
+  try {
+    const result = await musicSupabase.from("event_ticket_orders")
+      .select("id,event_id,quantity,unit_price,status,ticket_code,created_at")
+      .eq("user_id", user.id)
+      .eq("status", "paid")
+      .order("paid_at", { ascending: false });
+    if (result.error) throw result.error;
+    const tickets = result.data || [];
+    if (!tickets.length) {
+      host.innerHTML = '<p class="empty">No purchased tickets yet. Tickets will appear here after payment is confirmed.</p>';
+      return;
+    }
+    const eventIds = [...new Set(tickets.map(ticket => ticket.event_id).filter(Boolean))];
+    const eventResult = eventIds.length
+      ? await musicSupabase.from("events").select("id,title,date,location").in("id", eventIds)
+      : { data: [], error: null };
+    if (eventResult.error) throw eventResult.error;
+    const events = new Map((eventResult.data || []).map(event => [String(event.id), event]));
+    host.replaceChildren();
+    tickets.forEach(ticket => {
+      const event = events.get(String(ticket.event_id)) || {};
+      const article = document.createElement("article");
+      article.className = "hub-ticket";
+      const details = document.createElement("div");
+      details.className = "hub-ticket-details";
+      const title = document.createElement("strong");
+      title.textContent = event.title || "FSB Event";
+      const meta = document.createElement("span");
+      meta.textContent = [event.date, ticket.quantity + (Number(ticket.quantity) === 1 ? " ticket" : " tickets"), money(Number(ticket.quantity) * Number(ticket.unit_price))].filter(Boolean).join(" · ");
+      details.append(title, meta);
+      if (event.location) {
+        const location = document.createElement("small");
+        location.textContent = event.location;
+        details.appendChild(location);
+      }
+      const code = document.createElement("code");
+      code.className = "hub-ticket-code";
+      code.textContent = "Ticket code · " + String(ticket.ticket_code || "");
+      article.append(details, code);
+      host.appendChild(article);
+    });
+  } catch (error) {
+    console.error("Could not load purchased tickets:", error);
+    host.innerHTML = '<p class="empty">Your tickets could not be loaded right now. Please refresh and try again.</p>';
+  }
+}
+
 async function loadHubLibrary(user) {
+  loadHubTickets(user);
   const favoritesNode = document.getElementById("hubFavorites");
   const playlistsNode = document.getElementById("hubPlaylists");
   if (!user) {
