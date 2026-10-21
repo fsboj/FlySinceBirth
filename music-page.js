@@ -386,7 +386,7 @@ async function loadHubTickets(user) {
       .select("id,event_id,quantity,unit_price,status,ticket_code,created_at")
       .eq("user_id", user.id)
       .eq("status", "paid")
-      .order("paid_at", { ascending: false });
+      .order("created_at", { ascending: false });
     if (result.error) throw result.error;
     const tickets = result.data || [];
     if (!tickets.length) {
