@@ -377,7 +377,7 @@ async function loadHubTickets(user) {
   const host = document.getElementById("hubTickets");
   if (!host) return;
   if (!user) {
-    host.innerHTML = '<p class="empty">Sign in to view event tickets you have purchased.</p>';
+    host.innerHTML = '<p class="empty"><a style="color:#fff;text-decoration:underline" href="account.html?return=music.html">Sign in</a> with the account that purchased tickets to view them here.</p>';
     return;
   }
   host.innerHTML = '<p class="empty">Loading your tickets…</p>';
