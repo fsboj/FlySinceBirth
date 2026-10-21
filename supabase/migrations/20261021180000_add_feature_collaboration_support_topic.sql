@@ -1,0 +1,2 @@
+alter table public.customer_support_requests drop constraint customer_support_requests_topic_check;
+alter table public.customer_support_requests add constraint customer_support_requests_topic_check check (topic in ('account', 'ticket', 'order', 'payment', 'feature_collaboration', 'other'));
