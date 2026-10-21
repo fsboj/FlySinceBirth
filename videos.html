@@ -32,18 +32,19 @@ const supabaseClient = supabase.createClient("https://ccvhvxugoebdqwxxankl.supab
 </script><script src="music-library.js?v=6"></script><script>
 async function loadVideos(){
  const grid=document.getElementById("videoGrid");
- const [videoResult,songVideoResult]=await Promise.all([
+ const [videoResult,songVideoResult,releaseVideoResult]=await Promise.all([
   supabaseClient.from("videos").select("*").order("sort_order",{ascending:true}),
-  supabaseClient.from("artist_songs").select("id,title,artist_id,video_url,image_url,created_at,external_features").not("video_url","is",null).order("created_at",{ascending:false})
+  supabaseClient.from("artist_songs").select("id,title,artist_id,video_url,image_url,created_at,external_features").not("video_url","is",null).order("created_at",{ascending:false}),
+  supabaseClient.from("artist_releases").select("id,title,artist_id,video_url,artwork_url,type,created_at").not("video_url","is",null).order("created_at",{ascending:false})
  ]);
  if(videoResult.error)console.error("Could not load videos:",videoResult.error);
- if(songVideoResult.error)console.error("Could not load song videos:",songVideoResult.error);
+ if(songVideoResult.error)console.error("Could not load song videos:",songVideoResult.error);\n if(releaseVideoResult.error)console.error("Could not load album/EP videos:",releaseVideoResult.error);
  const videos=(videoResult.data||[]).filter(v=>v&&v.id!=null);
- const songVideos=(songVideoResult.data||[]).filter(song=>song&&song.video_url);
- if(videoResult.error&&songVideoResult.error){grid.innerHTML='<p class="status">VIDEOS COULD NOT BE LOADED. PLEASE TRY AGAIN LATER.</p>';return;}
+ const songVideos=(songVideoResult.data||[]).filter(song=>song&&song.video_url);\n const releaseVideos=(releaseVideoResult.data||[]).filter(release=>release&&release.video_url);
+ if(videoResult.error&&songVideoResult.error&&releaseVideoResult.error){grid.innerHTML='<p class="status">VIDEOS COULD NOT BE LOADED. PLEASE TRY AGAIN LATER.</p>';return;}
  const items=[
   ...videos.map(video=>({...video,itemType:"video",link:video.link,image:video.image})),
-  ...songVideos.map(song=>({...song,itemType:"song",link:song.video_url,image:song.image_url}))
+  ...songVideos.map(song=>({...song,itemType:"song",link:song.video_url,image:song.image_url})),\n  ...releaseVideos.map(release=>({...release,itemType:"release",link:release.video_url,image:release.artwork_url}))
  ];
  if(!items.length){grid.innerHTML='<p class="status">NO VIDEOS AVAILABLE YET.</p>';return;}
  const standaloneVideos=videos.filter(v=>v.id!=null);
@@ -73,7 +74,9 @@ async function loadVideos(){
   const artist=document.createElement("div");artist.className="video-artist";
   const artistCredits=item.itemType==="video"
    ?[...new Set([item.artist_id,...(creditsByVideo.get(String(item.id))||[])].filter(Boolean).map(String))]
-   :[...new Set([item.artist_id,...(creditsBySong.get(String(item.id))||[])].filter(Boolean).map(String))];
+   :item.itemType==="song"
+    ?[...new Set([item.artist_id,...(creditsBySong.get(String(item.id))||[])].filter(Boolean).map(String))]
+    :[...new Set([item.artist_id].filter(Boolean).map(String))];
   let creditCount=0;
   artistCredits.forEach(artistId=>{
    const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(artistId);link.textContent=artistNames[artistId]||"Artist";
@@ -94,7 +97,7 @@ async function loadVideos(){
   const actions=document.createElement("div");actions.className="video-actions";
   const favorite=window.fsbCreateVideoFavoriteButton?.(item.itemType,item.id,item.title);
   if(favorite){favorite.addEventListener("click",event=>event.stopPropagation());actions.appendChild(favorite);card.appendChild(actions)}
-  const open=()=>window.location.href="video.html?"+(item.itemType==="song"?"song_id=":"video_id=")+encodeURIComponent(item.id)+"&v=70a51fd5";
+  const open=()=>window.location.href="video.html?"+(item.itemType==="song"?"song_id=":item.itemType==="release"?"release_id=":"video_id=")+encodeURIComponent(item.id)+"&v=70a51fd5";
   card.addEventListener("click",e=>{if(e.target.closest(".video-artist a"))return;open();});
   card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){if(e.target.closest(".video-artist a"))return;e.preventDefault();open();}});
   grid.appendChild(card);
@@ -103,7 +106,7 @@ async function loadVideos(){
 loadVideos();
 </script>
 <script src="shared-nav.js?v=3"></script>
-<script src="video-favorites.js?v=6"></script>
+<script src="video-favorites.js?v=7"></script>
 </body>
 </html>
 
