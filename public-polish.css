@@ -125,7 +125,7 @@ a:focus-visible, button:focus-visible, [role="link"]:focus-visible, [tabindex]:f
 /* Artists directory */
 main.page:has(#artistGrid) .artist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: clamp(12px, 1.6vw, 20px);
   overflow: visible;
 }
@@ -268,19 +268,22 @@ footer {
 ::selection { background: #f5f5f5; color: #080808; }
 
 @media (max-width: 900px) {
-  main.page:has(#artistGrid) .artist-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); }
+  main.page:has(#artistGrid) .artist-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .video-grid, .next-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {
   html { scroll-padding-top: 72px; }
   .navbar { padding-left: 22px; padding-right: 22px; }
-  main.page:has(#artistGrid) .artist-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 125px), 1fr)); gap: 11px; }
+  main.page:has(#artistGrid) .artist-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; }
   main.page:has(#artistGrid) .artist-name { padding: 12px; letter-spacing: 1px; }
   .video-grid, .next-grid { grid-template-columns: 1fr; }
   #videoGrid .video-card, #nextVideos .next-card { padding: 8px; }
   .menu-button { padding: 10px 12px; }
   .page { width: calc(100% - 40px); }
   .events-featured { margin-left: 0; margin-right: 0; }
+}
+@media (max-width: 420px) {
+  main.page:has(#artistGrid) .artist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
