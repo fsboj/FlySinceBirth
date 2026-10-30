@@ -476,6 +476,16 @@ body {
  .main-page-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:25px}.main-page-tabs .button{margin:0}.main-page-tabs .button.active{background:white;color:black;border-color:white}.main-page-subpanel{display:none}.main-page-subpanel.active{display:block}.release-toggle{width:100%;text-align:left;background:none;border:0;color:white;cursor:pointer}.release-tracks{display:none;margin-top:15px;padding-left:25px;border-left:1px solid #242424}.release-tracks.open{display:block}
 #fsbAdminGate{position:fixed;inset:0;z-index:1000000;display:flex;align-items:center;justify-content:center;padding:22px;background:radial-gradient(ellipse at top,#191919 0%,#050505 65%);color:#fff;font-family:Arial,Helvetica,sans-serif}body.fsb-admin-ready #fsbAdminGate{display:none}body:not(.fsb-admin-ready) .admin{visibility:hidden}#fsbAdminGate .gate-card{width:min(440px,100%);padding:32px;background:#090909;border:1px solid #333;box-shadow:0 20px 80px #000}#fsbAdminGate .gate-kicker{font-size:10px;letter-spacing:4px;color:#aaa;margin-bottom:12px}#fsbAdminGate h1{font-size:28px;letter-spacing:-1px;margin-bottom:8px}#fsbAdminGate p{font-size:13px;line-height:1.6;color:#999;margin-bottom:22px}#fsbAdminGate label{display:block;color:#aaa;font-size:10px;letter-spacing:2px;margin:16px 0 8px}#fsbAdminGate input{width:100%;padding:14px;background:#050505;border:1px solid #333;color:#fff;font-size:14px}#fsbAdminGate button{width:100%;padding:14px;margin-top:18px;background:#fff;color:#000;border:1px solid #fff;font-size:10px;font-weight:700;letter-spacing:2px;cursor:pointer}#fsbAdminGate button:disabled{opacity:.6;cursor:wait}#fsbAdminGate .gate-status{min-height:18px;margin-top:14px;font-size:12px;color:#e9b7b7;overflow-wrap:anywhere}#fsbAdminGate .gate-logo{width:52px;height:52px;object-fit:contain;margin-bottom:20px}
 
+.artist-create-modal{width:min(760px,calc(100% - 36px));max-width:none;max-height:92vh;padding:0;border:1px solid #444;background:#090909;color:#fff;overflow:visible}
+.artist-create-modal::backdrop{background:rgba(0,0,0,.82)}
+.artist-create-card{max-height:92vh;overflow:auto;padding:24px;background:#090909}
+.artist-create-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding-bottom:18px;border-bottom:1px solid #242424}
+.artist-create-fields{margin-top:20px;max-height:calc(92vh - 190px);overflow:auto;padding:2px}
+.artist-create-fields input,.artist-create-fields textarea{width:100%;background:#050505;color:#fff;border:1px solid #242424;padding:12px;font:inherit}
+.artist-create-fields textarea{resize:vertical}
+.artist-create-actions{position:sticky;bottom:-24px;justify-content:flex-end;padding:18px 0 0;margin-top:20px;background:#090909;border-top:1px solid #242424}
+.artist-create-status{min-height:18px;margin-top:14px;color:#bbb;font-size:12px;overflow-wrap:anywhere}
+@media(max-width:600px){.artist-create-modal{width:calc(100% - 20px)}.artist-create-card{padding:18px}.artist-create-fields{grid-template-columns:1fr}.artist-create-fields .form-group.full{grid-column:auto}}
 .video-upload-modal{width:min(760px,calc(100% - 36px));max-width:none;max-height:92vh;padding:0;border:1px solid #444;background:#090909;color:#fff;overflow:visible}
 .video-upload-modal::backdrop{background:rgba(0,0,0,.82)}
 .video-upload-card{max-height:92vh;overflow:auto;padding:24px;background:#090909}
@@ -2849,83 +2859,76 @@ async function toggleHomepageArtist(id, enabled, checkbox) {
     );
 }
 
-async function addArtist() {
+function addArtist() {
+    const dialog = document.getElementById("artistCreateModal");
+    const form = document.getElementById("artistCreateForm");
+    const status = document.getElementById("artistCreateStatus");
+    if (!dialog || !form) return;
+    form.reset();
+    if (status) status.textContent = "";
+    if (!dialog.open) dialog.showModal();
+}
 
-    const name =
-        prompt("Artist name:");
+function closeArtistModal() {
+    const dialog = document.getElementById("artistCreateModal");
+    if (dialog && dialog.open) dialog.close();
+}
 
-    if (!name) return;
-
-    const slug =
-        prompt("Artist slug:") || "";
-
-    const imageUrl =
-        prompt("Artist image URL:") || "";
-
-    const backgroundImageUrl =
-        prompt("Artist background image URL (optional):") || "";
-
-    const bio =
-        prompt("Artist bio (optional):") || "";
-
-    const genre =
-        prompt("Artist genre (optional):") || "";
-
-    const location =
-        prompt("Artist location (optional):") || "";
-
-
-    const { data } =
-        await supabaseClient
+async function saveNewArtist(event) {
+    event.preventDefault();
+    const form = document.getElementById("artistCreateForm");
+    const status = document.getElementById("artistCreateStatus");
+    const submitButton = document.getElementById("artistCreateSubmit");
+    const value = id => document.getElementById(id).value.trim();
+    const name = value("newArtistName");
+    const nameSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const slug = value("newArtistSlug") || nameSlug;
+    if (!name) {
+        status.textContent = "Enter an artist name.";
+        document.getElementById("newArtistName").focus();
+        return;
+    }
+    if (!slug) {
+        status.textContent = "Enter a valid artist slug.";
+        document.getElementById("newArtistSlug").focus();
+        return;
+    }
+    submitButton.disabled = true;
+    submitButton.textContent = "SAVING...";
+    status.textContent = "Saving artist...";
+    try {
+        const { data, error: orderError } = await supabaseClient
             .from("artists")
             .select("sort_order")
-            .order(
-                "sort_order",
-                {
-                    ascending: false
-                }
-            )
+            .order("sort_order", { ascending: false })
             .limit(1);
-
-
-    const nextOrder =
-        data && data.length
-            ? (data[0].sort_order || 0) + 1
-            : 1;
-
-
-    const { error } =
-        await supabaseClient
+        if (orderError) throw orderError;
+        const nextOrder = data && data.length ? (data[0].sort_order || 0) + 1 : 1;
+        const { error } = await supabaseClient
             .from("artists")
             .insert({
-                name: name,
-                slug: slug,
-                image: imageUrl,
-                background_image_url: backgroundImageUrl,
-                bio: bio,
-                genre: genre,
-                location: location,
+                name,
+                slug,
+                image: value("newArtistImage"),
+                background_image_url: value("newArtistBackground"),
+                bio: value("newArtistBio"),
+                genre: value("newArtistGenre"),
+                location: value("newArtistLocation"),
                 sort_order: nextOrder,
                 homepage_featured: false
             });
-
-
-    if (error) {
-
-        alert(
-            "Could not add artist:\n\n" +
-            error.message
-        );
-
-        return;
+        if (error) throw error;
+        closeArtistModal();
+        form.reset();
+        await loadArtists();
+        setStatus("ARTIST ADDED");
+    } catch (error) {
+        console.error("ADD ARTIST ERROR:", error);
+        status.textContent = "Could not add artist: " + (error.message || error);
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "ADD ARTIST";
     }
-
-
-    await loadArtists();
-
-
-    
-    setStatus("ARTIST ADDED");
 }
 
 
@@ -6899,6 +6902,34 @@ document.addEventListener("DOMContentLoaded", function(){
 })();
 </script>
 
+
+<dialog id="artistCreateModal" class="artist-create-modal" aria-labelledby="artistCreateTitle" onclick="if(event.target===this)closeArtistModal()">
+  <div class="artist-create-card">
+    <div class="artist-create-header">
+      <div>
+        <div class="panel-title" id="artistCreateTitle">ADD ARTIST</div>
+        <div class="panel-description">Create an artist profile for the FSB website.</div>
+      </div>
+      <button type="button" class="button" aria-label="Close" onclick="closeArtistModal()">CLOSE</button>
+    </div>
+    <form id="artistCreateForm" onsubmit="saveNewArtist(event)">
+      <div class="form-grid artist-create-fields">
+        <div class="form-group full"><label for="newArtistName">ARTIST NAME</label><input id="newArtistName" type="text" class="admin-input" placeholder="ARTIST NAME" required></div>
+        <div class="form-group"><label for="newArtistSlug">ARTIST SLUG</label><input id="newArtistSlug" type="text" class="admin-input" placeholder="Auto-created from name"></div>
+        <div class="form-group"><label for="newArtistGenre">GENRE</label><input id="newArtistGenre" type="text" class="admin-input" placeholder="Optional"></div>
+        <div class="form-group"><label for="newArtistImage">ARTIST IMAGE URL</label><input id="newArtistImage" type="url" class="admin-input" placeholder="https://..."></div>
+        <div class="form-group"><label for="newArtistBackground">BACKGROUND IMAGE URL</label><input id="newArtistBackground" type="url" class="admin-input" placeholder="Optional"></div>
+        <div class="form-group"><label for="newArtistLocation">LOCATION</label><input id="newArtistLocation" type="text" class="admin-input" placeholder="Optional"></div>
+        <div class="form-group full"><label for="newArtistBio">BIO</label><textarea id="newArtistBio" rows="4" class="admin-input" placeholder="Optional artist bio"></textarea></div>
+      </div>
+      <div id="artistCreateStatus" class="artist-create-status" role="status" aria-live="polite"></div>
+      <div class="actions artist-create-actions">
+        <button type="button" class="button" onclick="closeArtistModal()">CANCEL</button>
+        <button id="artistCreateSubmit" type="submit" class="button primary">ADD ARTIST</button>
+      </div>
+    </form>
+  </div>
+</dialog>
 </body>
 
 </html>
