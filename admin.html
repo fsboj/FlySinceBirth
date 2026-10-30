@@ -2860,12 +2860,50 @@ async function toggleHomepageArtist(id, enabled, checkbox) {
 }
 
 let editingArtistModalId=null;
-function addArtist(){editingArtistModalId=null;const d=document.getElementById('artistCreateModal'),f=document.getElementById('artistCreateForm');if(!d||!f)return;f.reset();document.getElementById('artistCreateTitle').textContent='ADD ARTIST';document.getElementById('artistCreateDescription').textContent='Create an artist profile for the FSB website.';document.getElementById('artistCreateSubmit').textContent='ADD ARTIST';document.getElementById('artistCreateStatus').textContent='';if(!d.open)d.showModal()}
+function addArtist(){editingArtistModalId=null;const d=document.getElementById('artistCreateModal'),f=document.getElementById('artistCreateForm');if(!d||!f)return;f.reset();const featured=document.getElementById('artistFeaturedSongsGroup');if(featured)featured.hidden=true;document.getElementById('artistCreateTitle').textContent='ADD ARTIST';document.getElementById('artistCreateDescription').textContent='Create an artist profile for the FSB website.';document.getElementById('artistCreateSubmit').textContent='ADD ARTIST';document.getElementById('artistCreateStatus').textContent='';if(!d.open)d.showModal()}
 window.openArtistCreateModal=addArtist;
 function closeArtistModal(){const d=document.getElementById('artistCreateModal');if(d&&d.open)d.close()}
 async function uploadArtistImage(bucket,file){if(!file)return '';if(!file.type||!file.type.startsWith('image/'))throw new Error('Choose a valid image file.');const p='artist-profiles/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');const st=supabaseClient.storage.from(bucket),r=await st.upload(p,file,{upsert:false,contentType:file.type});if(r.error)throw r.error;return st.getPublicUrl(p).data.publicUrl}
 async function saveNewArtist(event){event.preventDefault();const f=document.getElementById('artistCreateForm'),s=document.getElementById('artistCreateStatus'),b=document.getElementById('artistCreateSubmit'),v=id=>document.getElementById(id).value.trim(),name=v('newArtistName'),slug=v('newArtistSlug')||name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');if(!name||!slug){s.textContent='Enter a valid artist name and slug.';return}b.disabled=true;b.textContent=editingArtistModalId?'SAVING...':'ADDING...';s.textContent='';try{const dup=await supabaseClient.from('artists').select('id').eq('slug',slug).maybeSingle();if(dup.error)throw dup.error;if(dup.data&&String(dup.data.id)!==String(editingArtistModalId))throw new Error('An artist with that slug already exists.');const imageFile=document.getElementById('newArtistImageFile').files[0],bgFile=document.getElementById('newArtistBackgroundFile').files[0],profile={name,slug,image:imageFile?await uploadArtistImage('artist-images',imageFile):v('newArtistImage'),background_image_url:bgFile?await uploadArtistImage('artist-backgrounds',bgFile):v('newArtistBackground'),bio:v('newArtistBio'),genre:v('newArtistGenre'),location:v('newArtistLocation')},editing=!!editingArtistModalId,id=editingArtistModalId;if(editing){const r=await supabaseClient.from('artists').update(profile).eq('id',id);if(r.error)throw r.error}else{const q=await supabaseClient.from('artists').select('sort_order').order('sort_order',{ascending:false}).limit(1);if(q.error)throw q.error;profile.sort_order=q.data&&q.data.length?(q.data[0].sort_order||0)+1:1;profile.homepage_featured=false;const r=await supabaseClient.from('artists').insert(profile);if(r.error)throw r.error}closeArtistModal();f.reset();editingArtistModalId=null;await loadArtists();if(id){const sel=document.getElementById('artistPageSelect');if(sel){sel.value=String(id);sel.dispatchEvent(new Event('change'))}}setStatus(editing?'ARTIST UPDATED':'ARTIST ADDED')}catch(err){console.error('SAVE ARTIST ERROR:',err);s.textContent='Could not save artist: '+(err.message||err)}finally{b.disabled=false;b.textContent=editingArtistModalId?'SAVE CHANGES':'ADD ARTIST'}}
-async function editArtist(id){const r=await supabaseClient.from('artists').select('*').eq('id',id).single();if(r.error){alert('Could not load artist:\n\n'+r.error.message);return}const x=r.data,d=document.getElementById('artistCreateModal'),f=document.getElementById('artistCreateForm');editingArtistModalId=id;f.reset();document.getElementById('artistCreateTitle').textContent='EDIT ARTIST';document.getElementById('artistCreateDescription').textContent='Select device files to replace images, or keep the existing images.';document.getElementById('artistCreateSubmit').textContent='SAVE CHANGES';document.getElementById('newArtistName').value=x.name||'';document.getElementById('newArtistSlug').value=x.slug||'';document.getElementById('newArtistGenre').value=x.genre||'';document.getElementById('newArtistImage').value=x.image||'';document.getElementById('newArtistBackground').value=x.background_image_url||'';document.getElementById('newArtistLocation').value=x.location||'';document.getElementById('newArtistBio').value=x.bio||'';document.getElementById('artistCreateStatus').textContent='';if(!d.open)d.showModal()}
+async function loadArtistFeaturedSongs(artistId){
+ const group=document.getElementById('artistFeaturedSongsGroup'),list=document.getElementById('artistFeaturedSongsList');
+ if(!group||!list)return;
+ group.hidden=false;list.textContent='LOADING FEATURED SONGS...';
+ try{
+  const refs=await supabaseClient.from('artist_song_features').select('song_id,sort_order').eq('artist_id',artistId).order('sort_order',{ascending:true});
+  if(refs.error)throw refs.error;
+  const featureRows=refs.data||[],songIds=[...new Set(featureRows.map(row=>row.song_id).filter(Boolean))];
+  if(!songIds.length){list.textContent='NO SONGS FEATURE THIS ARTIST YET.';return}
+  const songsResult=await supabaseClient.from('artist_songs').select('id,title,artist_id,release_id').in('id',songIds);
+  if(songsResult.error)throw songsResult.error;
+  const songsById=new Map((songsResult.data||[]).map(song=>[String(song.id),song]));
+  const songs=[...featureRows].map(row=>songsById.get(String(row.song_id))).filter(Boolean);
+  if(!songs.length){list.textContent='NO SONGS FEATURE THIS ARTIST YET.';return}
+  const mainArtistIds=[...new Set(songs.map(song=>song.artist_id).filter(Boolean))],releaseIds=[...new Set(songs.map(song=>song.release_id).filter(Boolean))];
+  const [artistResult,releaseResult]=await Promise.all([
+   mainArtistIds.length?supabaseClient.from('artists').select('id,name').in('id',mainArtistIds):Promise.resolve({data:[],error:null}),
+   releaseIds.length?supabaseClient.from('artist_releases').select('id,title,type').in('id',releaseIds):Promise.resolve({data:[],error:null})
+  ]);
+  if(artistResult.error)throw artistResult.error;
+  if(releaseResult.error)throw releaseResult.error;
+  const artistNames=new Map((artistResult.data||[]).map(artist=>[String(artist.id),artist.name||'ARTIST']));
+  const releases=new Map((releaseResult.data||[]).map(release=>[String(release.id),release]));
+  list.replaceChildren();
+  songs.forEach(song=>{
+   const row=document.createElement('div');row.className='admin-item';row.style.cssText='display:flex;flex-direction:column;gap:5px;padding:13px 15px;';
+   const title=document.createElement('div');title.className='item-name';title.textContent=song.title||'UNTITLED SONG';
+   const meta=document.createElement('div');meta.className='item-meta';
+   const parts=['FEATURED ON · '+(artistNames.get(String(song.artist_id))||'ARTIST')];
+   const release=releases.get(String(song.release_id));
+   if(release)parts.push((release.type||'RELEASE').toUpperCase()+' · '+release.title);
+   meta.textContent=parts.join('  /  ');row.append(title,meta);list.appendChild(row);
+  });
+ }catch(error){
+  console.error('Could not load songs featuring artist:',error);
+  list.textContent='Could not load featured songs: '+(error.message||error);
+ }
+}
+async function editArtist(id){const r=await supabaseClient.from('artists').select('*').eq('id',id).single();if(r.error){alert('Could not load artist:\n\n'+r.error.message);return}const x=r.data,d=document.getElementById('artistCreateModal'),f=document.getElementById('artistCreateForm');editingArtistModalId=id;f.reset();document.getElementById('artistCreateTitle').textContent='EDIT ARTIST';document.getElementById('artistCreateDescription').textContent='Select device files to replace images, or keep the existing images.';document.getElementById('artistCreateSubmit').textContent='SAVE CHANGES';document.getElementById('newArtistName').value=x.name||'';document.getElementById('newArtistSlug').value=x.slug||'';document.getElementById('newArtistGenre').value=x.genre||'';document.getElementById('newArtistImage').value=x.image||'';document.getElementById('newArtistBackground').value=x.background_image_url||'';document.getElementById('newArtistLocation').value=x.location||'';document.getElementById('newArtistBio').value=x.bio||'';document.getElementById('artistCreateStatus').textContent='';if(!d.open)d.showModal();await loadArtistFeaturedSongs(id)}
 async function removeArtist(id) {
 
     if (
@@ -6762,6 +6800,11 @@ document.addEventListener("DOMContentLoaded", function(){
         <div class="form-group full"><label for="newArtistBackgroundFile">BACKGROUND IMAGE FROM DEVICE</label><input id="newArtistBackgroundFile" type="file" class="admin-input" accept="image/*"><small class="field-help">Select a device image, or enter a URL below.</small></div><div class="form-group"><label for="newArtistBackground">BACKGROUND IMAGE URL (OPTIONAL)</label><input id="newArtistBackground" type="url" class="admin-input" placeholder="Optional"></div>
         <div class="form-group"><label for="newArtistLocation">LOCATION</label><input id="newArtistLocation" type="text" class="admin-input" placeholder="Optional"></div>
         <div class="form-group full"><label for="newArtistBio">BIO</label><textarea id="newArtistBio" rows="4" class="admin-input" placeholder="Optional artist bio"></textarea></div>
+      </div>
+      <div id="artistFeaturedSongsGroup" hidden style="margin-top:22px;padding:20px;border:1px solid #292929;background:#0b0b0b;">
+        <div class="panel-title">FEATURED SONGS</div>
+        <div class="panel-description">Songs this artist is featured on, including album and EP tracks.</div>
+        <div id="artistFeaturedSongsList" role="status" aria-live="polite" style="display:grid;gap:10px;margin-top:16px;"></div>
       </div>
       <div id="artistCreateStatus" class="artist-create-status" role="status" aria-live="polite"></div>
       <div class="actions artist-create-actions">
