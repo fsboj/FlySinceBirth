@@ -155,8 +155,8 @@ body {
 }
 
 .artist-image {
-    width: 230px;
-    height: 230px;
+    width: 300px;
+    height: 300px;
 
     object-fit: cover;
 
@@ -634,8 +634,8 @@ body {
 }
 
 .release-cover {
-    width: 180px;
-    height: 180px;
+    width: 210px;
+        height: 210px;
     object-fit: cover;
     background: #111;
     display: block;
@@ -2029,14 +2029,9 @@ console.log("ARTIST SUPABASE ERROR:", error);
         "artistName"
     ).textContent =
         data.name ||
-        "ARTIST";
-
-
-    document.getElementById(
-        "artistImage"
-    ).src =
-        data.image ||
-        "fsblogo.PNG";
+        "ARTIST";    const artistImage=document.getElementById("artistImage");
+    artistImage.src=data.image||"fsblogo.PNG";
+    artistImage.onerror=function(){artistImage.onerror=null;artistImage.src="fsblogo.PNG";};
 
 
     document.getElementById(
@@ -2169,6 +2164,7 @@ image.className = "video-thumbnail";
     image.alt =
         song.title ||
         "Song";
+    image.onerror=function(){image.onerror=null;image.src="fsblogo.PNG";};
 
 
     artwork.appendChild(image);
@@ -2397,41 +2393,37 @@ async function loadArtistMusic() {
         return;
     }
 
-    const { data: artistSongs, error } =
-        await supabaseClient
-            .from("artist_songs")
-            .select("*")
-            .eq("artist_id", artistId)
-            .order("created_at", {
-                ascending: false
-            });
-
-    if (error) {
-
-        console.error(
-            "Could not load artist music:",
-            error
-        );
-
-        return;
-    }
-
-    songs = artistSongs || [];
+    const primaryResult=await supabaseClient.from("artist_songs").select("*").eq("artist_id",artistId).order("created_at",{ascending:false});
+    if(primaryResult.error){console.error("Could not load artist music:",primaryResult.error);return}
+    const featureRefResult=await supabaseClient.from("artist_song_features").select("song_id").eq("artist_id",artistId);
+    if(featureRefResult.error)console.warn("Could not load songs featuring this artist:",featureRefResult.error);
+    const featuredSongIds=[...new Set((featureRefResult.data||[]).map(row=>String(row.song_id)))];
+    let featuredSongs=[];
+    if(featuredSongIds.length){const featuredResult=await supabaseClient.from("artist_songs").select("*").in("id",featuredSongIds).order("created_at",{ascending:false});if(featuredResult.error)console.warn("Could not load featured songs:",featuredResult.error);else featuredSongs=featuredResult.data||[]}
+    const songRowsById=new Map();
+    [...(primaryResult.data||[]),...featuredSongs].forEach(song=>songRowsById.set(String(song.id),song));
+    songs=[...songRowsById.values()];
     const featureResult=songs.length?await supabaseClient.from("artist_song_features").select("song_id,artist_id,sort_order").in("song_id",songs.map(song=>song.id)).order("sort_order",{ascending:true}):{data:[],error:null};
+    if(featureResult.error)console.warn("Could not load song feature credits:",featureResult.error);
     const featureRows=featureResult.error?[]:(featureResult.data||[]);
     const featureIdsBySong=new Map();
     featureRows.forEach(row=>{const key=String(row.song_id);if(!featureIdsBySong.has(key))featureIdsBySong.set(key,[]);featureIdsBySong.get(key).push(String(row.artist_id))});
-    const featureArtistIds=[...new Set(featureRows.map(row=>String(row.artist_id)).filter(id=>id!==String(artistId)))];
-    if(featureArtistIds.length){const artistsResult=await supabaseClient.from("artists").select("id,name").in("id",featureArtistIds);if(!artistsResult.error)(artistsResult.data||[]).forEach(artist=>artistFeatureNameMap.set(String(artist.id),artist.name||"Artist"))}
     songs.forEach(song=>song.feature_artist_ids=featureIdsBySong.get(String(song.id))||[]);
-
-    console.log(
-        "ARTIST SONGS LOADED:",
-        songs
-    );
+    const creditedArtistIds=[...new Set(songs.flatMap(song=>[song.artist_id,...(song.feature_artist_ids||[])]).filter(Boolean).map(String).filter(id=>id!==String(artistId)))];
+    if(creditedArtistIds.length){const artistsResult=await supabaseClient.from("artists").select("id,name").in("id",creditedArtistIds);if(!artistsResult.error)(artistsResult.data||[]).forEach(artist=>artistFeatureNameMap.set(String(artist.id),artist.name||"Artist"))}
+    const dedupedArtistSongs=new Map();
+    songs.forEach(song=>{
+        const titleKey=String(song.title||"").trim().toLocaleLowerCase().replace(/\s+/g," ");
+        const key=[String(song.artist_id||""),String(song.release_id||"standalone"),titleKey].join("|");
+        const current=dedupedArtistSongs.get(key);
+        const score=(song.feature_artist_ids||[]).length*100+(song.image_url&&!/\.(mov|mp4|m4v|webm|avi|mkv)(?:[?#].*)?$/i.test(song.image_url)?10:0);
+        const currentScore=current?(current.feature_artist_ids||[]).length*100+(current.image_url&&!/\.(mov|mp4|m4v|webm|avi|mkv)(?:[?#].*)?$/i.test(current.image_url)?10:0):-1;
+        if(!current||score>currentScore||(score===currentScore&&String(song.created_at||"")>String(current.created_at||"")))dedupedArtistSongs.set(key,song);
+    });
+    songs=[...dedupedArtistSongs.values()].sort((left,right)=>String(right.created_at||"").localeCompare(String(left.created_at||"")));
 function renderArtistSongCredits(node,song){
     node.replaceChildren();
-    const ids=[...new Set([String(artistId),...(song.feature_artist_ids||[]).map(String)].filter(Boolean))];
+    const ids=[...new Set([String(song.artist_id||""),...(song.feature_artist_ids||[]).map(String)].filter(Boolean))];
     let count=0;
     ids.forEach(id=>{const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(id);link.textContent=id===String(artistId)?(document.getElementById("artistName").textContent||"FSB ARTIST"):(artistFeatureNameMap.get(id)||"Artist");if(count)node.appendChild(document.createTextNode(count===1?" feat. ":", "));node.appendChild(link);link.addEventListener("click",event=>event.stopPropagation());count++});
     (song.external_features||[]).forEach(credit=>{if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;if(count)node.appendChild(document.createTextNode(count===1?" feat. ":", "));node.appendChild(link);link.addEventListener("click",event=>event.stopPropagation());count++}catch(_){}});
@@ -2468,6 +2460,7 @@ function createTopSongButton(song) {
     image.alt =
         song.title ||
         "Song";
+    image.onerror=function(){image.onerror=null;image.src="fsblogo.PNG";};
 
 
     /* NUMBER */
@@ -2567,6 +2560,7 @@ function createCompactSongButton(song) {
     image.alt =
         song.title ||
         "Song";
+    image.onerror=function(){image.onerror=null;image.src="fsblogo.PNG";};
 
 
     const number =
@@ -2647,7 +2641,7 @@ if (musicSection) {
         songs.filter(
             function(song) {
 
-                return !song.release_id;
+                return !song.release_id || String(song.artist_id)!==String(artistId);
 
             }
         );

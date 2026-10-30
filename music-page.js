@@ -316,6 +316,8 @@ function songCard(song) {
   card.className = "hub-song";
   const credits = artistCreditLinks(song.artist_id, song.artist_name || "FLY SINCE BIRTH", song.feature_artist_ids, song.artistNames || new Map(), song.external_features);
   card.innerHTML = `<img src="${musicEsc(song.image_url || "fsblogo.PNG")}" alt=""><div class="hub-song-info"><strong>${musicEsc(song.title || "Untitled")}</strong><small>${credits || "FLY SINCE BIRTH"}</small></div><button class="hub-play" type="button" data-hub-play-song="${musicEsc(song.id)}">${song.audio_url ? "PLAY" : "UNAVAILABLE"}</button>`;
+  const artwork = card.querySelector("img");
+  artwork.onerror = () => { artwork.onerror = null; artwork.src = "fsblogo.PNG"; };
   if (window.decorateSongControls) window.decorateSongControls(card, song);
   return card;
 }
@@ -325,6 +327,7 @@ function renderVideo(video, artistName, featuredIds, artistNames) {
   const image = document.createElement("img");
   image.src = video.image || "fsblogo.PNG";
   image.alt = (video.title || "FSB video") + " thumbnail";
+  image.onerror = () => { image.onerror = null; image.src = "fsblogo.PNG"; };
   image.loading = "lazy";
   card.appendChild(image);
   const info = document.createElement("div");
@@ -449,7 +452,7 @@ async function loadHubLibrary(user) {
   if (fav.error) throw fav.error;
   if (lists.error) throw lists.error;
   const favoriteIds = [...new Set((fav.data || []).map((row) => String(row.song_id)))];
-  const favoriteSongs = favoriteIds.map(id => musicById.get(id)).filter(Boolean);
+  const favoriteSongs = dedupeMusicSongs(favoriteIds.map(id => musicById.get(id)).filter(Boolean));
   renderHubFavoriteSongs(favoriteSongs);
   const playlistIds = (lists.data || []).map((p) => p.id);
   playlistsNode.innerHTML = "";
@@ -461,7 +464,7 @@ async function loadHubLibrary(user) {
     items = result.data || [];
   }
   for (const playlist of lists.data || []) {
-    const tracks = items.filter((item) => item.playlist_id === playlist.id).map((item) => musicById.get(String(item.song_id))).filter(Boolean);
+    const tracks = dedupeMusicSongs(items.filter((item) => item.playlist_id === playlist.id).map((item) => musicById.get(String(item.song_id))).filter(Boolean));
     const article = document.createElement("article");
     article.className = "hub-playlist";
     article.dataset.playlistId = String(playlist.id);
@@ -567,15 +570,29 @@ async function loadHubLibrary(user) {
   const requestedPlaylist = musicParams.get("playlist");
   if (requestedPlaylist) {
     const playlist = (lists.data || []).find((p) => String(p.id) === requestedPlaylist);
-    const tracks = items.filter((item) => item.playlist_id === requestedPlaylist).map((item) => musicById.get(String(item.song_id))).filter((song) => song?.audio_url);
+    const tracks = dedupeMusicSongs(items.filter((item) => item.playlist_id === requestedPlaylist).map((item) => musicById.get(String(item.song_id))).filter((song) => song?.audio_url));
     if (playlist) { const card = [...playlistsNode.querySelectorAll(".hub-playlist")].find((item) => item.dataset.playlistId === requestedPlaylist); const toggle = card?.querySelector(".hub-playlist-toggle"); if (toggle && card.querySelector(".hub-playlist-body")?.hidden) toggle.click(); card?.scrollIntoView({ behavior: "smooth", block: "center" }); if (tracks.length) setPlayerStatus(`Playlist “${playlist.name}” is ready. Press PLAY ALL or SHUFFLE to start.`); }
   }
   return { songIds: tasteSongIds, artistIds: tasteArtistIds };
 }
 
+function musicSongDuplicateKey(song){
+  const title=String(song.title||'').trim().toLocaleLowerCase().replace(/\s+/g,' ');
+  return [String(song.artist_id||''),String(song.release_id||'standalone'),title].join('|');
+}
+function dedupeMusicSongs(songs){
+  const chosen=new Map();
+  (songs||[]).forEach(song=>{
+    const key=musicSongDuplicateKey(song),old=chosen.get(key);
+    const score=(song.feature_artist_ids||[]).length*100+(song.image_url&&!/\.(mov|mp4|m4v|webm|avi|mkv)(?:[?#].*)?$/i.test(song.image_url)?10:0);
+    const oldScore=old?(old.feature_artist_ids||[]).length*100+(old.image_url&&!/\.(mov|mp4|m4v|webm|avi|mkv)(?:[?#].*)?$/i.test(old.image_url)?10:0):-1;
+    if(!old||score>oldScore)chosen.set(key,song);
+  });
+  return [...chosen.values()];
+}
 async function loadMusicHub() {
   const [{ data: songs, error: songError }, { data: sessionData }] = await Promise.all([
-    musicSupabase.from("artist_songs").select("id,title,artist_id,audio_url,image_url,release_id,track_number,external_features").order("created_at", { ascending: false }),
+    musicSupabase.from("artist_songs").select("id,title,artist_id,audio_url,image_url,release_id,track_number,external_features,created_at").order("created_at", { ascending: false }),
     musicSupabase.auth.getSession()
   ]);
   if (songError) throw songError;
@@ -599,13 +616,15 @@ async function loadMusicHub() {
     if (result.error) console.warn("Artist names could not be loaded:", result.error);
     (result.data || []).forEach(artist => names.set(String(artist.id), artist.name || ""));
   }
-  const catalog = (songs || []).map(song => ({
+  const allCatalog = (songs || []).map(song => ({
     ...song,
     artist_name: names.get(String(song.artist_id)) || "",
     feature_artist_ids: featureArtistsBySong.get(String(song.id)) || [],
     artistNames: names
   }));
-  catalog.forEach(song => musicById.set(String(song.id), song));
+  musicById.clear();
+  allCatalog.forEach(song => musicById.set(String(song.id), song));
+  const catalog = dedupeMusicSongs(allCatalog);
   const catalogNode = document.getElementById("songCatalog");
   const bySongId = new Map(catalog.map(song => [String(song.id), song]));
   const user = sessionData?.session?.user || null;

@@ -4293,7 +4293,22 @@ async function saveArtistPage() {
 /* =====================================================
    UPLOAD ARTIST SONG
 ===================================================== */
+function validateAdminImageFile(file,label){
+    if(!file)return;
+    const extOk=/\.(png|jpe?g|jfif|gif|webp|avif|bmp|svg|heic|heif)$/i.test(file.name||'');
+    if(!extOk||(file.type&&!file.type.toLowerCase().startsWith('image/')))throw new Error((label||'This field')+' must use an image file (PNG, JPG, GIF, WEBP, AVIF, BMP, or SVG).');
+}
+document.addEventListener('change',function(event){
+    const input=event.target;
+    if(!input||!input.matches||!input.matches('input[type=file][accept*="image"]'))return;
+    const files=[...input.files];
+    if(files.some(file=>{try{validateAdminImageFile(file,'Please choose an image')}catch(_){return true}return false})){input.value='';alert('Please choose an image file for this image field. Video files must go in a video field.');}
+});
 async function uploadArtistSong() {
+    if (window.artistSongUploadInProgress) return;
+    window.artistSongUploadInProgress = true;
+    const songUploadButton = document.getElementById('artistSongSubmitButton');
+    if (songUploadButton) { songUploadButton.disabled = true; songUploadButton.textContent = 'UPLOADING...'; }
 
     try {
 
@@ -4305,8 +4320,10 @@ async function uploadArtistSong() {
         const title = titleInput ? titleInput.value.trim() : "";
         const audioFile = audioInput ? audioInput.files[0] : null;
         const artworkFile = artworkInput ? artworkInput.files[0] : null;
+        validateAdminImageFile(artworkFile, 'Song artwork');
         const videoInput = document.getElementById("artistSongVideoFile");
         const videoFile = videoInput ? videoInput.files[0] : null;
+        if (videoFile && videoFile.type && !videoFile.type.toLowerCase().startsWith('video/')) throw new Error('Choose a valid video file.');
 
         const sections = Array.from(
             document.querySelectorAll(".artist-song-section:checked")
@@ -4718,6 +4735,9 @@ async function uploadArtistSong() {
             "Song upload failed:\n\n" +
             error.message
         );
+    } finally {
+        window.artistSongUploadInProgress = false;
+        if (songUploadButton) { songUploadButton.disabled = false; songUploadButton.textContent = editingArtistSongId ? 'SAVE SONG' : 'UPLOAD SONG'; }
     }
 }
     /* =====================================================
