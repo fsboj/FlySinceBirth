@@ -639,6 +639,7 @@ async function loadMusicHub() {
   };
   const tasteArtists = new Set(taste?.artistIds || []);
   const librarySongIds = taste?.songIds || new Set();
+  const librarySongKeys = new Set(allCatalog.filter(song => librarySongIds.has(String(song.id))).map(musicSongDuplicateKey));
   const artistNetwork = song => [song.artist_id, ...(song.feature_artist_ids || [])].filter(Boolean).map(String);
   const initialTasteArtists = new Set(tasteArtists);
   catalog.forEach(song => {
@@ -648,7 +649,7 @@ async function loadMusicHub() {
   const matching = [], other = [];
   catalog.forEach(song => {
     const overlapsTaste = artistNetwork(song).some(id => tasteArtists.has(id));
-    if (tasteArtists.size && overlapsTaste && !librarySongIds.has(String(song.id))) matching.push(song);
+    if (tasteArtists.size && overlapsTaste && !librarySongKeys.has(musicSongDuplicateKey(song))) matching.push(song);
     else if (!librarySongIds.has(String(song.id))) other.push(song);
   });
   const recommendedOrder = [...shuffle(matching), ...shuffle(other)];
