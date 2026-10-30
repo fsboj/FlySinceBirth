@@ -65,6 +65,41 @@ function openArtistManager(){
   }
  };
 }
+async function loadFeaturedSongsForArtistProfile(artistId){
+ const list=document.getElementById('artistProfileFeaturedSongsList');if(!list)return;
+ list.textContent='LOADING FEATURED SONGS...';
+ try{
+  const refs=await supabaseClient.from('artist_song_features').select('song_id,sort_order').eq('artist_id',artistId).order('sort_order',{ascending:true});
+  if(refs.error)throw refs.error;
+  const featureRows=refs.data||[],songIds=[...new Set(featureRows.map(row=>row.song_id).filter(Boolean))];
+  if(!songIds.length){list.textContent='NO SONGS FEATURE THIS ARTIST YET.';return}
+  const songsResult=await supabaseClient.from('artist_songs').select('id,title,artist_id,release_id').in('id',songIds);
+  if(songsResult.error)throw songsResult.error;
+  const songsById=new Map((songsResult.data||[]).map(song=>[String(song.id),song]));
+  const songs=featureRows.map(row=>songsById.get(String(row.song_id))).filter(Boolean);
+  if(!songs.length){list.textContent='NO SONGS FEATURE THIS ARTIST YET.';return}
+  const artistIds=[...new Set(songs.map(song=>song.artist_id).filter(Boolean))],releaseIds=[...new Set(songs.map(song=>song.release_id).filter(Boolean))];
+  const [artistsResult,releasesResult]=await Promise.all([
+   artistIds.length?supabaseClient.from('artists').select('id,name').in('id',artistIds):Promise.resolve({data:[],error:null}),
+   releaseIds.length?supabaseClient.from('artist_releases').select('id,title,type').in('id',releaseIds):Promise.resolve({data:[],error:null})
+  ]);
+  if(artistsResult.error)throw artistsResult.error;if(releasesResult.error)throw releasesResult.error;
+  const names=new Map((artistsResult.data||[]).map(artist=>[String(artist.id),artist.name||'ARTIST']));
+  const releases=new Map((releasesResult.data||[]).map(release=>[String(release.id),release]));
+  list.replaceChildren();
+  songs.forEach(song=>{
+   const row=document.createElement('div');row.className='admin-item';row.style.cssText='display:flex;flex-direction:column;gap:5px;padding:13px 15px;';
+   const title=document.createElement('div');title.className='item-name';title.textContent=song.title||'UNTITLED SONG';
+   const meta=document.createElement('div');meta.className='item-meta';
+   const details=['FEATURED ON · '+(names.get(String(song.artist_id))||'ARTIST')],release=releases.get(String(song.release_id));
+   if(release)details.push((release.type||'RELEASE').toUpperCase()+' · '+release.title);
+   meta.textContent=details.join('  /  ');row.append(title,meta);list.appendChild(row);
+  });
+ }catch(error){
+  console.error('Could not load featured songs for artist:',error);
+  list.textContent='COULD NOT LOAD FEATURED SONGS: '+(error.message||error);
+ }
+}
 async function loadArtistProfile(id){
  try{
   const r=await supabaseClient.from('artists').select('*').eq('id',id).single(); if(r.error)throw r.error; const a=r.data||{};
@@ -73,7 +108,8 @@ async function loadArtistProfile(id){
   const n=document.getElementById('artistPageName');if(n)n.value=a.name||'';
   const b=document.getElementById('artistPageBio');if(b)b.value=a.bio||'';
   const ip=document.getElementById('artistPageImagePreview');if(ip)ip.innerHTML=a.image?'<img src="'+esc(a.image)+'" style="width:120px;height:120px;object-fit:cover;border:1px solid #242424">':'';
-  const bp=document.getElementById('artistPageBackgroundPreview');if(bp)bp.innerHTML=a.background_image_url?'<img src="'+esc(a.background_image)+'" style="width:220px;height:120px;object-fit:cover;border:1px solid #242424">':'';
+  const bp=document.getElementById('artistPageBackgroundPreview');if(bp)bp.innerHTML=a.background_image_url?'<img src="'+esc(a.background_image)+'" style="width:220px;height:120px;object-fit:cover;border:1px solid #242424">':'';;
+  await loadFeaturedSongsForArtistProfile(id);
  }catch(e){console.error('Artist profile load error:',e)}
 }
 async function renderArtistMusic(artistId){
@@ -654,6 +690,10 @@ window.addEvent = async function(){
   const profileBody=profileDialog.querySelector('[data-modal-body]');
   if(profileFields)profileBody.appendChild(profileFields);
   if(profileSave)profileBody.appendChild(profileSave);
+  const featuredPanel=document.createElement('section');
+  featuredPanel.style.cssText='margin-top:22px;padding:20px;border-top:1px solid #292929';
+  featuredPanel.innerHTML='<div class="panel-title">FEATURED SONGS</div><div class="panel-description">Songs this artist is featured on, including album and EP tracks.</div><div id="artistProfileFeaturedSongsList" role="status" aria-live="polite" style="display:grid;gap:10px;margin-top:16px;">Select an artist to load featured songs.</div>';
+  profileBody.appendChild(featuredPanel);
   addLauncher(launchers,'EDIT ARTIST PROFILE',()=>open(profileDialog));
 
   const musicDialog=moveSection(manager,null,'MUSIC UPLOAD','artistMusicUploadModal','UPLOAD MUSIC',null);
