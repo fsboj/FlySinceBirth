@@ -2859,192 +2859,13 @@ async function toggleHomepageArtist(id, enabled, checkbox) {
     );
 }
 
-function addArtist() {
-    const dialog = document.getElementById("artistCreateModal");
-    const form = document.getElementById("artistCreateForm");
-    const status = document.getElementById("artistCreateStatus");
-    if (!dialog || !form) return;
-    form.reset();
-    if (status) status.textContent = "";
-    if (!dialog.open) dialog.showModal();
-}
-
-function closeArtistModal() {
-    const dialog = document.getElementById("artistCreateModal");
-    if (dialog && dialog.open) dialog.close();
-}
-
-async function saveNewArtist(event) {
-    event.preventDefault();
-    const form = document.getElementById("artistCreateForm");
-    const status = document.getElementById("artistCreateStatus");
-    const submitButton = document.getElementById("artistCreateSubmit");
-    const value = id => document.getElementById(id).value.trim();
-    const name = value("newArtistName");
-    const nameSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    const slug = value("newArtistSlug") || nameSlug;
-    if (!name) {
-        status.textContent = "Enter an artist name.";
-        document.getElementById("newArtistName").focus();
-        return;
-    }
-    if (!slug) {
-        status.textContent = "Enter a valid artist slug.";
-        document.getElementById("newArtistSlug").focus();
-        return;
-    }
-    submitButton.disabled = true;
-    submitButton.textContent = "SAVING...";
-    status.textContent = "Saving artist...";
-    try {
-        const { data, error: orderError } = await supabaseClient
-            .from("artists")
-            .select("sort_order")
-            .order("sort_order", { ascending: false })
-            .limit(1);
-        if (orderError) throw orderError;
-        const nextOrder = data && data.length ? (data[0].sort_order || 0) + 1 : 1;
-        const { error } = await supabaseClient
-            .from("artists")
-            .insert({
-                name,
-                slug,
-                image: value("newArtistImage"),
-                background_image_url: value("newArtistBackground"),
-                bio: value("newArtistBio"),
-                genre: value("newArtistGenre"),
-                location: value("newArtistLocation"),
-                sort_order: nextOrder,
-                homepage_featured: false
-            });
-        if (error) throw error;
-        closeArtistModal();
-        form.reset();
-        await loadArtists();
-        setStatus("ARTIST ADDED");
-    } catch (error) {
-        console.error("ADD ARTIST ERROR:", error);
-        status.textContent = "Could not add artist: " + (error.message || error);
-    } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = "ADD ARTIST";
-    }
-}
-
-
-async function editArtist(id) {
-
-    const { data, error } =
-        await supabaseClient
-            .from("artists")
-            .select("*")
-            .eq("id", id)
-            .single();
-
-
-    if (error) {
-
-        alert(
-            "Could not load artist:\n\n" +
-            error.message
-        );
-
-        return;
-    }
-
-
-    const name =
-        prompt(
-            "Artist name:",
-            data.name || ""
-        );
-
-    if (name === null) return;
-
-
-    const slug =
-        prompt(
-            "Artist slug:",
-            data.slug || ""
-        );
-
-    if (slug === null) return;
-
-
-    const imageUrl =
-    prompt(
-        "Artist image URL:",
-        data.image || ""
-    );
-
-if (imageUrl === null) return;
-
-const backgroundImageUrl =
-    prompt(
-        "Artist background image URL (optional):",
-        data.background_image_url || ""
-    );
-
-if (backgroundImageUrl === null) return;
-
-const bio =
-    prompt(
-        "Artist bio (optional):",
-        data.bio || ""
-    );
-
-if (bio === null) return;
-
-const genre =
-    prompt(
-        "Artist genre (optional):",
-        data.genre || ""
-    );
-
-if (genre === null) return;
-
-const location =
-    prompt(
-        "Artist location (optional):",
-        data.location || ""
-    );
-
-if (location === null) return;
-
-
-const { error: updateError } =
-    await supabaseClient
-        .from("artists")
-        .update({
-            name: name,
-            slug: slug,
-            image: imageUrl,
-            background_image_url: backgroundImageUrl,
-            bio: bio,
-            genre: genre,
-            location: location
-        })
-        .eq("id", id);
-           
-
-
-    if (updateError) {
-
-        alert(
-            "Could not update artist:\n\n" +
-            updateError.message
-        );
-
-        return;
-    }
-
-
-    await loadArtists();
-
-    setStatus("ARTIST UPDATED");
-}
-
-
+let editingArtistModalId=null;
+function addArtist(){editingArtistModalId=null;const d=document.getElementById('artistCreateModal'),f=document.getElementById('artistCreateForm');if(!d||!f)return;f.reset();document.getElementById('artistCreateTitle').textContent='ADD ARTIST';document.getElementById('artistCreateDescription').textContent='Create an artist profile for the FSB website.';document.getElementById('artistCreateSubmit').textContent='ADD ARTIST';document.getElementById('artistCreateStatus').textContent='';if(!d.open)d.showModal()}
+window.openArtistCreateModal=addArtist;
+function closeArtistModal(){const d=document.getElementById('artistCreateModal');if(d&&d.open)d.close()}
+async function uploadArtistImage(bucket,file){if(!file)return '';if(!file.type||!file.type.startsWith('image/'))throw new Error('Choose a valid image file.');const p='artist-profiles/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');const st=supabaseClient.storage.from(bucket),r=await st.upload(p,file,{upsert:false,contentType:file.type});if(r.error)throw r.error;return st.getPublicUrl(p).data.publicUrl}
+async function saveNewArtist(event){event.preventDefault();const f=document.getElementById('artistCreateForm'),s=document.getElementById('artistCreateStatus'),b=document.getElementById('artistCreateSubmit'),v=id=>document.getElementById(id).value.trim(),name=v('newArtistName'),slug=v('newArtistSlug')||name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');if(!name||!slug){s.textContent='Enter a valid artist name and slug.';return}b.disabled=true;b.textContent=editingArtistModalId?'SAVING...':'ADDING...';s.textContent='';try{const dup=await supabaseClient.from('artists').select('id').eq('slug',slug).maybeSingle();if(dup.error)throw dup.error;if(dup.data&&String(dup.data.id)!==String(editingArtistModalId))throw new Error('An artist with that slug already exists.');const imageFile=document.getElementById('newArtistImageFile').files[0],bgFile=document.getElementById('newArtistBackgroundFile').files[0],profile={name,slug,image:imageFile?await uploadArtistImage('artist-images',imageFile):v('newArtistImage'),background_image_url:bgFile?await uploadArtistImage('artist-backgrounds',bgFile):v('newArtistBackground'),bio:v('newArtistBio'),genre:v('newArtistGenre'),location:v('newArtistLocation')},editing=!!editingArtistModalId,id=editingArtistModalId;if(editing){const r=await supabaseClient.from('artists').update(profile).eq('id',id);if(r.error)throw r.error}else{const q=await supabaseClient.from('artists').select('sort_order').order('sort_order',{ascending:false}).limit(1);if(q.error)throw q.error;profile.sort_order=q.data&&q.data.length?(q.data[0].sort_order||0)+1:1;profile.homepage_featured=false;const r=await supabaseClient.from('artists').insert(profile);if(r.error)throw r.error}closeArtistModal();f.reset();editingArtistModalId=null;await loadArtists();if(id){const sel=document.getElementById('artistPageSelect');if(sel){sel.value=String(id);sel.dispatchEvent(new Event('change'))}}setStatus(editing?'ARTIST UPDATED':'ARTIST ADDED')}catch(err){console.error('SAVE ARTIST ERROR:',err);s.textContent='Could not save artist: '+(err.message||err)}finally{b.disabled=false;b.textContent=editingArtistModalId?'SAVE CHANGES':'ADD ARTIST'}}
+async function editArtist(id){const r=await supabaseClient.from('artists').select('*').eq('id',id).single();if(r.error){alert('Could not load artist:\n\n'+r.error.message);return}const x=r.data,d=document.getElementById('artistCreateModal'),f=document.getElementById('artistCreateForm');editingArtistModalId=id;f.reset();document.getElementById('artistCreateTitle').textContent='EDIT ARTIST';document.getElementById('artistCreateDescription').textContent='Select device files to replace images, or keep the existing images.';document.getElementById('artistCreateSubmit').textContent='SAVE CHANGES';document.getElementById('newArtistName').value=x.name||'';document.getElementById('newArtistSlug').value=x.slug||'';document.getElementById('newArtistGenre').value=x.genre||'';document.getElementById('newArtistImage').value=x.image||'';document.getElementById('newArtistBackground').value=x.background_image_url||'';document.getElementById('newArtistLocation').value=x.location||'';document.getElementById('newArtistBio').value=x.bio||'';document.getElementById('artistCreateStatus').textContent='';if(!d.open)d.showModal()}
 async function removeArtist(id) {
 
     if (
@@ -6908,7 +6729,7 @@ document.addEventListener("DOMContentLoaded", function(){
     <div class="artist-create-header">
       <div>
         <div class="panel-title" id="artistCreateTitle">ADD ARTIST</div>
-        <div class="panel-description">Create an artist profile for the FSB website.</div>
+        <div class="panel-description" id="artistCreateDescription">Create an artist profile for the FSB website.</div>
       </div>
       <button type="button" class="button" aria-label="Close" onclick="closeArtistModal()">CLOSE</button>
     </div>
@@ -6917,8 +6738,8 @@ document.addEventListener("DOMContentLoaded", function(){
         <div class="form-group full"><label for="newArtistName">ARTIST NAME</label><input id="newArtistName" type="text" class="admin-input" placeholder="ARTIST NAME" required></div>
         <div class="form-group"><label for="newArtistSlug">ARTIST SLUG</label><input id="newArtistSlug" type="text" class="admin-input" placeholder="Auto-created from name"></div>
         <div class="form-group"><label for="newArtistGenre">GENRE</label><input id="newArtistGenre" type="text" class="admin-input" placeholder="Optional"></div>
-        <div class="form-group"><label for="newArtistImage">ARTIST IMAGE URL</label><input id="newArtistImage" type="url" class="admin-input" placeholder="https://..."></div>
-        <div class="form-group"><label for="newArtistBackground">BACKGROUND IMAGE URL</label><input id="newArtistBackground" type="url" class="admin-input" placeholder="Optional"></div>
+        <div class="form-group full"><label for="newArtistImageFile">ARTIST IMAGE FROM DEVICE</label><input id="newArtistImageFile" type="file" class="admin-input" accept="image/*"><small class="field-help">Select a device image, or enter a URL below.</small></div><div class="form-group"><label for="newArtistImage">ARTIST IMAGE URL (OPTIONAL)</label><input id="newArtistImage" type="url" class="admin-input" placeholder="https://..."></div>
+        <div class="form-group full"><label for="newArtistBackgroundFile">BACKGROUND IMAGE FROM DEVICE</label><input id="newArtistBackgroundFile" type="file" class="admin-input" accept="image/*"><small class="field-help">Select a device image, or enter a URL below.</small></div><div class="form-group"><label for="newArtistBackground">BACKGROUND IMAGE URL (OPTIONAL)</label><input id="newArtistBackground" type="url" class="admin-input" placeholder="Optional"></div>
         <div class="form-group"><label for="newArtistLocation">LOCATION</label><input id="newArtistLocation" type="text" class="admin-input" placeholder="Optional"></div>
         <div class="form-group full"><label for="newArtistBio">BIO</label><textarea id="newArtistBio" rows="4" class="admin-input" placeholder="Optional artist bio"></textarea></div>
       </div>
