@@ -189,7 +189,7 @@ function renderArtistFeaturePicker(select){
   const selected=[...select.options].filter(option=>option.selected);
   selected.forEach(option=>{const chip=document.createElement('span');chip.style.cssText='display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border-radius:999px;background:#202020;color:#fff;font-size:12px;';
    const label=document.createElement('span');label.textContent=option.textContent;const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.setAttribute('aria-label','Remove '+option.textContent);remove.style.cssText='border:0;background:none;color:#fff;font-size:17px;cursor:pointer;padding:0;';
-   remove.onclick=()=>{option.selected=false;draw()};chip.append(label,remove);chips.appendChild(chip);
+   remove.onclick=()=>{option.selected=false;select.dispatchEvent(new Event('change',{bubbles:true}));draw()};chip.append(label,remove);chips.appendChild(chip);
   });
   const primary=select.id==='videoFeatureArtistSelect'?(document.getElementById('videoArtistSelect')||{}).value:window.selectedArtistPageId;
   [...select.options].forEach(option=>{if(primary&&String(option.value)===String(primary))option.selected=false});
@@ -197,7 +197,7 @@ function renderArtistFeaturePicker(select){
   const matches=[...select.options].filter(option=>String(option.value)!==String(primary||'')&&option.textContent.toLocaleLowerCase().includes(term));
   const shown=matches.slice(0,30);
   shown.forEach(option=>{const item=document.createElement('button');item.type='button';item.setAttribute('role','option');item.setAttribute('aria-selected',String(option.selected));item.textContent=(option.selected?'✓  ':'＋  ')+option.textContent;item.style.cssText='text-align:left;padding:9px 10px;border:1px solid '+(option.selected?'#8ab4ff':'#292929')+';border-radius:6px;background:'+(option.selected?'#172334':'#111')+';color:#fff;cursor:pointer;';
-   item.onclick=()=>{option.selected=!option.selected;draw();search.focus()};results.appendChild(item);
+   item.onclick=()=>{option.selected=!option.selected;select.dispatchEvent(new Event('change',{bubbles:true}));draw();search.focus()};results.appendChild(item);
   });
   message.textContent=selected.length?selected.length+' FSB artist'+(selected.length===1?'':'s')+' selected. Search and select more.':(matches.length?'Choose one or more artists from the list.':'No matching artists.');
  }
@@ -214,8 +214,9 @@ window.refreshArtistFeaturePickers=function(){
   if(select)renderArtistFeaturePicker(select);
  });
 };
-window.saveArtistFeatureLinks=async function(table,idColumn,recordId,select,primaryArtistId){
- const ids=select?[...select.selectedOptions].map(o=>String(o.value)).filter(id=>id&&id!==String(primaryArtistId)):[];
+window.saveArtistFeatureLinks=async function(table,idColumn,recordId,selectOrIds,primaryArtistId){
+ const source=Array.isArray(selectOrIds)?selectOrIds:(selectOrIds?[...selectOrIds.selectedOptions].map(o=>o.value):[]);
+ const ids=[...new Set(source.map(String))].filter(id=>id&&id!==String(primaryArtistId));
  const del=await supabaseClient.from(table).delete().eq(idColumn,recordId);if(del.error)throw del.error;
  if(ids.length){const rows=ids.map((artist_id,index)=>({[idColumn]:recordId,artist_id,sort_order:index+1}));const ins=await supabaseClient.from(table).insert(rows);if(ins.error)throw ins.error}
 };
