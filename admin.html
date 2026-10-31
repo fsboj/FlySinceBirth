@@ -6528,7 +6528,10 @@ async function openArtistMediaEditor(kind,id){
   var featureSelect=card.querySelector("#mediaEditFeatureArtistSelect");
   var featureRows=await supabaseClient.from("artist_song_features").select("artist_id").eq("song_id",id);
   if(featureRows.error){overlay.remove();alert("Could not load featured artists: "+featureRows.error.message);return}
-  await window.populateArtistFeatureSelect(featureSelect,(featureRows.data||[]).map(function(row){return row.artist_id}));
+  var originalFeatureIds=(featureRows.data||[]).map(function(row){return row.artist_id});
+  var featureSelectionTouched=false;
+  featureSelect.addEventListener("change",function(){featureSelectionTouched=true});
+  await window.populateArtistFeatureSelect(featureSelect,originalFeatureIds);
   (item.external_features||[]).forEach(function(credit){window.addExternalFeatureRow("mediaEditExternalFeatures",credit)});
   card.querySelector("#mediaEditAddExternal").onclick=function(){window.addExternalFeatureRow("mediaEditExternalFeatures")};
  }
@@ -6552,7 +6555,7 @@ async function openArtistMediaEditor(kind,id){
    var videoUrl=await upload("videos",videoFile,"artist-videos");if(videoUrl)data.video_url=videoUrl;
    var audioUrl=await upload("artist-music",audioFile,"artist-audio");if(audioUrl)data.audio_url=audioUrl;
    var update=await supabaseClient.from(table).update(data).eq("id",id);if(update.error)throw update.error;
-   if(kind==="song"){var links=await window.saveArtistFeatureLinks("artist_song_features","song_id",id,card.querySelector("#mediaEditFeatureArtistSelect"),selectedArtistPageId);if(links&&links.error)throw links.error}
+   if(kind==="song"){var selectedFeatureIds=featureSelectionTouched?[...card.querySelector("#mediaEditFeatureArtistSelect").selectedOptions].map(function(option){return option.value}):originalFeatureIds;await window.saveArtistFeatureLinks("artist_song_features","song_id",id,selectedFeatureIds,selectedArtistPageId)}
    overlay.remove();
    if(window.renderArtistMusic)await window.renderArtistMusic(selectedArtistPageId);else{if(window.loadArtistSongsAdmin)await window.loadArtistSongsAdmin();if(window.loadArtistReleasesAdmin)await window.loadArtistReleasesAdmin()}
    if(typeof setStatus==="function")setStatus(kind==="release"?"RELEASE UPDATED":"SONG UPDATED");
