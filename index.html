@@ -487,20 +487,40 @@ body {
 }
 .music-card {
     height: 190px;
-
     border: 1px solid #242424;
-
     display: flex;
-
     align-items: flex-end;
-
     padding: 22px;
-
+    position: relative;
+    overflow: hidden;
     background: #090909;
-
     transition: 0.3s;
-
     cursor: pointer;
+}
+.music-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(to top, rgba(0,0,0,.92), rgba(0,0,0,.08) 72%);
+    pointer-events: none;
+}
+.music-card .music-card-cover {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain !important;
+    object-position: center;
+    border-radius: 0 !important;
+    background: #111;
+}
+.music-card .music-card-info {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    min-width: 0;
 }
 
 .music-card:hover {
@@ -1578,9 +1598,8 @@ async function loadSiteImages() {
     const grid = document.getElementById("musicGrid");
     if (!grid || grid.dataset.homeMusicLoad === "loading" || grid.dataset.homeMusicLoad === "loaded") return;
     grid.dataset.homeMusicLoad = "loading";
-    grid.innerHTML = "";
+    grid.replaceChildren();
 
-    // Combine artist-page songs/releases with older items saved in the legacy music table.
     const [
         { data: songs, error: songsError },
         { data: releases, error: releasesError },
@@ -1605,91 +1624,155 @@ async function loadSiteImages() {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     const eligibleReleases = (releases || []).filter(function(release) {
-        if (!release.release_date) return true;
-        return new Date(release.release_date + "T00:00:00") <= today;
+        return !release.release_date || new Date(release.release_date + "T00:00:00") <= today;
     });
-
+    const releaseById = new Map(eligibleReleases.map(function(release) {
+        return [String(release.id), release];
+    }));
     const artistMap = {};
     (artists || []).forEach(function(artist) {
         artistMap[String(artist.id)] = artist.name || "FSB ARTIST";
     });
 
-    const songFeatureResult=(songs||[]).length?await supabaseClient.from("artist_song_features").select("song_id,artist_id,sort_order").in("song_id",songs.map(song=>song.id)).order("sort_order",{ascending:true}):{data:[],error:null};
-    const featureIdsBySong=new Map();
-    (songFeatureResult.data||[]).forEach(function(row){const key=String(row.song_id);if(!featureIdsBySong.has(key))featureIdsBySong.set(key,[]);featureIdsBySong.get(key).push(String(row.artist_id))});
-    const releaseById=new Map(eligibleReleases.map(function(release){return [String(release.id),release]}));
-    const eligibleSongs=(songs||[]).filter(function(song){
-        if(song.release_date && new Date(song.release_date+"T00:00:00")>today)return false;
+    const songRows = songs || [];
+    const featureResult = songRows.length
+        ? await supabaseClient.from("artist_song_features").select("song_id,artist_id,sort_order")
+            .in("song_id", songRows.map(function(song) { return song.id; }))
+            .order("sort_order", { ascending: true })
+        : { data: [], error: null };
+    if (featureResult.error) console.warn("Could not load homepage song features:", featureResult.error);
+
+    const featuresBySong = new Map();
+    (featureResult.data || []).forEach(function(row) {
+        const key = String(row.song_id);
+        if (!featuresBySong.has(key)) featuresBySong.set(key, []);
+        featuresBySong.get(key).push(String(row.artist_id));
+    });
+
+    const songsForDisplay = songRows.filter(function(song) {
+        if (song.release_date && new Date(song.release_date + "T00:00:00") > today) return false;
         return !song.release_id || releaseById.has(String(song.release_id));
-    }).map(function(song){
-        const release=song.release_id?releaseById.get(String(song.release_id)):null;
-        return {kind:"song",id:song.id,title:song.title||"Untitled",
-            image:song.image_url||(release&&release.artwork_url)||"fsblogo.PNG",
-            artist:artistMap[String(song.artist_id)]||"FSB ARTIST",artistId:song.artist_id,
-            featuredArtistIds:featureIdsBySong.get(String(song.id))||[],externalFeatures:song.external_features||[],
-            isTopSong:song.is_top_song===true||(Array.isArray(song.sections)&&song.sections.includes("top")),
-            trackType:release?String(release.type||"album").toLowerCase()+" track":"single",
-            date:song.release_date||song.created_at,link:"artist.html?id="+encodeURIComponent(song.artist_id)};
-    }).sort(function(a,b){return Number(b.isTopSong)-Number(a.isTopSong)});
-    const candidateKeys=new Set();
-    const uniqueSongs=eligibleSongs.filter(function(song){
-        const key=String(song.artistId||"")+"|"+String(song.title||"").trim().toLocaleLowerCase().replace(/\s+/g," ");
-        if(candidateKeys.has(key))return false;candidateKeys.add(key);return true;
+    }).map(function(song) {
+        const release = song.release_id ? releaseById.get(String(song.release_id)) : null;
+        return {
+            id: song.id,
+            title: song.title || "Untitled",
+            image: song.image_url || (release && release.artwork_url) || "fsblogo.PNG",
+            artist: artistMap[String(song.artist_id)] || "FSB ARTIST",
+            artistId: song.artist_id,
+            featuredArtistIds: featuresBySong.get(String(song.id)) || [],
+            externalFeatures: song.external_features || [],
+            isTopSong: song.is_top_song === true ||
+                (Array.isArray(song.sections) && song.sections.includes("top")),
+            trackType: release ? String(release.type || "album").toLowerCase() + " track" : "single",
+            link: "artist.html?id=" + encodeURIComponent(song.artist_id)
+        };
+    }).sort(function(a, b) {
+        return Number(b.isTopSong) - Number(a.isTopSong);
     });
-    const songKey=function(song){return String(song.artistId||"")+"|"+String(song.title||"").trim().toLocaleLowerCase().replace(/\s+/g," ")};
-    const selected=[],selectedKeys=new Set();
-    uniqueSongs.filter(function(song){return song.isTopSong}).slice(0,5).forEach(function(song){const key=songKey(song);if(!selectedKeys.has(key)){selectedKeys.add(key);selected.push(song)}});
-    const randomPool=uniqueSongs.filter(function(song){return !song.isTopSong&&!selectedKeys.has(songKey(song))});
-    for(let i=randomPool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[randomPool[i],randomPool[j]]=[randomPool[j],randomPool[i]]}
-    while(selected.length<5&&randomPool.length){
-        const usedArtists=new Set(selected.map(function(song){return String(song.artistId||"")}));
-        let candidates=randomPool.filter(function(song){return !usedArtists.has(String(song.artistId||""))});
-        if(!candidates.length)candidates=randomPool;
-        const chosen=candidates[0],key=songKey(chosen);randomPool.splice(randomPool.indexOf(chosen),1);
-        if(selectedKeys.has(key))continue;selectedKeys.add(key);selected.push(chosen);
+
+    // Prefer a Top Song version when an artist/title also exists on a release.
+    const seenSongs = new Set();
+    const uniqueSongs = songsForDisplay.filter(function(song) {
+        const key = String(song.artistId || "") + "|" +
+            String(song.title || "").trim().toLocaleLowerCase().replace(/\s+/g, " ");
+        if (seenSongs.has(key)) return false;
+        seenSongs.add(key);
+        return true;
+    });
+    const songKey = function(song) {
+        return String(song.artistId || "") + "|" +
+            String(song.title || "").trim().toLocaleLowerCase().replace(/\s+/g, " ");
+    };
+    const selected = [];
+    const selectedKeys = new Set();
+    uniqueSongs.filter(function(song) { return song.isTopSong; }).slice(0, 5).forEach(function(song) {
+        selected.push(song);
+        selectedKeys.add(songKey(song));
+    });
+
+    const randomPool = uniqueSongs.filter(function(song) {
+        return !song.isTopSong && !selectedKeys.has(songKey(song));
+    });
+    for (let i = randomPool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [randomPool[i], randomPool[j]] = [randomPool[j], randomPool[i]];
     }
-    if(!selected.length){grid.innerHTML='<div class="empty-state">NO MUSIC AVAILABLE</div>';grid.dataset.homeMusicLoad="loaded";return}
-    selected.forEach(function(music){
-        const card=document.createElement("div");card.className="music-card";
-        card.style.backgroundImage='url("'+String(music.image||"fsblogo.PNG").replace(/"/g,'\\"')+'")';
-        card.style.backgroundSize="contain";card.style.backgroundRepeat="no-repeat";card.style.backgroundPosition="center";card.style.backgroundColor="#111";
-        const subtitle=music.isTopSong?"TOP SONG":(music.trackType==="single"?"SINGLE":music.trackType.toUpperCase());
-        card.innerHTML='<div><div class="card-title">'+escapeHtml(music.title)+'</div><div class="card-artist"></div><div class="card-subtitle">'+escapeHtml(subtitle)+'</div></div>';
-        const creditLine=card.querySelector(".card-artist");let creditCount=0;
-        const artistCredits=[...new Set([music.artistId,...(music.featuredArtistIds||[])].filter(Boolean).map(String))];
-        artistCredits.forEach(function(id){const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(id);link.textContent=artistMap[id]||"Artist";link.style.color="inherit";link.addEventListener("click",event=>event.stopPropagation());if(creditCount)creditLine.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));creditLine.appendChild(link);creditCount++});
-        (music.externalFeatures||[]).forEach(function(credit){if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;link.style.color="inherit";link.addEventListener("click",event=>event.stopPropagation());if(creditCount)creditLine.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));creditLine.appendChild(link);creditCount++}catch(_){}});
-        if(!creditCount)creditLine.textContent=music.artist||"";
-        card.onclick=function(){if(music.link)window.location.href=music.link};grid.appendChild(card);
-    });
-    grid.dataset.homeMusicLoad = "loaded";
+    while (selected.length < 5 && randomPool.length) {
+        const usedArtists = new Set(selected.map(function(song) { return String(song.artistId || ""); }));
+        let choices = randomPool.filter(function(song) {
+            return !usedArtists.has(String(song.artistId || ""));
+        });
+        if (!choices.length) choices = randomPool;
+        const choice = choices[0];
+        randomPool.splice(randomPool.indexOf(choice), 1);
+        selected.push(choice);
+    }
+
+    if (!selected.length) {
+        grid.innerHTML = '<div class="empty-state">NO MUSIC AVAILABLE</div>';
+        grid.dataset.homeMusicLoad = "loaded";
         return;
     }
 
-    newestTen.forEach(function(music) {
+    selected.forEach(function(music) {
         const card = document.createElement("div");
         card.className = "music-card";
-        card.style.backgroundImage = 'url("' + String(music.image || "fsblogo.PNG").replace(/"/g, '\\"') + '")';
-        card.style.backgroundSize = "cover";
-        card.style.backgroundPosition = "center";
-        const subtitle = music.kind === "release" ? escapeHtml(music.type) :
-            (music.kind === "legacy" ? "MUSIC" : "SINGLE");
-        card.innerHTML = '<div><div class="card-title">' + escapeHtml(music.title) +
-            '</div><div class="card-artist"></div><div class="card-subtitle">' + subtitle + '</div></div>';
-        const creditLine=card.querySelector(".card-artist");let creditCount=0;
-        const artistCredits=[...new Set([music.artistId,...(music.featuredArtistIds||[])].filter(Boolean).map(String))];
-        artistCredits.forEach(function(id){const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(id);link.textContent=artistMap[id]||"Artist";link.style.color="inherit";link.addEventListener("click",event=>event.stopPropagation());if(creditCount)creditLine.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));creditLine.appendChild(link);creditCount++});
-        (music.externalFeatures||[]).forEach(function(credit){if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;link.style.color="inherit";link.addEventListener("click",event=>event.stopPropagation());if(creditCount)creditLine.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));creditLine.appendChild(link);creditCount++}catch(_){}});
-        if(!creditCount)creditLine.textContent=music.artist||"";
-        card.onclick = function() {
-            if (!music.link || music.link === "#music") return;
-            if (/^https?:\/\//i.test(music.link)) window.open(music.link, "_blank", "noopener");
-            else window.location.href = music.link;
-        };
+        const cover = document.createElement("img");
+        cover.className = "music-card-cover";
+        cover.src = music.image;
+        cover.alt = music.title + " cover art";
+        cover.loading = "lazy";
+        cover.decoding = "async";
+        card.appendChild(cover);
+
+        const subtitle = music.isTopSong ? "TOP SONG" :
+            (music.trackType === "single" ? "SINGLE" : music.trackType.toUpperCase());
+        const info = document.createElement("div");
+        info.className = "music-card-info";
+        info.innerHTML = '<div class="card-title">' + escapeHtml(music.title) +
+            '</div><div class="card-artist"></div><div class="card-subtitle">' +
+            escapeHtml(subtitle) + '</div>';
+        card.appendChild(info);
+
+        const creditLine = info.querySelector(".card-artist");
+        let creditCount = 0;
+        const artistCredits = [...new Set([music.artistId, ...music.featuredArtistIds].filter(Boolean).map(String))];
+        artistCredits.forEach(function(id) {
+            const link = document.createElement("a");
+            link.href = "artist.html?id=" + encodeURIComponent(id);
+            link.textContent = artistMap[id] || "Artist";
+            link.style.color = "inherit";
+            link.addEventListener("click", function(event) { event.stopPropagation(); });
+            if (creditCount) creditLine.appendChild(document.createTextNode(creditCount === 1 ? " feat. " : ", "));
+            creditLine.appendChild(link);
+            creditCount++;
+        });
+        (music.externalFeatures || []).forEach(function(credit) {
+            if (!credit || !credit.name || !credit.url) return;
+            try {
+                const url = new URL(credit.url);
+                if (!["http:", "https:"].includes(url.protocol)) return;
+                const link = document.createElement("a");
+                link.href = url.href;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.textContent = credit.name;
+                link.style.color = "inherit";
+                link.addEventListener("click", function(event) { event.stopPropagation(); });
+                if (creditCount) creditLine.appendChild(document.createTextNode(creditCount === 1 ? " feat. " : ", "));
+                creditLine.appendChild(link);
+                creditCount++;
+            } catch (_) {}
+        });
+        if (!creditCount) creditLine.textContent = music.artist;
+
+        card.onclick = function() { window.location.href = music.link; };
         grid.appendChild(card);
     });
     grid.dataset.homeMusicLoad = "loaded";
 }
+
 async function loadArtists() {
 
     const grid =
