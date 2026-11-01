@@ -2794,7 +2794,9 @@ if (musicSection) {
                     );
 
                 }
-            );
+            ).slice(0, 5);
+
+        
 
         if (!topSongList.length) {
 
@@ -2828,10 +2830,13 @@ if (musicSection) {
     songs.filter(
         function(song) {
 
+            const isTopSong = song.is_top_song === true ||
+                (Array.isArray(song.sections) && song.sections.includes("top"));
             return (
-                !song.release_id &&
-                Array.isArray(song.sections) &&
-                song.sections.includes("singles")
+                (!song.release_id &&
+                    Array.isArray(song.sections) &&
+                    song.sections.includes("singles")) ||
+                (!!song.release_id && isTopSong)
             );
 
         }
