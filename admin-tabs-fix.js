@@ -1,7 +1,48 @@
 (function(){
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+function setupArtistFileClearControls(){
+ const apply=()=>{
+  document.querySelectorAll('#artistPages input[type="file"], #artistMediaEditor input[type="file"]').forEach(input=>{
+   if(input.dataset.clearSelectionReady==="true")return;
+   input.dataset.clearSelectionReady="true";
+   const wrap=document.createElement('div');
+   wrap.className='artist-file-picker';
+   wrap.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;';
+   const parent=input.parentNode;
+   if(!parent)return;
+   parent.insertBefore(wrap,input);
+   wrap.appendChild(input);
+   input.style.flex='1 1 220px';
+   input.style.minWidth='0';
+   const clear=document.createElement('button');
+   clear.type='button';
+   clear.className='button artist-file-clear';
+   clear.textContent='CLEAR';
+   clear.title='Clear selected file';
+   clear.setAttribute('aria-label','Clear selected '+(input.accept||'media')+' file');
+   clear.style.cssText='padding:9px 12px;font-size:8px;letter-spacing:1px;white-space:nowrap;margin:0;';
+   clear.disabled=!input.files||!input.files.length;
+   input.addEventListener('change',()=>{clear.disabled=!input.files||!input.files.length});
+   clear.addEventListener('click',()=>{
+    input.value='';
+    clear.disabled=true;
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+    if(input.id==='artistSongImageFile'){
+     const preview=document.getElementById('artistSongImagePreview');
+     if(preview)preview.replaceChildren();
+    }
+   });
+   wrap.appendChild(clear);
+  });
+ };
+ apply();
+ if(document.body.dataset.artistFileClearObserver==="true")return;
+ document.body.dataset.artistFileClearObserver="true";
+ new MutationObserver(apply).observe(document.body,{childList:true,subtree:true});
+}
 function init(){
  const n=document.querySelector('.admin-nav'),m=document.getElementById('mainPage'); if(!n||!m)return;
+ setupArtistFileClearControls();
  const eventsPanel=document.getElementById('events');
  if(eventsPanel && m.parentElement && eventsPanel.previousElementSibling!==m){
   m.parentElement.insertBefore(eventsPanel,m.nextElementSibling);
