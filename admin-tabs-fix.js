@@ -1,5 +1,13 @@
 (function(){
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+window.assertArtistTopSongLimit=async function(artistId,editingSongId,sections){
+ if(!Array.isArray(sections)||!sections.includes('top'))return;
+ const result=await supabaseClient.from('artist_songs').select('id,is_top_song,sections').eq('artist_id',artistId);
+ if(result.error)throw result.error;
+ const topSongs=(result.data||[]).filter(function(song){return song.is_top_song===true||(Array.isArray(song.sections)&&song.sections.includes('top'))});
+ const alreadyTop=topSongs.some(function(song){return String(song.id)===String(editingSongId)});
+ if(!alreadyTop&&topSongs.length>=5)throw new Error('An artist can have no more than 5 Top Songs. Remove Top Song from another track first.');
+};
 function setupArtistFileClearControls(){
  const apply=()=>{
   document.querySelectorAll('#artistPages input[type="file"], #artistMediaEditor input[type="file"]').forEach(input=>{
@@ -178,6 +186,7 @@ async function saveInlineSong(id,editor){
   const title=editor.querySelector('.inline-title').value.trim();if(!title){alert('Enter a song name.');return}
   const sections=[...editor.querySelectorAll('.inline-section:checked')].map(x=>x.value);
   const data={title,sections,is_top_song:sections.includes('top')};
+  await window.assertArtistTopSongLimit(selectedArtistPageId,id,sections);
   const image=await uploadInlineFile('artist-artwork',selectedArtistPageId,editor.querySelector('.inline-image').files[0],'');
   const audio=await uploadInlineFile('artist-music',selectedArtistPageId,editor.querySelector('.inline-audio').files[0],'');
   const video=await uploadInlineFile('videos',selectedArtistPageId,editor.querySelector('.inline-video').files[0],'artist-videos');
