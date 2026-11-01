@@ -4348,6 +4348,8 @@ async function uploadArtistSong() {
             return;
         }
 
+        await window.assertArtistTopSongLimit(selectedArtistPageId, editingArtistSongId, sections);
+
         /* ============================================
            EDIT EXISTING SONG
         ============================================ */
@@ -5111,6 +5113,10 @@ async function loadArtistSongsAdmin() {
                 const nextSections = enabled
                     ? (currentSections.includes("top") ? currentSections : currentSections.concat(["top"]))
                     : currentSections.filter(function(section) { return section !== "top"; });
+                if (enabled) {
+                    try { await window.assertArtistTopSongLimit(selectedArtistPageId, song.id, nextSections); }
+                    catch (limitError) { topToggle.checked = false; alert(limitError.message || limitError); return; }
+                }
                 topToggle.disabled = true;
                 const saved = await supabaseClient.from("artist_songs").update({
                     sections: nextSections,
@@ -6542,6 +6548,7 @@ async function openArtistMediaEditor(kind,id){
    var sections=Array.from(card.querySelectorAll(".mediaEditSection:checked")).map(function(x){return x.value});
    if(!sections.length){alert("Select at least one music section.");return}
    data.sections=sections;data.is_top_song=sections.includes("top");
+   try{await window.assertArtistTopSongLimit(selectedArtistPageId,id,sections)}catch(e){alert(e.message||e);return}
    try{data.external_features=window.collectExternalFeatureCredits("mediaEditExternalFeatures")}catch(e){alert(e.message);return}
   }else{
    data.type=card.querySelector("#mediaEditType").value;
