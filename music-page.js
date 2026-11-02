@@ -316,6 +316,10 @@ function songCard(song) {
   card.className = "hub-song";
   const credits = artistCreditLinks(song.artist_id, song.artist_name || "FLY SINCE BIRTH", song.feature_artist_ids, song.artistNames || new Map(), song.external_features);
   card.innerHTML = `<img src="${musicEsc(song.image_url || "fsblogo.PNG")}" alt=""><div class="hub-song-info"><strong>${musicEsc(song.title || "Untitled")}</strong><small>${credits || "FLY SINCE BIRTH"}</small></div><button class="hub-play" type="button" data-hub-play-song="${musicEsc(song.id)}">${song.audio_url ? "PLAY" : "UNAVAILABLE"}</button>`;
+  const releaseLabel = document.createElement("small");
+  releaseLabel.className = "hub-song-release";
+  releaseLabel.textContent = song.release_title ? (song.release_type === "ep" ? "EP" : "ALBUM") + " · " + song.release_title : "SINGLE";
+  card.querySelector(".hub-song-info").appendChild(releaseLabel);
   const artwork = card.querySelector("img");
   artwork.onerror = () => { artwork.onerror = null; artwork.src = "fsblogo.PNG"; };
   if (window.decorateSongControls) window.decorateSongControls(card, song);
@@ -592,15 +596,43 @@ function dedupeMusicSongs(songs){
   });
   return [...chosen.values()];
 }
+async function loadAllMusicRows(table, columns, orderColumn = "id") {
+  const rows = [];
+  const pageSize = 500;
+  for (let offset = 0; ; offset += pageSize) {
+    const result = await musicSupabase.from(table).select(columns).order(orderColumn, { ascending: true }).range(offset, offset + pageSize - 1);
+    if (result.error) throw result.error;
+    rows.push(...(result.data || []));
+    if ((result.data || []).length < pageSize) return rows;
+  }
+}
+function filterMusicCatalog(catalog, { term = "", artistId = "", type = "", sort = "newest" } = {}) {
+  const query = term.trim().toLocaleLowerCase();
+  return catalog.filter(song => {
+    const credits = [song.artist_name, ...(song.feature_artist_ids || []).map(id => song.artistNames?.get(String(id)) || ""), ...(song.external_features || []).map(credit => credit.name || "")].join(" ");
+    return (!artistId || String(song.artist_id) === artistId || (song.feature_artist_ids || []).map(String).includes(artistId)) &&
+      (!type || song.release_type === type) &&
+      `${song.title || ""} ${credits} ${song.release_title || ""}`.toLocaleLowerCase().includes(query);
+  }).sort((a, b) => {
+    if (sort === "title") return (a.title || "").localeCompare(b.title || "") || String(a.id).localeCompare(String(b.id));
+    if (sort === "artist") return (a.artist_name || "").localeCompare(b.artist_name || "") || (a.title || "").localeCompare(b.title || "");
+    return String(b.release_date || b.created_at || "").localeCompare(String(a.release_date || a.created_at || "")) || (a.title || "").localeCompare(b.title || "");
+  });
+}
+
 async function loadMusicHub() {
-  const [{ data: songs, error: songError }, { data: sessionData }] = await Promise.all([
-    musicSupabase.from("artist_songs").select("id,title,artist_id,audio_url,image_url,release_id,track_number,external_features,created_at,lyrics").order("created_at", { ascending: false }),
+  const [allSongs, releases, { data: sessionData }] = await Promise.all([
+    loadAllMusicRows("artist_songs", "id,title,artist_id,audio_url,image_url,release_id,track_number,external_features,created_at,release_date,lyrics"),
+    loadAllMusicRows("artist_releases", "id,title,type,artwork_url,release_date"),
     musicSupabase.auth.getSession()
   ]);
-  if (songError) throw songError;
-  const songFeatureResult = (songs || []).length
-    ? await musicSupabase.from("artist_song_features").select("song_id,artist_id,sort_order").in("song_id", songs.map(song => song.id)).order("sort_order")
-    : { data: [], error: null };
+  const releaseById = new Map(releases.map(release => [String(release.id), release]));
+  const today = new Date().toLocaleDateString("en-CA");
+  const songs = allSongs.filter(song => {
+    const release = releaseById.get(String(song.release_id));
+    return (!song.release_date || song.release_date <= today) && (!release?.release_date || release.release_date <= today);
+  });
+  const songFeatureResult = { data: (await loadAllMusicRows("artist_song_features", "song_id,artist_id,sort_order", "song_id")).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)), error: null };
   if (songFeatureResult.error) console.warn("Featured song credits could not be loaded:", songFeatureResult.error);
   const featureArtistsBySong = new Map();
   (songFeatureResult.data || []).forEach(row => {
@@ -614,65 +646,61 @@ async function loadMusicHub() {
   ].filter(Boolean).map(String))];
   const names = new Map();
   if (allArtistIds.length) {
-    const result = await musicSupabase.from("artists").select("id,name").in("id", allArtistIds);
+    const result = { data: await loadAllMusicRows("artists", "id,name"), error: null };
     if (result.error) console.warn("Artist names could not be loaded:", result.error);
     (result.data || []).forEach(artist => names.set(String(artist.id), artist.name || ""));
   }
   const allCatalog = (songs || []).map(song => ({
     ...song,
+    image_url: song.image_url || releaseById.get(String(song.release_id))?.artwork_url,
+    release_title: releaseById.get(String(song.release_id))?.title || "",
+    release_type: releaseById.get(String(song.release_id))?.type || "single",
+    release_date: releaseById.get(String(song.release_id))?.release_date || song.release_date,
     artist_name: names.get(String(song.artist_id)) || "",
     feature_artist_ids: featureArtistsBySong.get(String(song.id)) || [],
     artistNames: names
   }));
   musicById.clear();
   allCatalog.forEach(song => musicById.set(String(song.id), song));
-  const catalog = dedupeMusicSongs(allCatalog);
+  const catalog = allCatalog;
   const catalogNode = document.getElementById("songCatalog");
   const bySongId = new Map(catalog.map(song => [String(song.id), song]));
   const user = sessionData?.session?.user || null;
-  const taste = await loadHubLibrary(user);
-  const shuffle = items => {
-    const shuffled = [...items];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
-  const tasteArtists = new Set(taste?.artistIds || []);
-  const librarySongIds = taste?.songIds || new Set();
-  const librarySongKeys = new Set(allCatalog.filter(song => librarySongIds.has(String(song.id))).map(musicSongDuplicateKey));
-  const artistNetwork = song => [song.artist_id, ...(song.feature_artist_ids || [])].filter(Boolean).map(String);
-  const initialTasteArtists = new Set(tasteArtists);
-  catalog.forEach(song => {
-    const credits = artistNetwork(song);
-    if (credits.some(id => initialTasteArtists.has(id))) credits.forEach(id => tasteArtists.add(id));
+  const artistFilter = document.getElementById("songArtistFilter");
+  const artists = [...new Map(catalog.map(song => [String(song.artist_id), song.artist_name])).entries()]
+    .sort((a, b) => a[1].localeCompare(b[1]));
+  artists.forEach(([id, name]) => {
+    const option = document.createElement("option");
+    option.value = id; option.textContent = name || "FSB artist";
+    artistFilter.appendChild(option);
   });
-  const matching = [], other = [];
-  catalog.forEach(song => {
-    const overlapsTaste = artistNetwork(song).some(id => tasteArtists.has(id));
-    if (tasteArtists.size && overlapsTaste && !librarySongKeys.has(musicSongDuplicateKey(song))) matching.push(song);
-    else if (!librarySongIds.has(String(song.id))) other.push(song);
-  });
-  const recommendedOrder = [...shuffle(matching), ...shuffle(other)];
-  if (!recommendedOrder.length && catalog.length) recommendedOrder.push(...shuffle(catalog));
+  let visibleSongs = catalog;
   const renderCatalog = () => {
     const term = document.getElementById("songSearch").value.trim().toLowerCase();
-    const filtered = recommendedOrder.filter(song => {
-      const credits = [song.artist_name, ...(song.feature_artist_ids || []).map(id => names.get(id) || "")].join(" ");
-      return `${song.title || ""} ${credits}`.toLowerCase().includes(term);
-    });
-    catalogNode.innerHTML = "";
-    if (!filtered.length) catalogNode.innerHTML = '<p class="empty">No recommended songs match your search yet.</p>';
-    filtered.forEach(song => catalogNode.appendChild(songCard(song)));
+    const artistId = artistFilter.value;
+    const type = document.getElementById("songTypeFilter").value;
+    const sort = document.getElementById("songSort").value;
+    visibleSongs = filterMusicCatalog(catalog, { term, artistId, type, sort });
+    catalogNode.replaceChildren();
+    document.getElementById("songCount").textContent = `${visibleSongs.length} of ${catalog.length} songs`;
+    if (!visibleSongs.length) catalogNode.innerHTML = '<p class="empty">' + (catalog.length ? 'No songs match these filters.' : 'No music has been released yet.') + '</p>';
+    visibleSongs.forEach(song => catalogNode.appendChild(songCard(song)));
+    document.getElementById("playAllSongs").disabled = !visibleSongs.some(song => song.audio_url);
   };
   renderCatalog();
   document.getElementById("songSearch").addEventListener("input", renderCatalog);
+  [artistFilter, document.getElementById("songTypeFilter"), document.getElementById("songSort")].forEach(control => control.addEventListener("change", renderCatalog));
+  document.getElementById("playAllSongs").addEventListener("click", () => {
+    const playable = visibleSongs.filter(song => song.audio_url);
+    if (playable.length) startSong(playable[0], playable);
+  });
   document.addEventListener("click", event => {
     const button = event.target.closest("[data-hub-play-song]");
-    if (button) startSong(bySongId.get(button.dataset.hubPlaySong));
+    if (button) startSong(bySongId.get(button.dataset.hubPlaySong), visibleSongs);
   });
-  await loadMerchRecommendations(user);
+  // Personal library failures must never hide the public catalog.
+  try { await loadHubLibrary(user); } catch (error) { console.warn("Your music library could not be loaded:", error); }
+  try { await loadMerchRecommendations(user); } catch (error) { console.warn("Clothing picks could not be loaded:", error); }
   const requestedSong = musicParams.get("song_id");
   if (requestedSong && bySongId.has(requestedSong)) { startSong(bySongId.get(requestedSong)); window.scrollTo({ top: 0, behavior: "smooth" }); }
   const requestedVideo = musicParams.get("video_id");
@@ -686,5 +714,6 @@ loadMusicHub().catch((error) => {
   document.getElementById("songCatalog").innerHTML = '<p class="empty">Music could not be loaded. Please refresh and try again.</p>';
   document.getElementById("playerStatus").textContent = error.message || "Music could not be loaded.";
 });
+
 
 

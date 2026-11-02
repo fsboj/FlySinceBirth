@@ -10,13 +10,22 @@
   };
 
   const musicLink = document.getElementById("topnavMusic");
-  if (musicLink) musicLink.textContent = "My FSB";
+  if (musicLink) { musicLink.textContent = "My FSB"; musicLink.href = "my-fsb.html"; }
+  const artistLink = document.getElementById("topnavArtist");
+  if (artistLink) artistLink.textContent = "Artists";
+  if (artistLink && !document.getElementById("topnavLibrary")) {
+    const libraryLink = document.createElement("a");
+    libraryLink.id = "topnavLibrary";
+    libraryLink.href = "music.html";
+    libraryLink.textContent = "Music";
+    artistLink.insertAdjacentElement("afterend", libraryLink);
+  }
 
   function markCurrentPage() {
     const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
     const aliases = { "artist.html": "artists.html", "epalbum.html": "music.html", "video.html": "videos.html" };
     const current = aliases[file] || file;
-    document.querySelectorAll("#topnavHome, #topnavMusic, #topnavArtist, #topnavShop, #topnavVideos, #topnavEvents, #topnavAccount").forEach(function (link) {
+    document.querySelectorAll("#topnavHome, #topnavMusic, #topnavArtist, #topnavLibrary, #topnavShop, #topnavVideos, #topnavEvents, #topnavAccount").forEach(function (link) {
       const target = (link.getAttribute("href") || "").split("#")[0].toLowerCase();
       if (target === current) link.setAttribute("aria-current", "page");
       else link.removeAttribute("aria-current");
@@ -100,4 +109,5 @@
   addSupportLink();
   loadNavigationLabels();
 })();
+
 
