@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const SITE_ORIGIN = "https://fsboj.github.io";
-const RETURN_URL = `${SITE_ORIGIN}/FlySinceBirth/account.html`;
+const SITE_ORIGIN = "https://flysbirth.com";
+const RETURN_URL = `${SITE_ORIGIN}/account.html`;
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": SITE_ORIGIN,
   "Access-Control-Allow-Headers": "authorization, apikey, x-client-info, content-type",
