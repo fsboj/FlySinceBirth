@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const SITE_ORIGIN = "https://fsboj.github.io";
+const SITE_ORIGIN = "https://flysbirth.com";
 const SUPPORT_ADDRESS = "fsbsupport@flysbirth.com";
 const SMTP_HOST = "smtppro.zoho.com";
 const SMTP_PORT = 465;
@@ -185,7 +185,7 @@ async function sendSupportEmail(item: SupportRequest) {
       item.message,
       "",
       "Open the FSB admin page to manage and reply to this request.",
-      "https://fsboj.github.io/FlySinceBirth/admin.html",
+      "https://flysbirth.com/admin.html",
     ].join("\n");
     const encodedBody = base64(new TextEncoder().encode(body)).match(/.{1,76}/g)?.join("\r\n") || "";
     const headers = [
