@@ -150,9 +150,7 @@ async function loadMusicHub() {
       button.dataset.artistId = id;
       button.setAttribute("aria-pressed", String(selectedArtistId === id));
       const label = document.createElement("span"); label.textContent = name;
-      const total = document.createElement("small"); total.textContent = String(count);
-      total.setAttribute("aria-label", count + (count === 1 ? " song" : " songs"));
-      button.append(label, total);
+      button.appendChild(label);
       button.addEventListener("click", () => {
         selectedArtistId = id;
         renderArtists();
