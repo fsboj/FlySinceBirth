@@ -131,30 +131,61 @@ async function loadMusicHub() {
   const catalog = allCatalog;
   const catalogNode = document.getElementById("songCatalog");
   const bySongId = new Map(catalog.map(song => [String(song.id), song]));
-  const artistFilter = document.getElementById("songArtistFilter");
-  const artists = [...new Map(catalog.map(song => [String(song.artist_id), song.artist_name])).entries()]
-    .sort((a, b) => a[1].localeCompare(b[1]));
-  artists.forEach(([id, name]) => {
-    const option = document.createElement("option");
-    option.value = id; option.textContent = name || "FSB artist";
-    artistFilter.appendChild(option);
-  });
+
+  let selectedArtistId = "";
+  const artistSearch = document.getElementById("artistSearch");
+  const artistList = document.getElementById("artistIndex");
+  const artistEntries = [...names.entries()].map(([id, name]) => ({
+    id, name: name || "FSB artist",
+    count: catalog.filter(song => String(song.artist_id) === id || (song.feature_artist_ids || []).map(String).includes(id)).length
+  })).sort((a, b) => a.name.localeCompare(b.name));
+  const renderArtists = () => {
+    const query = artistSearch.value.trim().toLocaleLowerCase();
+    const entries = artistEntries.filter(artist => artist.name.toLocaleLowerCase().includes(query));
+    artistList.replaceChildren();
+    const addArtistButton = (id, name, count) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "artist-index-button";
+      button.dataset.artistId = id;
+      button.setAttribute("aria-pressed", String(selectedArtistId === id));
+      const label = document.createElement("span"); label.textContent = name;
+      const total = document.createElement("small"); total.textContent = String(count);
+      total.setAttribute("aria-label", count + (count === 1 ? " song" : " songs"));
+      button.append(label, total);
+      button.addEventListener("click", () => {
+        selectedArtistId = id;
+        renderArtists();
+        renderCatalog();
+      });
+      artistList.appendChild(button);
+    };
+    addArtistButton("", "All artists", catalog.length);
+    entries.forEach(artist => addArtistButton(artist.id, artist.name, artist.count));
+    if (!entries.length) {
+      const empty = document.createElement("p"); empty.className = "empty";
+      empty.textContent = "No artists match your search."; artistList.appendChild(empty);
+    }
+  };
   let visibleSongs = catalog;
   const renderCatalog = () => {
     const term = document.getElementById("songSearch").value.trim().toLowerCase();
-    const artistId = artistFilter.value;
+    const artistId = selectedArtistId;
     const type = document.getElementById("songTypeFilter").value;
     const sort = document.getElementById("songSort").value;
     visibleSongs = filterMusicCatalog(catalog, { term, artistId, type, sort });
+    document.getElementById("catalogTitle").textContent = selectedArtistId ? (names.get(selectedArtistId) || "Artist") + " — Songs" : "All Songs";
     catalogNode.replaceChildren();
     document.getElementById("songCount").textContent = `${visibleSongs.length} of ${catalog.length} songs`;
     if (!visibleSongs.length) catalogNode.innerHTML = '<p class="empty">' + (catalog.length ? 'No songs match these filters.' : 'No music has been released yet.') + '</p>';
     visibleSongs.forEach(song => catalogNode.appendChild(songCard(song)));
     document.getElementById("playAllSongs").disabled = !visibleSongs.some(song => song.audio_url);
   };
+  renderArtists();
   renderCatalog();
+  artistSearch.addEventListener("input", renderArtists);
   document.getElementById("songSearch").addEventListener("input", renderCatalog);
-  [artistFilter, document.getElementById("songTypeFilter"), document.getElementById("songSort")].forEach(control => control.addEventListener("change", renderCatalog));
+  [document.getElementById("songTypeFilter"), document.getElementById("songSort")].forEach(control => control.addEventListener("change", renderCatalog));
   document.getElementById("playAllSongs").addEventListener("click", () => {
     const playable = visibleSongs.filter(song => song.audio_url);
     if (playable.length) startSong(playable[0], playable);
