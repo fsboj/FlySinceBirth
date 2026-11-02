@@ -157,7 +157,7 @@ function renderSingles(list,songs){
   const card=document.createElement('div');card.className='admin-item artist-single-editor-card';card.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;box-sizing:border-box;padding:14px;overflow:visible';
   const summary=document.createElement('div');summary.className='artist-single-summary';summary.style.cssText='display:flex;align-items:center;gap:14px;min-height:65px;min-width:0;flex:1';
   const img=song.image_url?'<img src="'+esc(song.image_url)+'" alt="" style="width:54px;height:54px;object-fit:cover;border:1px solid #242424;flex:0 0 auto">':'<div style="width:54px;height:54px;border:1px solid #242424;display:flex;align-items:center;justify-content:center;color:#555;font-size:10px;flex:0 0 auto">SINGLE</div>';
-  summary.innerHTML=img+'<div><div class="item-name" style="font-size:12px;line-height:1.25">'+esc(song.title)+'</div><div class="item-meta">SINGLE</div></div>';
+  summary.innerHTML=img+'<div><div class="item-name" style="font-size:12px;line-height:1.25">'+esc(song.title)+'</div><div class="item-meta">SINGLE · '+(song.lyrics&&song.lyrics.trim()?'LYRICS ADDED':'NO LYRICS YET')+'</div></div>';
   const actions=document.createElement('div');actions.className='actions';actions.style.cssText='margin:0;flex:0 0 auto';
   const edit=document.createElement('button');edit.type='button';edit.className='button';edit.textContent='EDIT';edit.onclick=()=>window.editArtistSong(song.id);
   const remove=document.createElement('button');remove.type='button';remove.className='button danger';remove.textContent='DELETE';remove.onclick=()=>deleteArtistSong(song.id).then(()=>renderArtistMusic(selectedArtistPageId));
@@ -168,6 +168,7 @@ function inlineSongEditorHtml(song){
  const sections=Array.isArray(song.sections)?song.sections:[];
  return '<div class="panel-title" style="font-size:18px">EDIT SINGLE</div><div class="form-grid" style="margin-top:18px">'+
  '<div class="form-group"><label>SONG NAME</label><input class="inline-title" value="'+esc(song.title)+'"></div>'+
+ '<div class="form-group full"><label>LYRICS (OPTIONAL)<textarea class="inline-lyrics" rows="8">'+esc(song.lyrics||'')+'</textarea></label></div>'+
  '<div class="form-group"><label>REPLACE PHOTO</label><input class="inline-image" type="file" accept="image/*"></div>'+
  '<div class="form-group"><label>REPLACE SONG TRACK</label><input class="inline-audio" type="file" accept="audio/*"></div>'+
  '<div class="form-group"><label>REPLACE VIDEO</label><input class="inline-video" type="file" accept="video/*"></div>'+
@@ -185,7 +186,7 @@ async function saveInlineSong(id,editor){
  try{
   const title=editor.querySelector('.inline-title').value.trim();if(!title){alert('Enter a song name.');return}
   const sections=[...editor.querySelectorAll('.inline-section:checked')].map(x=>x.value);
-  const data={title,sections,is_top_song:sections.includes('top')};
+  const data={title,lyrics:editor.querySelector('.inline-lyrics').value.trim()||null,sections,is_top_song:sections.includes('top')};
   await window.assertArtistTopSongLimit(selectedArtistPageId,id,sections);
   const image=await uploadInlineFile('artist-artwork',selectedArtistPageId,editor.querySelector('.inline-image').files[0],'');
   const audio=await uploadInlineFile('artist-music',selectedArtistPageId,editor.querySelector('.inline-audio').files[0],'');
@@ -206,7 +207,7 @@ function renderReleases(list,releases,songs){
   const body=document.createElement('div');body.className='release-tracks';body.style.cssText='padding:0 20px 20px 20px';
   body.innerHTML='<div class="actions" style="margin-top:0"><button class="button release-edit">EDIT RELEASE</button><button class="button danger release-delete">DELETE RELEASE</button></div>';
   const trackBox=document.createElement('div');trackBox.style.cssText='margin-top:18px;display:flex;flex-direction:column;gap:8px';
-  tracks.forEach((t,i)=>{const tr=document.createElement('div');tr.className='admin-item';tr.style.padding='12px 14px';tr.innerHTML='<div><div class="item-name">'+(i+1)+'. '+esc(t.title)+'</div><div class="item-meta">TRACK</div></div><div class="actions" style="margin-top:0"><button class="button track-edit">EDIT SONG</button><button class="button danger track-delete">DELETE</button></div>';tr.querySelector('.track-edit').onclick=()=>editArtistSong(t.id);tr.querySelector('.track-delete').onclick=async()=>{await deleteArtistSong(t.id);await renderArtistMusic(selectedArtistPageId)};trackBox.appendChild(tr)});
+  tracks.forEach((t,i)=>{const tr=document.createElement('div');tr.className='admin-item';tr.style.padding='12px 14px';tr.innerHTML='<div><div class="item-name">'+(i+1)+'. '+esc(t.title)+'</div><div class="item-meta">TRACK · '+(t.lyrics&&t.lyrics.trim()?'LYRICS ADDED':'NO LYRICS YET')+'</div></div><div class="actions" style="margin-top:0"><button class="button track-edit">EDIT SONG</button><button class="button danger track-delete">DELETE</button></div>';tr.querySelector('.track-edit').onclick=()=>editArtistSong(t.id);tr.querySelector('.track-delete').onclick=async()=>{await deleteArtistSong(t.id);await renderArtistMusic(selectedArtistPageId)};trackBox.appendChild(tr)});
   body.appendChild(trackBox);
   head.onclick=()=>{const open=body.style.display==='block';document.querySelectorAll('#artistReleasesAdminList .release-tracks').forEach(x=>x.style.display='none');document.querySelectorAll('#artistReleasesAdminList .release-toggle span:last-child').forEach(x=>x.textContent='+');body.style.display=open?'none':'block';head.querySelector('span:last-child').textContent=open?'+':'−'};
   body.querySelector('.release-edit').onclick=e=>{e.stopPropagation();editArtistRelease(rel.id)};
@@ -305,6 +306,12 @@ function artistUploadTrackRow(container,number){
  row.dataset.externalFeatureId=externalId;
  row.style.cssText='display:grid;grid-template-columns:45px repeat(3,minmax(100px,1fr)) minmax(220px,1.8fr) auto;gap:10px;align-items:start';
  row.innerHTML='<div style="text-align:center;padding-top:12px">'+number+'</div><input class="artist-upload-track-title" placeholder="Track title"><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">AUDIO<input class="artist-upload-track-file" type="file" accept="audio/*"></label><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">VIDEO<input class="artist-upload-track-video" type="file" accept="video/*"></label><div><strong style="display:block;font-size:11px;margin-bottom:6px">FEATURE ARTISTS</strong><div class="artist-feature-picker" data-select-id="'+pickerId+'"></div><select id="'+pickerId+'" class="artist-track-feature-select" multiple aria-label="Featured FSB artists for track" style="display:none"></select><div style="display:flex;align-items:center;gap:8px;margin:10px 0 5px"><span style="font-size:11px">NON-FSB ARTISTS</span><button class="button" type="button" data-add-external-feature>Add artist + link</button></div><div id="'+externalId+'"></div></div><button class="button danger" type="button">REMOVE</button>';
+ const lyricsGroup=document.createElement('details');lyricsGroup.className='artist-track-lyrics';lyricsGroup.style.cssText='grid-column:1/-1;padding:12px;border-top:1px solid #333';
+ const lyricsSummary=document.createElement('summary');lyricsSummary.textContent='LYRICS · NO LYRICS YET';lyricsSummary.style.cursor='pointer';
+ const lyricsLabel=document.createElement('label');lyricsLabel.textContent='LYRICS (OPTIONAL)';lyricsLabel.style.cssText='display:block;margin-top:12px;font-size:11px';
+ const lyricsField=document.createElement('textarea');lyricsField.className='artist-track-lyrics-input';lyricsField.rows=8;lyricsField.placeholder='Paste lyrics for this track. Keep line breaks for verses and choruses.';lyricsField.style.cssText='display:block;width:100%;box-sizing:border-box;margin-top:8px';
+ lyricsField.addEventListener('input',()=>{lyricsSummary.textContent=lyricsField.value.trim()?'LYRICS · ADDED':'LYRICS · NO LYRICS YET'});
+ lyricsLabel.appendChild(lyricsField);lyricsGroup.append(lyricsSummary,lyricsLabel);row.appendChild(lyricsGroup);
  row.querySelector('[data-add-external-feature]').onclick=()=>window.addExternalFeatureRow(externalId);
  row.querySelector('.button.danger').onclick=()=>{row.remove();[...container.children].forEach((x,i)=>{const n=x.firstElementChild;if(n)n.textContent=i+1})};
  container.appendChild(row);
@@ -323,7 +330,7 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
   const trackTitle=titleEl&&titleEl.value.trim(),audio=audioEl&&audioEl.files[0],video=videoEl&&videoEl.files[0];
   if(!trackTitle)throw new Error('Enter a title for track '+(i+1)+'.');
   if(!audio)throw new Error('Select an audio file for track '+(i+1)+'.');
-  return {title:trackTitle,audio,video,externalFeatures:window.collectExternalFeatureCredits(row.dataset.externalFeatureId),featureIds:[...(row.querySelector('.artist-track-feature-select')?.selectedOptions||[])].map(o=>o.value)};
+  return {title:trackTitle,audio,video,lyrics:row.querySelector('.artist-track-lyrics-input')?.value.trim()||null,externalFeatures:window.collectExternalFeatureCredits(row.dataset.externalFeatureId),featureIds:[...(row.querySelector('.artist-track-feature-select')?.selectedOptions||[])].map(o=>o.value)};
  });
  const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
  const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,release_date:date||null,sort_order:0}).select().single();
@@ -342,7 +349,7 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
   const {title:trackTitle,audio,video}=tracks[i];
   const audioUrl=await artistUploadFile('artist-music',selectedArtistPageId,audio,'releases/'+ins.data.id);
   const videoUrl=await artistUploadFile('videos',selectedArtistPageId,video,'artist-videos/'+ins.data.id);
-  const song=await supabaseClient.from('artist_songs').insert({artist_id:selectedArtistPageId,title:trackTitle,audio_url:audioUrl,image_url:artwork,video_url:videoUrl,sort_order:i+1,plays:0,is_top_song:false,external_features:tracks[i].externalFeatures||[],sections:[type==='album'?'albums':'eps'],release_id:ins.data.id,track_number:i+1}).select('id').single();
+  const song=await supabaseClient.from('artist_songs').insert({artist_id:selectedArtistPageId,title:trackTitle,lyrics:tracks[i].lyrics,audio_url:audioUrl,image_url:artwork,video_url:videoUrl,sort_order:i+1,plays:0,is_top_song:false,external_features:tracks[i].externalFeatures||[],sections:[type==='album'?'albums':'eps'],release_id:ins.data.id,track_number:i+1}).select('id').single();
   if(song.error)throw song.error;
   await window.saveArtistFeatureLinks('artist_song_features','song_id',song.data.id,rows[i].querySelector('.artist-track-feature-select'),selectedArtistPageId);
  }
@@ -412,7 +419,7 @@ function setupArtistMusicUploadUI(){
   });
  }
  if(!type||!fields||!tracks||!add)return;
- const sync=()=>{const project=type.value!=='single';fields.style.display=project?'block':'none';['artistSingleTitleGroup','artistSingleArtworkGroup','artistSingleAudioGroup','artistSingleSectionsGroup','artistSingleFeaturesGroup'].forEach(id=>{const x=document.getElementById(id);if(x)x.style.display=project?'none':''});if(project&&!tracks.children.length)artistUploadTrackRow(tracks,1)};
+ const sync=()=>{const project=type.value!=='single';fields.style.display=project?'block':'none';['artistSingleTitleGroup','artistSingleArtworkGroup','artistSingleAudioGroup','artistSingleSectionsGroup','artistSingleFeaturesGroup','artistSingleLyricsGroup'].forEach(id=>{const x=document.getElementById(id);if(x)x.style.display=project?'none':''});if(project&&!tracks.children.length)artistUploadTrackRow(tracks,1)};
  type.addEventListener('change',sync);add.onclick=()=>artistUploadTrackRow(tracks,tracks.children.length+1);sync();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupArtistMusicUploadUI);else setupArtistMusicUploadUI();
@@ -761,4 +768,5 @@ window.addEvent = async function(){
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(setup,0),{once:true});else setTimeout(setup,0);
 })();
+
 

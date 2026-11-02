@@ -368,6 +368,7 @@ function renderHubFavoriteSongs(favoriteSongs) {
     favorite.textContent = "♥";
     favorite.title = "Remove from favorites";
     row.append(info, play, favorite);
+    if (window.createSongLyricsButton) row.appendChild(window.createSongLyricsButton(song));
     favoritesNode.appendChild(row);
   });
 }
@@ -545,6 +546,7 @@ async function loadHubLibrary(user) {
       button.disabled = !song.audio_url;
       button.addEventListener("click", () => startSong(song, tracks));
       row.append(title, button);
+      if (window.decorateSongControls) window.decorateSongControls(row, song);
       body.appendChild(row);
     });
 
@@ -592,7 +594,7 @@ function dedupeMusicSongs(songs){
 }
 async function loadMusicHub() {
   const [{ data: songs, error: songError }, { data: sessionData }] = await Promise.all([
-    musicSupabase.from("artist_songs").select("id,title,artist_id,audio_url,image_url,release_id,track_number,external_features,created_at").order("created_at", { ascending: false }),
+    musicSupabase.from("artist_songs").select("id,title,artist_id,audio_url,image_url,release_id,track_number,external_features,created_at,lyrics").order("created_at", { ascending: false }),
     musicSupabase.auth.getSession()
   ]);
   if (songError) throw songError;
@@ -684,4 +686,5 @@ loadMusicHub().catch((error) => {
   document.getElementById("songCatalog").innerHTML = '<p class="empty">Music could not be loaded. Please refresh and try again.</p>';
   document.getElementById("playerStatus").textContent = error.message || "Music could not be loaded.";
 });
+
 

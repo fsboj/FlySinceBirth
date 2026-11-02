@@ -70,6 +70,75 @@
     });
   }
 
+  styles.textContent += `
+    .fsb-song-lyrics{font-weight:700;font-size:15px;flex-shrink:0}
+    .fsb-song-lyrics[data-has-lyrics="false"]{color:#999}
+    .fsb-song-lyrics:focus-visible{outline:2px solid #fff;outline-offset:3px}
+    .fsb-lyrics-dialog{box-sizing:border-box;width:min(620px,calc(100vw - 32px));max-height:85dvh;padding:26px;border:1px solid #444;background:#0c0c0c;color:#f5f5f5;box-shadow:0 24px 90px #0009;overflow:auto}
+    .fsb-lyrics-dialog::backdrop{background:#000c;backdrop-filter:blur(7px)}
+    .fsb-lyrics-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+    .fsb-lyrics-head h2{font-size:clamp(22px,5vw,32px);line-height:1.15;margin:6px 0 0;overflow-wrap:anywhere}
+    .fsb-lyrics-kicker{font-size:10px;letter-spacing:3px;color:#aaa}
+    .fsb-lyrics-close{flex-shrink:0;width:38px;height:38px;background:#111;border:1px solid #555;color:#fff;font-size:25px;cursor:pointer}
+    .fsb-lyrics-text{white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit;font-size:15px;line-height:1.85;margin:24px 0 0;text-align:left;letter-spacing:normal;text-transform:none}
+    .fsb-lyrics-text.is-empty{color:#aaa}
+  `;
+  let lyricsDialog;
+  let lyricsRequest = 0;
+  function getLyricsDialog() {
+    if (lyricsDialog) return lyricsDialog;
+    lyricsDialog = document.createElement("dialog");
+    lyricsDialog.className = "fsb-lyrics-dialog";
+    lyricsDialog.setAttribute("aria-labelledby", "fsbLyricsTitle");
+    lyricsDialog.innerHTML = '<div class="fsb-lyrics-head"><div><div class="fsb-lyrics-kicker">LYRICS</div><h2 id="fsbLyricsTitle"></h2></div><button type="button" class="fsb-lyrics-close" aria-label="Close lyrics">×</button></div><div class="fsb-lyrics-text" role="status" aria-live="polite"></div>';
+    lyricsDialog.querySelector("button").onclick = () => lyricsDialog.close();
+    lyricsDialog.addEventListener("click", event => { if (event.target === lyricsDialog) { const rect = lyricsDialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) lyricsDialog.close(); } });
+    lyricsDialog.addEventListener("close", () => { lyricsRequest++; });
+    document.body.appendChild(lyricsDialog);
+    return lyricsDialog;
+  }
+  window.createSongLyricsButton = function (song) {
+    if (!song.lyrics?.trim()) return document.createDocumentFragment();
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "fsb-song-action fsb-song-lyrics";
+    button.dataset.fsbLyrics = String(song.id);
+    button.dataset.hasLyrics = String(Boolean(song.lyrics?.trim()));
+    button.textContent = '“”';
+    button.setAttribute("aria-label", `Lyrics for ${song.title || "song"}`);
+    button.title = "View lyrics";
+    button.addEventListener("click", async event => {
+      event.preventDefault();
+      event.stopPropagation();
+      const dialog = getLyricsDialog();
+      const request = ++lyricsRequest;
+      const text = dialog.querySelector(".fsb-lyrics-text");
+      dialog.querySelector("h2").textContent = song.title || "Song";
+      text.classList.remove("is-empty");
+      text.textContent = "Loading lyrics…";
+      if (!dialog.open) dialog.showModal();
+      try {
+        const { data, error } = await supabaseClient.from("artist_songs").select("title,lyrics").eq("id", song.id).single();
+        if (request !== lyricsRequest || !dialog.open) return;
+        if (error) throw error;
+        const lyrics = data.lyrics?.trim() || "";
+        dialog.querySelector("h2").textContent = data.title || song.title || "Song";
+        text.textContent = lyrics || "Lyrics haven’t been added yet.";
+        text.classList.toggle("is-empty", !lyrics);
+        document.querySelectorAll(`[data-fsb-lyrics="${CSS.escape(String(song.id))}"]`).forEach(control => {
+          control.dataset.hasLyrics = String(Boolean(lyrics));
+          if (!lyrics) control.remove();
+        });
+      } catch (error) {
+        if (request === lyricsRequest && dialog.open) {
+          text.classList.add("is-empty");
+          text.textContent = "Lyrics could not be loaded. Close this window and try again.";
+        }
+      }
+    });
+    return button;
+  };
+
   window.decorateSongControls = function (element, song) {
     if (!element || !song?.id || element.querySelector(".fsb-song-actions")) return element;
     const actions = document.createElement("span");
@@ -90,7 +159,7 @@
     add.setAttribute("aria-label", `Add ${song.title || "song"} to a playlist`);
     add.title = "Add to a playlist";
     add.textContent = "+";
-    actions.append(favorite, add);
+    actions.append(favorite, window.createSongLyricsButton(song), add);
     element.appendChild(actions);
     return element;
   };
@@ -323,7 +392,7 @@
   }, true);
 
   async function loadCatalog() {
-    const { data, error } = await supabaseClient.from("artist_songs").select("id,title,artist_id,image_url,audio_url").order("title", { ascending: true });
+    const { data, error } = await supabaseClient.from("artist_songs").select("id,title,artist_id,image_url,audio_url,lyrics").order("title", { ascending: true });
     if (error) throw error;
     allSongs = data || [];
     const ids = [...new Set(allSongs.map((song) => song.artist_id).filter(Boolean))];
@@ -402,4 +471,5 @@
     });
   });
 })();
+
 

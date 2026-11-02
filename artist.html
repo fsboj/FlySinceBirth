@@ -1683,7 +1683,7 @@ footer {
 ===================================================== -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script defer src="music-library.js?v=6"></script>
+<script defer src="music-library.js?v=20261102-lyrics"></script>
 
 
 <script>
@@ -3103,6 +3103,7 @@ async function loadArtistReleaseTracks(
 
             };
 
+            if (window.decorateSongControls) window.decorateSongControls(track, song);
             container.appendChild(track);
 
         }
@@ -3299,6 +3300,7 @@ loadArtist();
 </body>
 
 </html>
+
 
 
 
