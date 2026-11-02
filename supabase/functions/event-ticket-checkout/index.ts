@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const SITE_ORIGIN = "https://fsboj.github.io";
-const SITE_PATH = "/FlySinceBirth/events.html";
+const SITE_ORIGIN = "https://flysbirth.com";
+const SITE_PATH = "/events.html";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": SITE_ORIGIN,
   "Access-Control-Allow-Headers": "authorization, apikey, x-client-info, content-type",
