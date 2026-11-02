@@ -59,8 +59,8 @@
 
 
   function addBackButton() {
-    const home = document.getElementById("topnavHome");
-    if (!home || !home.parentElement || document.getElementById("fsbBackButton")) return;
+    const logo = document.querySelector(".public-nav .nav-logo");
+    if (!logo || !logo.parentElement || document.getElementById("fsbBackButton")) return;
     const button = document.createElement("button");
     button.id = "fsbBackButton";
     button.type = "button";
@@ -73,9 +73,12 @@
       else window.location.assign("index.html");
     });
     const style = document.createElement("style");
-    style.textContent = ".fsb-back-button{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:36px;height:36px;padding:0;border:1px solid #555;border-radius:50%;background:transparent;color:inherit;font:24px/1 Arial,sans-serif;cursor:pointer;vertical-align:middle}.fsb-back-button:hover{border-color:currentColor;background:#ffffff12}.fsb-back-button:focus-visible{outline:2px solid currentColor;outline-offset:3px}";
+    style.textContent = ".fsb-nav-brand{display:flex;align-items:center;gap:10px;flex:0 0 auto}.fsb-back-button{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:36px;height:36px;padding:0;border:1px solid #555;border-radius:50%;background:transparent;color:inherit;font:24px/1 Arial,sans-serif;cursor:pointer;vertical-align:middle}.fsb-back-button:hover{border-color:currentColor;background:#ffffff12}.fsb-back-button:focus-visible{outline:2px solid currentColor;outline-offset:3px}";
     document.head.appendChild(style);
-    home.parentElement.insertBefore(button, home);
+    const brand = document.createElement("div");
+    brand.className = "fsb-nav-brand";
+    logo.parentElement.insertBefore(brand, logo);
+    brand.append(button, logo);
   }
 
   addBackButton();
