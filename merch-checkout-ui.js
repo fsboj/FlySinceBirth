@@ -25,6 +25,7 @@
     <label class="wide">PHONE (OPTIONAL)<input name="phone" autocomplete="tel" maxlength="40"></label>
     <span id="merchCountryHelp" class="wide" style="color:#777;font-size:10px">Use the 2-letter country code, such as US, CA, or GB.</span>
   </div><button class="outline" type="button" id="getPrintfulRates">GET SHIPPING OPTIONS</button><div class="merch-checkout-rates" id="merchCheckoutRates" role="radiogroup" aria-label="Printful shipping options"></div><p class="merch-checkout-status" id="merchCheckoutStatus" role="status" aria-live="polite"></p><p class="merch-checkout-terms">By continuing, you agree to the <button type="button" data-open-policy>Shipping & Returns</button> policy. Stripe will display applicable tax and the final amount before payment.</p><button class="add" type="button" id="payForMerch" disabled>CONTINUE TO SECURE PAYMENT</button>`;
+  checkoutButton.onclick = null;
   checkoutButton.insertAdjacentElement("beforebegin", form);
 
   let checkoutAvailable = false;
@@ -34,7 +35,7 @@
   function setStatus(message) { $("merchCheckoutStatus").textContent = message; }
   function addressValue() {
     const value = {};
-    new FormData(form).forEach((entry, key) => { value[key] = String(entry).trim(); });
+    form.querySelectorAll(".merch-checkout-fields input[name]").forEach((input) => { value[input.name] = input.value.trim(); });
     value.country_code = String(value.country_code || "").toUpperCase();
     return value;
   }
@@ -68,17 +69,20 @@
       const heading = document.createElement("strong");
       heading.textContent = "Checkout setup is still in progress.";
       note.append(heading, document.createTextNode(" You can build a bag, but no order or charge will be created yet."));
-      try {
-        if (configuration.missing?.length) {
-          const details = document.createElement("span");
-          details.style.display = "block";
-          details.style.marginTop = "8px";
-          details.textContent = `Setup needed in Supabase Secrets: ${configuration.missing.join(", ")}.`;
-          note.appendChild(details);
-        }
-      } catch (_) { /* keep the setup message generic */ }
+
     }
   }
+
+  function invalidateQuote(message = "") {
+    currentQuoteId = "";
+    lastAddress = null;
+    $("merchCheckoutRates").replaceChildren();
+    $("payForMerch").disabled = true;
+    if (message) setStatus(message);
+  }
+  form.querySelectorAll(".merch-checkout-fields input").forEach((input) =>
+    input.addEventListener("input", () => invalidateQuote("Address changed. Get updated shipping options."))
+  );
 
   checkoutButton.addEventListener("click", () => {
     if (!checkoutAvailable) return;
@@ -98,7 +102,12 @@
     $("payForMerch").disabled = true;
     setStatus("Getting current Printful shipping rates…");
     try {
-      const result = await invoke({ action: "quote", address, items: cartInput() });
+      const items = cartInput();
+      const result = await invoke({ action: "quote", address, items });
+      if (JSON.stringify(addressValue()) !== JSON.stringify(address) || JSON.stringify(cartInput()) !== JSON.stringify(items)) {
+        invalidateQuote("Your bag or address changed. Get updated shipping options.");
+        return;
+      }
       currentQuoteId = result.quoteId;
       lastAddress = address;
       const host = $("merchCheckoutRates");
@@ -136,7 +145,8 @@
   if (params.has("store_order")) { notify("Stripe is confirming your payment. Check Your Account → Store Orders for the latest status."); history.replaceState({}, "", location.pathname); }
   refreshAvailability();
   const cartObserver = new MutationObserver(() => {
-    if (checkoutAvailable && form.classList.contains("open")) checkoutButton.disabled = !Array.isArray(cart) || cart.length === 0;
+    if (checkoutAvailable) checkoutButton.disabled = !Array.isArray(cart) || cart.length === 0;
+    invalidateQuote(form.classList.contains("open") ? "Your bag changed. Get updated shipping options." : "");
   });
   cartObserver.observe($("cartItems"), { childList: true, subtree: true });
 })();
