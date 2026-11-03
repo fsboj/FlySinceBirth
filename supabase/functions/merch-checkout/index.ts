@@ -272,6 +272,9 @@ Deno.serve(async (request: Request) => {
       if (!stripeCustomerResult.ok || !stripeCustomer.id) throw new Error("Stripe could not prepare your delivery address. No payment was taken.");
       const form = new URLSearchParams();
       form.set("mode", "payment");
+      form.set("payment_intent_data[receipt_email]", customer.email);
+      form.set("payment_intent_data[metadata][order_id]", String(order.id));
+      form.set("payment_intent_data[metadata][order_type]", "merch");
       form.set("customer", String(stripeCustomer.id));
       form.set("customer_update[address]", "auto");
       form.set("automatic_tax[enabled]", "true");
