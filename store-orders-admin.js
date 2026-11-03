@@ -80,5 +80,5 @@
   }
   $("refreshStoreOrders").onclick=()=>{limit=30;load();};
   $("moreStoreOrders").onclick=()=>{limit+=30;load();};
-  document.querySelectorAll(".admin-nav button").forEach(button=>button.addEventListener("click",()=>{if(host.classList.contains("active"))load();}));
+  document.querySelectorAll(".admin-nav button").forEach(button=>button.addEventListener("click",()=>{queueMicrotask(()=>{if(host.classList.contains("active"))load();});}));
 })();
