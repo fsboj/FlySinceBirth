@@ -167,6 +167,10 @@ body {
     flex-shrink: 0;
 }
 
+#artistImage[data-artist-id="3"] {
+    object-fit: contain;
+}
+
 .artist-details {
     max-width: 800px;
     min-width: 0;
@@ -2037,6 +2041,7 @@ console.log("ARTIST SUPABASE ERROR:", error);
     ).textContent =
         data.name ||
         "ARTIST";    const artistImage=document.getElementById("artistImage");
+    artistImage.dataset.artistId=String(data.id);
     artistImage.src=data.image||"fsblogo.PNG";
     artistImage.onerror=function(){artistImage.onerror=null;artistImage.src="fsblogo.PNG";};
 
