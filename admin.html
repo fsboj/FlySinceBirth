@@ -965,7 +965,7 @@ body {
         <div class="form-group"><label>SHIPPING PER ITEM (USD)</label><input id="merchProductShippingPrice" type="number" min="0" step="0.01" placeholder="Set before accepting orders"><div class="item-meta">For your inventory and other suppliers. Enter 0 for free shipping. Each item's charge is added to the bag. Printful uses live rates.</div></div>
         <div class="form-group"><label>SHIP TO COUNTRIES</label><input id="merchProductShippingCountries" placeholder="US, CA, GB"><div class="item-meta">Two-letter country codes for your inventory and other suppliers. Leave blank until you decide where to ship.</div></div>
         <div class="form-group"><label>FULFILLMENT IDS</label><button class="button" type="button" id="openMerchFulfillmentModal">SUPPLIER & PRINTFUL DETAILS</button><div class="item-meta" style="margin-top:7px">Optional supplier and Printful product identifiers.</div></div>
-        <div id="merchFulfillmentFields" class="form-grid" style="display:none"><div class="form-group"><label>SUPPLIER NAME</label><input id="merchProductSupplier" placeholder="Supplier or store name"></div><div class="form-group"><label>SUPPLIER PRODUCT ID (OPTIONAL)</label><input id="merchProductSupplierId" placeholder="Supplier SKU / product ID"></div><div class="form-group"><label>PRINTFUL PRODUCT ID (OPTIONAL)</label><input id="merchProductPrintfulId" placeholder="Connect Printful later"></div><div class="form-group"><label>PRINTFUL SYNC VARIANT ID (OPTIONAL)</label><input id="merchProductPrintfulVariant" placeholder="Variant ID"></div></div>
+        <div id="merchFulfillmentFields" class="form-grid" style="display:none"><div class="form-group"><label>SUPPLIER NAME</label><input id="merchProductSupplier" placeholder="Supplier or store name"></div><div class="form-group"><label>SUPPLIER PRODUCT LINK (OPTIONAL)</label><input id="merchProductSupplierUrl" type="url" placeholder="https://supplier-site.com/product"></div><div class="form-group"><label>SUPPLIER PRODUCT ID (OPTIONAL)</label><input id="merchProductSupplierId" placeholder="Supplier SKU / product ID"></div><div class="form-group"><label>PRINTFUL PRODUCT ID (OPTIONAL)</label><input id="merchProductPrintfulId" placeholder="Connect Printful later"></div><div class="form-group"><label>PRINTFUL SYNC VARIANT ID (OPTIONAL)</label><input id="merchProductPrintfulVariant" placeholder="Variant ID"></div></div>
         <div class="form-group"><label>GENERAL STOCK (NO SIZE OPTIONS)</label><input id="merchProductStock" type="number" min="0" value="0"></div>
         <div class="form-group"><label>DISPLAY ORDER</label><input id="merchProductSort" type="number" value="0"></div>
         <div class="form-group full" style="display:flex;flex-direction:row;gap:24px;flex-wrap:wrap;">
@@ -6734,6 +6734,7 @@ document.addEventListener("DOMContentLoaded", function(){
 })();
 </script>
 <script src="admin-tabs-fix.js?v=20261102-store-orders"></script>
+<script src="store-orders-admin.js?v=20261102-orders"></script>
 <script src="store-aisles.js?v=20261018-store-aisle-system"></script>
 
 <script>
