@@ -96,6 +96,10 @@ Deno.serve(async (request: Request) => {
     const event = JSON.parse(payload);
     if (!["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired"].includes(event.type)) return Response.json({ received: true });
     const session = event.data?.object;
+    if (session?.metadata?.order_type === "ticket") {
+      const forwarded = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/event-ticket-stripe-webhook`, {method:"POST",headers:{"stripe-signature":request.headers.get("stripe-signature")||""},body:payload});
+      return forwarded.ok ? Response.json({received:true}) : new Response("Ticket confirmation is processing. Stripe will retry.",{status:500});
+    }
     if (session?.metadata?.order_type !== "merch") return Response.json({ received: true });
     const isLive = /^(sk|rk)_live_/.test((Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) || "");
     if (event.livemode !== isLive) return new Response("Stripe mode did not match", { status: 400 });

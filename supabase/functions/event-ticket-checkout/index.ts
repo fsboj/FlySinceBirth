@@ -58,7 +58,7 @@ async function rest(path: string, init: RequestInit = {}) {
 
 function configuredProviders() {
   const providers: string[] = [];
-  if (Deno.env.get("STRIPE_SECRET_KEY") && Deno.env.get("STRIPE_WEBHOOK_SECRET")) providers.push("stripe");
+  if ((Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) && (Deno.env.get("MERCH_STRIPE_WEBHOOK_SECRET") || Deno.env.get("STRIPE_WEBHOOK_SECRET"))) providers.push("stripe");
   if (Deno.env.get("PAYPAL_CLIENT_ID") && Deno.env.get("PAYPAL_CLIENT_SECRET")) providers.push("paypal");
   return providers;
 }
@@ -139,7 +139,7 @@ async function paypalToken() {
 }
 
 async function confirmStripe(order: Record<string, unknown>, sessionId: string) {
-  const secret = Deno.env.get("STRIPE_SECRET_KEY");
+  const secret = (Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY"));
   if (!secret) throw new Error("Stripe checkout is not configured yet.");
   if (order.provider !== "stripe" || order.provider_reference !== sessionId) {
     throw new Error("The Stripe session does not match this ticket order.");
@@ -153,7 +153,7 @@ async function confirmStripe(order: Record<string, unknown>, sessionId: string) 
     throw new Error("Stripe could not verify this checkout session.");
   }
   const expectedCents = Math.round(Number(order.unit_price) * 100) * Number(order.quantity);
-  if (session.payment_status !== "paid" || session.amount_total !== expectedCents || session.currency !== "usd") {
+  if (session.livemode !== (order.payment_mode === "live") || session.payment_status !== "paid" || session.amount_total !== expectedCents || session.currency !== "usd") {
     throw new Error("Stripe has not confirmed payment for these tickets.");
   }
   const updated = await updateOrder(String(order.id), { status: "paid", paid_at: new Date().toISOString() }, sessionId);
@@ -224,7 +224,7 @@ Deno.serve(async (request: Request) => {
         ticket_capacity: event.ticket_capacity,
         remaining,
         providers: availableProviders,
-        provider_modes: Object.fromEntries(availableProviders.map(provider => [provider, provider === "stripe" ? (/^(sk|rk)_live_/.test(Deno.env.get("STRIPE_SECRET_KEY") || "") ? "live" : "test") : (Deno.env.get("PAYPAL_ENV") === "live" ? "live" : "test")])),
+        provider_modes: Object.fromEntries(availableProviders.map(provider => [provider, provider === "stripe" ? (/^(sk|rk)_live_/.test((Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) || "") ? "live" : "test") : (Deno.env.get("PAYPAL_ENV") === "live" ? "live" : "test")])),
       });
     }
 
@@ -249,12 +249,12 @@ Deno.serve(async (request: Request) => {
       if (!order?.id) throw new Error("Could not reserve tickets for checkout.");
       const total = (Number(order.unit_price) * Number(order.quantity)).toFixed(2);
       const returnUrl = `${SITE_ORIGIN}${SITE_PATH}`;
-      const paymentMode = provider === "stripe" ? (/^(sk|rk)_live_/.test(Deno.env.get("STRIPE_SECRET_KEY") || "") ? "live" : "test") : (Deno.env.get("PAYPAL_ENV") === "live" ? "live" : "test");
+      const paymentMode = provider === "stripe" ? (/^(sk|rk)_live_/.test((Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) || "") ? "live" : "test") : (Deno.env.get("PAYPAL_ENV") === "live" ? "live" : "test");
       await updateOrder(String(order.id), {payment_mode: paymentMode});
 
       try {
         if (provider === "stripe") {
-          const secret = Deno.env.get("STRIPE_SECRET_KEY");
+          const secret = (Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY"));
           if (!secret) throw new Error("Stripe checkout is not configured yet.");
           const form = new URLSearchParams();
           form.set("mode", "payment");
@@ -265,6 +265,7 @@ Deno.serve(async (request: Request) => {
           form.set("expires_at", String(Math.floor(Date.now() / 1000) + 3480));
           form.set("client_reference_id", String(order.id));
           form.set("metadata[order_id]", String(order.id));
+          form.set("metadata[order_type]", "ticket");
           form.set("line_items[0][price_data][currency]", "usd");
           form.set("line_items[0][price_data][unit_amount]", String(Math.round(Number(order.unit_price) * 100)));
           form.set("line_items[0][price_data][product_data][name]", `${String(event.title)} ticket`);

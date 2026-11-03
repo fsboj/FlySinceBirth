@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {sendTicketReceipt} from "../_shared/ticket-receipt.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+const webhookSecrets = [Deno.env.get("STRIPE_WEBHOOK_SECRET"),Deno.env.get("MERCH_STRIPE_WEBHOOK_SECRET")].filter(Boolean) as string[];
 
 function serviceKey(): { key: string; isSecretKey: boolean } {
   const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
@@ -47,17 +47,20 @@ function fromHex(hex: string): Uint8Array | null {
 }
 
 async function validStripeSignature(payload: string, signature: string): Promise<boolean> {
-  if (!webhookSecret) return false;
+  if (!webhookSecrets.length) return false;
   const parts = signature.split(",").map((part) => part.split("=", 2));
   const timestamp = parts.find(([key]) => key === "t")?.[1];
   const signatures = parts.filter(([key]) => key === "v1").map(([, value]) => value || "");
   if (!timestamp || !/^\d+$/.test(timestamp) || Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
+  for (const webhookSecret of webhookSecrets) {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(webhookSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const expected = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${timestamp}.${payload}`)));
-  return signatures.some((signatureHex) => {
+  if (signatures.some((signatureHex) => {
     const candidate = fromHex(signatureHex);
     return candidate !== null && equalBytes(candidate, expected);
-  });
+  })) return true;
+  }
+  return false;
 }
 
 async function loadOrder(orderId: string) {
@@ -75,7 +78,7 @@ async function updateOrder(orderId: string, sessionId: string, patch: Record<str
 
 Deno.serve(async (request: Request) => {
   if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
-  if (!supabaseUrl || !webhookSecret) return new Response("Webhook is not configured", { status: 503 });
+  if (!supabaseUrl || !webhookSecrets.length) return new Response("Webhook is not configured", { status: 503 });
   const payload = await request.text();
   if (!await validStripeSignature(payload, request.headers.get("stripe-signature") || "")) {
     return new Response("Invalid Stripe signature", { status: 400 });

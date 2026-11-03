@@ -17,9 +17,29 @@ Deno.serve(async(req:Request)=>{
   const eventId=b.eventId==null||b.eventId===''?null:Number(b.eventId);if(eventId!==null&&(!Number.isSafeInteger(eventId)||eventId<1))return reply({error:'Invalid event'},400);
   if(b.action==='setup'){
    const events=await db.from('events').select('id,title,date,location,ticket_sales_mode,ticket_price,ticket_capacity,ticket_providers').order('id',{ascending:false});if(events.error)throw events.error;
-   const secret=Deno.env.get('STRIPE_SECRET_KEY')||'';
+   const secret=(Deno.env.get('MERCH_STRIPE_SECRET_KEY')||Deno.env.get('STRIPE_SECRET_KEY'))||'';
    return reply({events:events.data,stripeMode:/^(sk|rk)_live_/.test(secret)?'live':secret?'test':'unconfigured',paypalMode:Deno.env.get('PAYPAL_CLIENT_ID')?(Deno.env.get('PAYPAL_ENV')==='live'?'live':'test'):'unconfigured'});
   }
+
+  if(b.action==='verifyStripe'){
+   const secret=Deno.env.get('MERCH_STRIPE_SECRET_KEY')||Deno.env.get('STRIPE_SECRET_KEY')||'';
+   if(!/^(sk|rk)_live_/.test(secret))return reply({error:'Live Stripe credentials are not configured.'},409);
+   const form=new URLSearchParams({mode:'payment',success_url:'https://flysbirth.com/events.html',cancel_url:'https://flysbirth.com/events.html','line_items[0][price_data][currency]':'usd','line_items[0][price_data][unit_amount]':'100','line_items[0][price_data][product_data][name]':'FSB connection verification - do not pay','line_items[0][quantity]':'1','metadata[order_type]':'ticket_setup_check',expires_at:String(Math.floor(Date.now()/1000)+1800)});
+   const created=await fetch('https://api.stripe.com/v1/checkout/sessions',{method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/x-www-form-urlencoded','Idempotency-Key':'fsb-ticket-verify-'+crypto.randomUUID()},body:form});
+   const session=await created.json();
+   if(!created.ok||!session.id)return reply({error:session.error?.message||'Live Stripe checkout could not be verified.'},409);
+   const expired=await fetch('https://api.stripe.com/v1/checkout/sessions/'+encodeURIComponent(session.id)+'/expire',{method:'POST',headers:{Authorization:'Bearer '+secret}});
+   const closed=await expired.json();
+   if(!expired.ok||closed.status!=='expired')return reply({error:'Verification session cleanup needs attention.'},409);
+
+   let artifactsArchived=false;
+   const items=await fetch('https://api.stripe.com/v1/checkout/sessions/'+encodeURIComponent(session.id)+'/line_items?expand%5B%5D=data.price.product',{headers:{Authorization:'Bearer '+secret}});
+   if(items.ok){const data=await items.json();const price=data.data?.[0]?.price,product=typeof price?.product==='string'?price.product:price?.product?.id;
+    if(price?.id&&product){const results=await Promise.all([['prices',price.id],['products',product]].map(([resource,id])=>fetch('https://api.stripe.com/v1/'+resource+'/'+encodeURIComponent(id),{method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/x-www-form-urlencoded'},body:'active=false'})));artifactsArchived=results.every(r=>r.ok);}
+   }
+   return reply({verified:session.livemode===true,mode:session.livemode?'live':'test',sessionExpired:true,paymentStatus:session.payment_status,artifactsArchived});
+  }
+
   if(b.action==='list'){
    const offset=Number(b.offset||0);if(!Number.isSafeInteger(offset)||offset<0||offset>100000)return reply({error:'Invalid page'},400);
    const q=String(b.search||'').trim().replace(/[^\p{L}\p{N}@ .+\-]/gu,'').slice(0,100);
