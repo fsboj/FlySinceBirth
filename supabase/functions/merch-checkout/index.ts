@@ -51,11 +51,11 @@ function checkoutStatus() {
   const stripe = (Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) || "";
   const webhook = (Deno.env.get("MERCH_STRIPE_WEBHOOK_SECRET") || Deno.env.get("STRIPE_WEBHOOK_SECRET")) || "";
 
-  const test = stripe.startsWith("sk_test_");
-  const live = stripe.startsWith("sk_live_") && Deno.env.get("MERCH_LIVE_CHECKOUT_ENABLED") === "true";
+  const test = /^(sk|rk)_test_/.test(stripe);
+  const live = /^(sk|rk)_live_/.test(stripe) && Deno.env.get("MERCH_LIVE_CHECKOUT_ENABLED") === "true";
   const missing: string[] = [];
-  if (!test && !stripe.startsWith("sk_live_")) missing.push("STRIPE_SECRET_KEY (test key)");
-  if (stripe.startsWith("sk_live_") && !live) missing.push("MERCH_LIVE_CHECKOUT_ENABLED (keep off until ready for real sales)");
+  if (!test && !/^(sk|rk)_live_/.test(stripe)) missing.push("STRIPE_SECRET_KEY (test key)");
+  if (/^(sk|rk)_live_/.test(stripe) && !live) missing.push("MERCH_LIVE_CHECKOUT_ENABLED (keep off until ready for real sales)");
   if (!webhook) missing.push("STRIPE_WEBHOOK_SECRET");
 
   if (Deno.env.get("MERCH_CHECKOUT_ENABLED") !== "true") missing.push("MERCH_CHECKOUT_ENABLED");
