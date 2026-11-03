@@ -9,7 +9,8 @@
  ${['Overview','Orders','Music','Videos','Activity'].map((n,i)=>`<div id="perfView${n}" role="tabpanel" aria-labelledby="perfTab${n}" ${i?'hidden':''}></div>`).join('')}`;
  nav.parentElement.appendChild(root);
  const navButton=document.createElement('button');navButton.type='button';navButton.textContent='PERFORMANCE';navButton.id='performanceNav';nav.appendChild(navButton);
- navButton.onclick=()=>{document.querySelectorAll('section.panel').forEach(p=>{p.classList.remove('active');p.style.setProperty('display','none','important');});document.querySelectorAll('.admin-nav button').forEach(b=>b.classList.remove('active'));root.classList.add('active');root.style.setProperty('display','block','important');root.style.setProperty('visibility','visible','important');navButton.classList.add('active');if(!loaded)load();};
+ const openPerformance=()=>{document.querySelectorAll('section.panel').forEach(p=>{p.classList.remove('active');p.style.setProperty('display','none','important');});document.querySelectorAll('.admin-nav button').forEach(b=>b.classList.remove('active'));root.classList.add('active');root.style.setProperty('display','block','important');root.style.setProperty('visibility','visible','important');navButton.classList.add('active');if(!loaded)load();};
+ navButton.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();openPerformance();},true);
  let view='Overview',events=[],orders=[],products=[],loaded=false,busy=false,started='',page=0,exportRows=[],warning='';
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const date=v=>new Date(v).toLocaleString();
