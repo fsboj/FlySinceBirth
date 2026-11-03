@@ -39,7 +39,7 @@
  function render(){if(!loaded)return;const {a,b,previous}=dates(),current=events.filter(e=>inRange(e,a,b)),old=events.filter(e=>inRange(e,previous,a)),currentOrders=orders.filter(o=>inRange(o,a,b)),oldOrders=orders.filter(o=>inRange(o,previous,a)),host=$('perfView'+view);host.innerHTML='';exportRows=[];
   $('perfStatusLabel').hidden=view!=='Orders';$('perfArtistLabel').hidden=!['Music','Videos'].includes(view);$('perfStatus').textContent=warning||('Showing '+$('perfFrom').value+' through '+$('perfTo').value+'. Times use your device’s timezone.');
   root.querySelector('.perf-filters').hidden=view==='Tickets';
-  if(view==='Tickets'){window.fsbTicketAdmin?.mount(host);}
+  if(view==='Tickets'){$('perfStatus').textContent='Ticket records are grouped by event. Use the ticket controls below.';window.fsbTicketAdmin?.mount(host);}
   else if(view==='Overview'){
    const starts=current.filter(e=>e.phase==='start'),paid=currentOrders.filter(o=>o.payment_status==='paid'),beforePaid=oldOrders.filter(o=>o.payment_status==='paid');
    const totals=list=>{const m=new Map();list.forEach(o=>m.set(o.currency,(m.get(o.currency)||0)+Number(o.grand_total)));return [...m].map(([c,v])=>money(v,c)).join(' · ')||money(0);};
