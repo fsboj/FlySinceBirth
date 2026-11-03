@@ -97,7 +97,7 @@ Deno.serve(async (request: Request) => {
     if (!["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired"].includes(event.type)) return Response.json({ received: true });
     const session = event.data?.object;
     if (session?.metadata?.order_type !== "merch") return Response.json({ received: true });
-    const isLive = ((Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) || "").startsWith("sk_live_");
+    const isLive = /^(sk|rk)_live_/.test((Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) || "");
     if (event.livemode !== isLive) return new Response("Stripe mode did not match", { status: 400 });
     const orderId = String(session?.metadata?.order_id || session?.client_reference_id || "");
     if (!/^\d+$/.test(orderId) || !session?.id) return new Response("Invalid store order reference", { status: 400 });
@@ -117,7 +117,7 @@ Deno.serve(async (request: Request) => {
     await rest("rpc/fsb_store_inventory", { method: "POST", body: JSON.stringify({ order_id_input: Number(orderId), action_input: "consume" }) });
     const printfulItems = await rest(`fsb_store_order_items?order_id=eq.${orderId}&fulfillment_method=eq.printful&select=id&limit=1`) as Array<{ id: number }>;
     const stripeKey = (Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) || "";
-    if (stripeKey.startsWith("sk_live_") && Deno.env.get("MERCH_LIVE_CHECKOUT_ENABLED") === "true" && !order.printful_order_id && printfulItems.length) await submitPrintfulOrder({ ...order, payment_status: "paid" });
+    if (/^(sk|rk)_live_/.test(stripeKey) && Deno.env.get("MERCH_LIVE_CHECKOUT_ENABLED") === "true" && !order.printful_order_id && printfulItems.length) await submitPrintfulOrder({ ...order, payment_status: "paid" });
     return Response.json({ received: true });
   } catch (error) {
     console.error("Store payment webhook failed:", error instanceof Error ? error.message : "unknown error");
