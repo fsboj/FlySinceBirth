@@ -48,8 +48,8 @@ async function rest(path: string, init: RequestInit = {}) {
 }
 
 function checkoutStatus() {
-  const stripe = Deno.env.get("STRIPE_SECRET_KEY") || "";
-  const webhook = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
+  const stripe = (Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) || "";
+  const webhook = (Deno.env.get("MERCH_STRIPE_WEBHOOK_SECRET") || Deno.env.get("STRIPE_WEBHOOK_SECRET")) || "";
 
   const test = stripe.startsWith("sk_test_");
   const live = stripe.startsWith("sk_live_") && Deno.env.get("MERCH_LIVE_CHECKOUT_ENABLED") === "true";
@@ -259,7 +259,7 @@ Deno.serve(async (request: Request) => {
       });
       void itemRows;
       await rest("rpc/fsb_store_inventory", { method: "POST", body: JSON.stringify({ order_id_input: order.id, action_input: "reserve" }) });
-      const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY")!;
+      const stripeSecret = (Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY"))!;
       // Isolate the quoted delivery address per order so another browser checkout cannot overwrite it.
       const address = saved.quote.address;
       const customerForm = new URLSearchParams({ email: customer.email, name: address.name, "shipping[name]": address.name });
