@@ -11,7 +11,7 @@
  function render(){if(!host)return;stopCamera();host.innerHTML=header();$('ticketRefresh').onclick=refresh;$('ticketEditEvents').onclick=()=>{[...document.querySelectorAll('.admin-nav button')].find(b=>b.textContent.trim()==='EVENTS')?.click();};
   host.querySelectorAll('[data-ticket-view]').forEach(b=>b.onclick=()=>{active=b.dataset.ticketView;current=null;pending=null;offset=0;render();if(active==='Sales')refresh();});
   $('ticketEvent').onchange=()=>{eventId=$('ticketEvent').value;offset=0;current=null;pending=null;stopCamera();refresh();};
-  if(!setup?.events?.length){$('ticketBody').innerHTML='<div class="perf-box"><h3>CREATE YOUR FIRST EVENT</h3><p>Add the event title, date, location, ticket price and capacity under Manage Events. Purchases will appear here automatically after checkout.</p></div>';if(active!=='Check-in')return;}
+  if(!setup?.events?.length){$('ticketBody').innerHTML='<div class="perf-box"><h3>CREATE YOUR FIRST EVENT</h3><p>Add the event title, date, location, ticket price and capacity under Manage Events. Purchases will appear here automatically after checkout.</p></div>';message('No events yet. Use Manage Events to add your first event.');}
   if(active==='Sales')sales();else if(active==='Guest List')guests();else checkIn();
  }
  function sales(){const event=setup.events.find(e=>String(e.id)===String(eventId)),available=event?.ticket_capacity==null?null:Math.max(0,event.ticket_capacity-Number(totals.tickets_sold||0)-Number(totals.reserved||0));
