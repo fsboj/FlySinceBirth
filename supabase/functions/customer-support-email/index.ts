@@ -189,7 +189,7 @@ async function sendSupportEmail(item: SupportRequest) {
     ].join("\n");
     const encodedBody = base64(new TextEncoder().encode(body)).match(/.{1,76}/g)?.join("\r\n") || "";
     const headers = [
-      `From: Fly Since Birth Support <${from}>`,
+      `From: FSB Support <${from}>`,
       `To: ${SUPPORT_ADDRESS}`,
       `Reply-To: ${item.customer_email}`,
       "Subject: [FSB Website] New support request",
