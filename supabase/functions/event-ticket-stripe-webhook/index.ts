@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import {sendTicketReceipt} from "../_shared/ticket-receipt.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
@@ -60,7 +61,7 @@ async function validStripeSignature(payload: string, signature: string): Promise
 }
 
 async function loadOrder(orderId: string) {
-  const rows = await rest(`event_ticket_orders?id=eq.${encodeURIComponent(orderId)}&select=id,unit_price,quantity,provider,provider_reference,status`) as Record<string, unknown>[];
+  const rows = await rest(`event_ticket_orders?id=eq.${encodeURIComponent(orderId)}&select=id,unit_price,quantity,provider,provider_reference,status,payment_mode`) as Record<string, unknown>[];
   return rows[0] || null;
 }
 
@@ -105,6 +106,7 @@ Deno.serve(async (request: Request) => {
     if (!order || order.provider !== "stripe" || order.provider_reference !== session.id) {
       return new Response("Ticket order reference did not match", { status: 400 });
     }
+    if ((event.livemode === true ? "live" : "test") !== order.payment_mode) return new Response("Payment mode mismatch", {status:400});
     if (event.type === "checkout.session.expired") {
       await updateOrder(orderId, session.id, { status: "expired" });
       return Response.json({ received: true });
@@ -116,6 +118,10 @@ Deno.serve(async (request: Request) => {
     if (order.status === "pending") {
       await updateOrder(orderId, session.id, { status: "paid", paid_at: new Date().toISOString() });
     }
+    const confirmed = await loadOrder(orderId);
+    if (confirmed?.status !== "paid") return new Response("Ticket payment requires review", {status:500});
+    const emailStatus = await sendTicketReceipt(orderId);
+    if (emailStatus === "failed") return new Response("Ticket email delivery failed", {status:500});
     return Response.json({ received: true });
   } catch (error) {
     console.error("Stripe ticket webhook error:", error);

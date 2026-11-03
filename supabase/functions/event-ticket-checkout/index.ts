@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { sendTicketReceipt } from "../_shared/ticket-receipt.ts";
 
 const SITE_ORIGIN = "https://flysbirth.com";
 const SITE_PATH = "/events.html";
@@ -71,7 +72,7 @@ async function loadEvent(eventId: number) {
 
 async function loadOrder(orderId: string) {
   const rows = await rest(
-    `event_ticket_orders?id=eq.${encodeURIComponent(orderId)}&select=id,event_id,user_id,buyer_email,quantity,unit_price,provider,provider_reference,status,ticket_code,expires_at`,
+    `event_ticket_orders?id=eq.${encodeURIComponent(orderId)}&select=id,event_id,user_id,buyer_email,quantity,unit_price,provider,provider_reference,status,ticket_code,expires_at,payment_mode`,
   ) as Record<string, unknown>[];
   return rows[0] || null;
 }
@@ -115,6 +116,7 @@ function safeTicketOrder(order: Record<string, unknown>) {
     unit_price: order.unit_price,
     ticket_code: order.ticket_code,
     status: order.status,
+    payment_mode: order.payment_mode,
   };
 }
 
@@ -222,6 +224,7 @@ Deno.serve(async (request: Request) => {
         ticket_capacity: event.ticket_capacity,
         remaining,
         providers: availableProviders,
+        provider_modes: Object.fromEntries(availableProviders.map(provider => [provider, provider === "stripe" ? (/^(sk|rk)_live_/.test(Deno.env.get("STRIPE_SECRET_KEY") || "") ? "live" : "test") : (Deno.env.get("PAYPAL_ENV") === "live" ? "live" : "test")])),
       });
     }
 
@@ -246,6 +249,8 @@ Deno.serve(async (request: Request) => {
       if (!order?.id) throw new Error("Could not reserve tickets for checkout.");
       const total = (Number(order.unit_price) * Number(order.quantity)).toFixed(2);
       const returnUrl = `${SITE_ORIGIN}${SITE_PATH}`;
+      const paymentMode = provider === "stripe" ? (/^(sk|rk)_live_/.test(Deno.env.get("STRIPE_SECRET_KEY") || "") ? "live" : "test") : (Deno.env.get("PAYPAL_ENV") === "live" ? "live" : "test");
+      await updateOrder(String(order.id), {payment_mode: paymentMode});
 
       try {
         if (provider === "stripe") {
@@ -316,7 +321,10 @@ Deno.serve(async (request: Request) => {
       const order = await loadOrder(orderId);
       if (!order) return response({ error: "Ticket order not found." }, 404);
       if (order.user_id !== customer.id) return response({ error: "This ticket order belongs to another account." }, 403);
-      if (order.status === "paid") return response({ order: safeTicketOrder(order) });
+      if (order.status === "paid") {
+        const receiptEmailStatus = await sendTicketReceipt(orderId);
+        return response({ order: safeTicketOrder(order), receiptEmailStatus });
+      }
       if (new Date(String(order.expires_at)).getTime() < Date.now()) {
         await updateOrder(orderId, { status: "expired" });
         return response({ error: "This checkout expired. Please start again." }, 410);
@@ -327,7 +335,8 @@ Deno.serve(async (request: Request) => {
         ? await confirmPayPal(order, String(body.paypalOrderId || ""))
         : null;
       if (!confirmed) return response({ error: "Payment provider is not supported." }, 400);
-      return response({ order: confirmed });
+      const receiptEmailStatus = await sendTicketReceipt(orderId);
+      return response({ order: confirmed, receiptEmailStatus });
     }
 
     return response({ error: "Unknown checkout action." }, 400);

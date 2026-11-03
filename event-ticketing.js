@@ -57,7 +57,7 @@
       const label = element("label", "fsb-ticket-method");
       const radio = document.createElement("input"); radio.type = "radio"; radio.name = "ticket-provider";
       radio.value = provider; radio.required = true; radio.checked = index === 0;
-      label.appendChild(radio); label.appendChild(document.createTextNode(provider === "paypal" ? "PayPal" : "Credit or debit card"));
+      label.appendChild(radio); label.appendChild(document.createTextNode((provider === "paypal" ? "PayPal" : "Credit or debit card") + (status.provider_modes?.[provider] === "test" ? " (TEST MODE — no valid admission)" : "")));
       methods.appendChild(label);
     });
     methodLabel.appendChild(methods); form.appendChild(methodLabel);
@@ -120,8 +120,8 @@
       copy.textContent = confirmed.data?.error || confirmed.error?.message || "We could not confirm this payment. Contact FSB before trying again.";
     } else {
       const ticket = confirmed.data.order;
-      heading.textContent = "TICKETS CONFIRMED";
-      copy.textContent = "Ticket code " + ticket.ticket_code + " · " + ticket.quantity + " ticket" + (Number(ticket.quantity) === 1 ? "" : "s") + " · Total " + money(Number(ticket.unit_price) * Number(ticket.quantity));
+      heading.textContent = ticket.payment_mode === "test" ? "TEST CHECKOUT CONFIRMED" : "TICKETS CONFIRMED";
+      copy.textContent = (ticket.payment_mode === "test" ? "Test purchase only — this does not grant admission. " : "") + "Ticket code " + ticket.ticket_code + " · " + ticket.quantity + " ticket" + (Number(ticket.quantity) === 1 ? "" : "s") + " · Total " + money(Number(ticket.unit_price) * Number(ticket.quantity));
     }
     const done = element("button", "event-action", "DONE"); done.type = "button";
     done.addEventListener("click", function () { overlay.remove(); }); dialog.appendChild(done);
