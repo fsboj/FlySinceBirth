@@ -70,7 +70,25 @@ async function loadOrders(user){
   supabaseClient.from("fsb_store_orders").select("id,order_number,grand_total,payment_status,fulfillment_status,created_at").eq("user_id",user.id).order("created_at",{ascending:false})
  ]);
  if(ticketError)tickets.innerHTML='<div class="empty">Tickets could not be loaded.</div>';else if(ticketData?.length){const ids=[...new Set(ticketData.map(t=>t.event_id))];const {data:events}=await supabaseClient.from("events").select("id,title,date").in("id",ids);const map=new Map((events||[]).map(e=>[e.id,e]));tickets.innerHTML=ticketData.map(t=>{const e=map.get(t.event_id)||{};return '<article class="order"><div><strong>'+safe(e.title||"FSB Event")+'</strong><br><span class="muted">'+safe(e.date||"")+' · '+safe(t.quantity)+' ticket(s) · '+safe(t.status)+'</span>'+(t.status==="paid"?'<br><span class="muted">Ticket code: '+safe(t.ticket_code)+'</span>':'')+'</div><strong>'+money(Number(t.quantity)*Number(t.unit_price))+'</strong></article>'}).join("")}
- if(storeError)stores.innerHTML='<div class="empty">Store orders could not be loaded.</div>';else if(storeData?.length)stores.innerHTML=storeData.map(o=>'<article class="order"><div><strong>'+safe(o.order_number||("Order #"+o.id))+'</strong><br><span class="muted">'+safe(o.payment_status)+' · '+safe(o.fulfillment_status)+'</span></div><strong>'+money(o.grand_total)+'</strong></article>').join("");
+
+ if(storeError)stores.innerHTML='<div class="empty">Store orders could not be loaded.</div>';
+ else if(storeData?.length){
+   const itemResult=await supabaseClient.from("fsb_store_order_items").select("order_id,product_name,variant_size,variant_color,quantity,fulfillment_status,tracking_number,tracking_url").in("order_id",storeData.map(order=>order.id));
+   stores.replaceChildren();
+   for(const order of storeData){
+     const article=document.createElement("article");article.className="order";
+     const details=document.createElement("div"),heading=document.createElement("strong");heading.textContent=order.order_number||("Order #"+order.id);details.appendChild(heading);
+     const state=document.createElement("p");state.className="muted";state.textContent=order.payment_status+" · "+order.fulfillment_status;details.appendChild(state);
+     for(const item of (itemResult.data||[]).filter(item=>item.order_id===order.id)){
+       const line=document.createElement("p");line.className="muted";line.textContent=item.product_name+" × "+item.quantity+[item.variant_size,item.variant_color].filter(Boolean).map(value=>" · "+value).join("")+" · "+item.fulfillment_status;details.appendChild(line);
+       if(item.tracking_number){const tracking=document.createElement("p");tracking.className="muted";tracking.textContent="Tracking: "+item.tracking_number;details.appendChild(tracking);}
+       if(item.tracking_url){try{const url=new URL(item.tracking_url);if(url.protocol==="https:"){const link=document.createElement("a");link.href=url.href;link.textContent="TRACK SHIPMENT";link.target="_blank";link.rel="noopener noreferrer";link.style.cssText="display:inline-block;color:#fff;text-decoration:underline;margin:8px 0;font-size:11px";details.appendChild(link);}}catch(_){}}
+     }
+     if(itemResult.error){const note=document.createElement("p");note.className="muted";note.textContent="Shipment details could not be loaded. Refresh to try again.";details.appendChild(note);}
+     const total=document.createElement("strong");total.textContent=money(order.grand_total);article.append(details,total);stores.appendChild(article);
+   }
+ }
+
  const orderSelect=$("supportOrder");orderSelect.innerHTML='<option value="">No specific order</option>';
  (ticketData||[]).forEach(t=>{const option=document.createElement('option');option.value='ticket:'+t.id;option.textContent='Ticket order · '+t.quantity+' ticket(s) · '+new Date(t.created_at).toLocaleDateString();orderSelect.appendChild(option)});
  (storeData||[]).forEach(o=>{const option=document.createElement('option');option.value='store:'+o.id;option.textContent=(o.order_number||('Store order #'+o.id))+' · '+money(o.grand_total);orderSelect.appendChild(option)});
@@ -79,7 +97,7 @@ async function showUser(user){$("accountResetEmailAddress").textContent=user.ema
 function showAccountSettings(user){$("accountSettingsPanel").style.display="block";$("accountSettingsToggle").setAttribute("aria-expanded","true");$("accountReauthForm").style.display="none";$("accountDetailsForm").style.display="block";$("passwordSettingsPanel").style.display="block";$("accountConfirmPassword").value="";$("currentAccountEmail").textContent=user.email||"";$("newAccountEmail").value="";$("accountDetailsStatus").textContent="Password confirmed. Update the fields you want, then save."}
 function resetAccountSettings(){$("accountSettingsPanel").style.display="none";$("accountSettingsToggle").setAttribute("aria-expanded","false");$("accountReauthForm").style.display="block";$("accountDetailsForm").style.display="none";$("passwordSettingsPanel").style.display="none";$("accountConfirmPassword").value="";$("currentPassword").value="";$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeStatus").textContent="";$("accountReauthStatus").textContent="";$("accountDetailsStatus").textContent=""}
 async function completePendingPasswordUpdate(){const status=$("passwordChangeStatus"),button=$("passwordChangeForm").querySelector('button[type="submit"]');button.disabled=true;status.textContent="Updating your password…";try{const {error}=await supabaseClient.auth.updateUser({password:$("newAccountPassword").value});if(error)throw error;$("passwordChangeForm").reset();status.textContent="Your password was changed."}catch(error){$("currentPassword").value="";status.textContent=error.message||"Could not change your password. Check the new password and try again."}finally{pendingPasswordUpdate=false;button.disabled=false}}
-function returnToPurchase(){const returnPath=new URLSearchParams(location.search).get("return");if(!returnPath)return false;try{const target=new URL(returnPath,location.origin);if(target.origin===location.origin&&target.pathname.startsWith("/FlySinceBirth/")){location.assign(target.href);return true}}catch(_){}return false}
+function returnToPurchase(){const returnPath=new URLSearchParams(location.search).get("return");if(!returnPath)return false;try{const target=new URL(returnPath,location.origin);if(target.origin===location.origin&&["/merch.html","/events.html","/music.html","/my-fsb.html","/FlySinceBirth/merch.html","/FlySinceBirth/events.html"].includes(target.pathname)){location.assign(target.href);return true}}catch(_){}return false}
 const signupModal=$("signupModal"),signupTrigger=$("openSignupModal");
 function closeSignupModal(){signupModal.hidden=true;document.body.classList.remove("signup-modal-open");signupTrigger.focus()}
 function openSignupModal(){signupModal.hidden=false;document.body.classList.add("signup-modal-open");$("signupName").focus()}
