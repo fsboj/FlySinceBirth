@@ -149,7 +149,21 @@ class SMTPConnection {
   }
 }
 
-async function sendSupportEmail(item: SupportRequest) {
+function supportCustomerName(profileName: unknown, metadataName: unknown): string {
+  for (const value of [profileName, metadataName]) {
+    if (typeof value !== "string") continue;
+    const name = value.replace(/[\u0000-\u001f\u007f-\u009f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
+    if (name) return name;
+  }
+  return "FSB Member";
+}
+
+function emailHeaderText(value: string): string {
+  // Encode untrusted display text so punctuation, Unicode and newlines cannot create headers.
+  return (Array.from(value).join("").match(/.{1,10}/gu) || [""]).map(part => `=?UTF-8?B?${base64(new TextEncoder().encode(part))}?=`).join("\r\n ");
+}
+
+async function sendSupportEmail(item: SupportRequest, customerName: string) {
   const user = Deno.env.get("ZOHO_SMTP_USER");
   const password = Deno.env.get("ZOHO_SMTP_PASSWORD");
   const from = Deno.env.get("ZOHO_SMTP_FROM") || SUPPORT_ADDRESS;
@@ -175,7 +189,8 @@ async function sendSupportEmail(item: SupportRequest) {
     const body = [
       "A customer sent a new support request through the FSB website.",
       "",
-      `Customer: ${item.customer_email}`,
+      `Customer name: ${customerName}`,
+      `Customer email: ${item.customer_email}`,
       `Topic: ${{ account: "Account help", feature_collaboration: "Feature / Collaboration Support", ticket: "Tickets", order: "Store order", payment: "Payment", other: "Other" }[item.topic] || item.topic}`,
       `Subject: ${item.subject}`,
       orderReference,
@@ -189,10 +204,10 @@ async function sendSupportEmail(item: SupportRequest) {
     ].join("\n");
     const encodedBody = base64(new TextEncoder().encode(body)).match(/.{1,76}/g)?.join("\r\n") || "";
     const headers = [
-      `From: FSB Support <${from}>`,
+      `From: ${emailHeaderText(`FSB Support - ${customerName}`)} <${from}>`,
       `To: ${SUPPORT_ADDRESS}`,
       `Reply-To: ${item.customer_email}`,
-      "Subject: [FSB Website] New support request",
+      `Subject: ${emailHeaderText(`FSB Support - ${customerName}: New support request`)}`,
       "MIME-Version: 1.0",
       "Content-Type: text/plain; charset=UTF-8",
       "Content-Transfer-Encoding: base64",
@@ -235,10 +250,15 @@ Deno.serve(async (req: Request) => {
       return response({ error: "Support request not found." }, 404);
     }
 
+    const profiles = await rest(
+      `customer_profiles?user_id=eq.${encodeURIComponent(user.id)}&select=display_name&limit=1`,
+    ) as Array<{ display_name: string | null }>;
+    const customerName = supportCustomerName(profiles[0]?.display_name, user.user_metadata?.display_name);
+
     const claim = await claimDelivery(requestId);
     if (!claim.claimed) return response({ status: "already_notified" });
     try {
-      await sendSupportEmail(item);
+      await sendSupportEmail(item, customerName);
       await setDelivery(requestId, "sent");
       return response({ status: "sent" });
     } catch (error) {
