@@ -19,6 +19,7 @@ function startSong(song, queue = [song]) {
   document.body.classList.add("mini-player-open");
   document.getElementById("nowTitle").textContent = selected.title || "Untitled";
   document.getElementById("nowArtist").textContent = selected.artist_name || "FLY SINCE BIRTH";
+  window.fsbTrackMedia?.(audio,"music","song:"+selected.id);
   audio.src = selected.audio_url;
   setPlayerStatus("Now playing from FSB Music.");
   audio.play().catch(() => setPlayerStatus("Press play to start listening."));
@@ -56,6 +57,7 @@ function playVideo(video) {
     videoElement.src = url.href;
     videoElement.setAttribute("aria-label", video.title || "FSB video player");
     host.appendChild(videoElement);
+    window.fsbTrackVideo?.(videoElement,"video:"+video.id);
   } else {
     const yt = url.href.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
     const vm = url.href.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
@@ -69,6 +71,7 @@ function playVideo(video) {
     frame.allowFullscreen = true;
     frame.referrerPolicy = "strict-origin-when-cross-origin";
     host.replaceChildren(frame);
+    window.fsbTrackVideo?.(frame,"video:"+video.id);
   }
   document.getElementById("nowTitle").textContent = video.title || "FSB Video";
   document.getElementById("nowArtist").textContent = "FSB VIDEO PLAYER";

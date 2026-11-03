@@ -19,7 +19,7 @@
 <section><h2 class="section-heading">UP NEXT</h2><div class="next-grid" id="nextVideos"><div class="empty">LOADING VIDEOS...</div></div></section>
 </main>
 <footer><div>© 2026 FLY SINCE BIRTH</div><div>FSB WORLDWIDE</div></footer>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="performance-tracker.js?v=20261103"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseClient=supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co","sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
 </script><script src="music-library.js?v=6"></script><script>
@@ -31,17 +31,18 @@ let currentVideo=null;
 let artistVideos=[];
 function safeText(value){return value==null?"":String(value)}
 function escapeHtml(value){return safeText(value).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function performanceVideoKey(){return releaseId?"release:"+releaseId:songId?"song:"+songId:"video:"+videoId;}
 function videoPlayer(url,title){
  const host=document.getElementById("playerHost");host.innerHTML="";
  if(!url){host.innerHTML='<div class="empty">VIDEO LINK NOT AVAILABLE</div>';return}
  const isFile=/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url);
- if(isFile){const v=document.createElement("video");v.className="video-player";v.controls=true;v.controlsList="nodownload";v.playsInline=true;v.preload="metadata";v.src=url;v.setAttribute("aria-label",title||"Video player");host.appendChild(v);return}
+ if(isFile){const v=document.createElement("video");v.className="video-player";v.controls=true;v.controlsList="nodownload";v.playsInline=true;v.preload="metadata";v.src=url;v.setAttribute("aria-label",title||"Video player");host.appendChild(v);window.fsbTrackVideo?.(v,performanceVideoKey());return}
  let embed=url;
  const yt=url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
  const vm=url.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
  if(yt)embed="https://www.youtube-nocookie.com/embed/"+yt[1];
  else if(vm)embed="https://player.vimeo.com/video/"+vm[1];
- const frame=document.createElement("iframe");frame.className="video-player";frame.src=embed;frame.title=title||"Video player";frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";frame.allowFullscreen=true;frame.referrerPolicy="strict-origin-when-cross-origin";host.appendChild(frame);
+ const frame=document.createElement("iframe");frame.className="video-player";frame.src=embed;frame.title=title||"Video player";frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";frame.allowFullscreen=true;frame.referrerPolicy="strict-origin-when-cross-origin";host.appendChild(frame);window.fsbTrackVideo?.(frame,performanceVideoKey());
 }
 async function loadPage(){
  if(!videoId&&!songId&&!releaseId){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}

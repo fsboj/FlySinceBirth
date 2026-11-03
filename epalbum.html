@@ -204,7 +204,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Release | Fly Since Birth</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="performance-tracker.js?v=20261103"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="public-polish.css?v=5">
   <link rel="icon" type="image/png" href="fsb-favicon.png?v=4">
 </head>
@@ -457,6 +457,7 @@ trackRow.onclick = function() {
     const player =
         document.getElementById("releaseAudioPlayer");
 
+window.fsbTrackMedia?.(player,"music","song:"+track.id);
 player.src = track.audio_url;
 player.style.display = "block";
 player.play().catch(function(error) {
@@ -478,7 +479,8 @@ playButton.onclick = function(event) {
         document.getElementById("releaseAudioPlayer");
 
     player.style.display = "block";
-    player.src = track.audio_url;
+    window.fsbTrackMedia?.(player,"music","song:"+track.id);
+player.src = track.audio_url;
     
     player.play().catch(function(error) {
         console.error("Audio playback failed:", error);

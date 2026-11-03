@@ -16,6 +16,7 @@ function startSong(song, queue = [song]) {
   document.body.classList.add("mini-player-open");
   document.getElementById("nowTitle").textContent = selected.title || "Untitled";
   document.getElementById("nowArtist").textContent = selected.artist_name || "FLY SINCE BIRTH";
+  window.fsbTrackMedia?.(audio,"music","song:"+selected.id);
   audio.src = selected.audio_url;
   setPlayerStatus("Now playing from FSB Music.");
   audio.play().catch(() => setPlayerStatus("Press play to start listening."));
