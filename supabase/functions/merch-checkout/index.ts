@@ -50,16 +50,16 @@ async function rest(path: string, init: RequestInit = {}) {
 function checkoutStatus() {
   const stripe = Deno.env.get("STRIPE_SECRET_KEY") || "";
   const webhook = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
-  const printful = Deno.env.get("PRINTFUL_API_TOKEN") || "";
+
   const test = stripe.startsWith("sk_test_");
   const live = stripe.startsWith("sk_live_") && Deno.env.get("MERCH_LIVE_CHECKOUT_ENABLED") === "true";
   const missing: string[] = [];
   if (!test && !stripe.startsWith("sk_live_")) missing.push("STRIPE_SECRET_KEY (test key)");
   if (stripe.startsWith("sk_live_") && !live) missing.push("MERCH_LIVE_CHECKOUT_ENABLED (keep off until ready for real sales)");
   if (!webhook) missing.push("STRIPE_WEBHOOK_SECRET");
-  if (!printful) missing.push("PRINTFUL_API_TOKEN");
+
   if (Deno.env.get("MERCH_CHECKOUT_ENABLED") !== "true") missing.push("MERCH_CHECKOUT_ENABLED");
-  return { enabled: Deno.env.get("MERCH_CHECKOUT_ENABLED") === "true" && !!webhook && !!printful && (test || live), missing, mode: live ? "live" : "test" };
+  return { enabled: Deno.env.get("MERCH_CHECKOUT_ENABLED") === "true" && !!webhook && (test || live), missing, mode: live ? "live" : "test" };
 }
 
 async function customerFromRequest(request: Request) {
@@ -95,7 +95,8 @@ type CartInput = { id: number; size?: string; color?: string; quantity: number }
 type PricedLine = {
   product_id: number; product_name: string; product_image: string | null; variant_size: string | null;
   variant_color: string | null; quantity: number; unit_price: number; fulfillment_method: string;
-  printful_variant_id: string;
+  printful_variant_id: string; printful_catalog_variant_id?: string; supplier_name: string | null;
+  shipping_price: number | null; shipping_countries: string[];
 };
 
 async function resolveCart(raw: unknown): Promise<PricedLine[]> {
@@ -103,7 +104,7 @@ async function resolveCart(raw: unknown): Promise<PricedLine[]> {
   const items = raw as CartInput[];
   const ids = [...new Set(items.map((item) => Number(item.id)))];
   if (ids.some((id) => !Number.isSafeInteger(id) || id < 1)) throw new Error("The bag contains an invalid item.");
-  const rows = await rest(`merch_products?id=in.(${ids.join(",")})&active=eq.true&select=id,name,price,images,sizes,colors,variants,fulfillment_method,printful_variant_id`) as Array<Record<string, unknown>>;
+  const rows = await rest(`merch_products?id=in.(${ids.join(",")})&active=eq.true&select=id,name,price,images,sizes,colors,variants,fulfillment_method,printful_variant_id,supplier_name,shipping_price,shipping_countries,track_inventory,stock_quantity`) as Array<Record<string, unknown>>;
   const products = new Map(rows.map((product) => [Number(product.id), product]));
   if (products.size !== ids.length) throw new Error("An item in your bag is no longer available.");
   const lines: PricedLine[] = [];
@@ -111,7 +112,7 @@ async function resolveCart(raw: unknown): Promise<PricedLine[]> {
     const product = products.get(Number(item.id))!;
     const quantity = Number(item.quantity);
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) throw new Error("Choose a quantity from 1 to 10 for each item.");
-    if (product.fulfillment_method !== "printful") throw new Error("This bag includes an item whose shipping is not set up yet. Remove it and try again later.");
+    if (!["printful", "supplier", "own_inventory"].includes(String(product.fulfillment_method))) throw new Error("An item has no fulfillment method.");
     const size = String(item.size || "").trim();
     const color = String(item.color || "").trim();
     const sizes = Array.isArray(product.sizes) ? product.sizes.map(String) : [];
@@ -124,17 +125,52 @@ async function resolveCart(raw: unknown): Promise<PricedLine[]> {
       String(variant.color || "").trim().toLowerCase() === color.toLowerCase()
     );
     const variantId = String(mapped?.printful_variant_id || ((!sizes.length && !colors.length) ? product.printful_variant_id || "" : "")).trim();
-    if (!/^[0-9]{1,20}$/.test(variantId)) throw new Error(`The Printful variant for ${String(product.name)}${size ? ` (${size}${color ? `, ${color}` : ""})` : ""} has not been configured in Admin.`);
+    if (product.fulfillment_method === "printful" && !/^[0-9]{1,20}$/.test(variantId)) throw new Error(`The Printful variant for ${String(product.name)}${size ? ` (${size}${color ? `, ${color}` : ""})` : ""} has not been configured in Admin.`);
+    if (variants.length && !mapped) throw new Error("That size and color combination is not available.");
+    if (product.fulfillment_method !== "printful" && product.track_inventory) {
+      const stock = Number(mapped ? mapped.stock_quantity : product.stock_quantity);
+      if (!Number.isInteger(stock) || stock < quantity) throw new Error("An item is sold out or has insufficient stock.");
+    }
+    let catalogVariantId = "";
+    if (product.fulfillment_method === "printful") {
+      const token = Deno.env.get("PRINTFUL_API_TOKEN");
+      if (!token) throw new Error("Printful is not configured yet.");
+      const result = await fetch(`https://api.printful.com/store/variants/${variantId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await result.json();
+      if (!result.ok || !data.result?.sync_variant?.synced || !data.result.sync_variant.variant_id) {
+        throw new Error("A Printful product needs a configured sync variant with its print design.");
+      }
+      catalogVariantId = String(data.result.sync_variant.variant_id);
+    }
     const images = Array.isArray(product.images) ? product.images as unknown[] : [];
     const price = Number(product.price);
     if (!Number.isFinite(price) || price <= 0) throw new Error(`The price for ${String(product.name)} is not valid.`);
     lines.push({
       product_id: Number(product.id), product_name: String(product.name), product_image: images.length ? String(images[0]) : null,
       variant_size: size || null, variant_color: color || null, quantity, unit_price: price,
-      fulfillment_method: "printful", printful_variant_id: variantId,
+      fulfillment_method: String(product.fulfillment_method), printful_variant_id: product.fulfillment_method === "printful" ? variantId : "",
+      printful_catalog_variant_id: catalogVariantId, supplier_name: typeof product.supplier_name === "string" ? product.supplier_name : null,
+      shipping_price: product.shipping_price == null ? null : Number(product.shipping_price),
+      shipping_countries: Array.isArray(product.shipping_countries) ? product.shipping_countries.map(String) : [],
     });
   }
   return lines;
+}
+
+async function shippingRates(address: Record<string, string>, lines: PricedLine[]) {
+  const manualLines = lines.filter(line => line.fulfillment_method !== "printful");
+  let manualAmount = 0;
+  for (const line of manualLines) {
+    if (line.shipping_price == null || !Number.isFinite(line.shipping_price) || line.shipping_price < 0 || !line.shipping_countries.includes(address.country_code)) {
+      throw new Error(`Shipping for ${line.product_name} is not available to this country yet.`);
+    }
+    manualAmount += Math.round(line.shipping_price * 100) * line.quantity;
+  }
+  const printfulLines = lines.filter(line => line.fulfillment_method === "printful");
+  if (!printfulLines.length) return [{ id: "FSB_STANDARD", name: "Standard shipping", amount: manualAmount / 100, currency: "USD", min_delivery_days: null, max_delivery_days: null }];
+  const rates = await printfulRates(address, printfulLines);
+  return rates.map(rate => ({ ...rate, name: manualLines.length ? rate.name + " + other items (separate shipments)" : rate.name, amount: (Math.round(rate.amount * 100) + manualAmount) / 100,
+    min_delivery_days: manualLines.length ? null : rate.min_delivery_days, max_delivery_days: manualLines.length ? null : rate.max_delivery_days }));
 }
 
 async function printfulRates(address: Record<string, string>, lines: PricedLine[]) {
@@ -145,7 +181,7 @@ async function printfulRates(address: Record<string, string>, lines: PricedLine[
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       recipient: address,
-      items: lines.map((line) => ({ variant_id: Number(line.printful_variant_id), quantity: line.quantity, value: line.unit_price.toFixed(2) })),
+      items: lines.map((line) => ({ variant_id: Number(line.printful_catalog_variant_id), quantity: line.quantity, value: line.unit_price.toFixed(2) })),
       currency: "USD", locale: "en_US",
     }),
   });
@@ -170,6 +206,7 @@ Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   if (request.headers.get("origin") !== SITE_ORIGIN) return response({ error: "Origin is not allowed." }, 403);
   if (request.method !== "POST") return response({ error: "Use POST." }, 405);
+  let createdOrderId: number | null = null;
   try {
     if (!supabaseUrl) throw new Error("Supabase URL is not configured.");
     const body = await request.json();
@@ -180,7 +217,7 @@ Deno.serve(async (request: Request) => {
     if (body.action === "quote") {
       const address = cleanAddress(body.address || {});
       const lines = await resolveCart(body.items);
-      const rates = await printfulRates(address, lines);
+      const rates = await shippingRates(address, lines);
       const quote = { address, lines, rates };
       const created = await rest("fsb_store_checkout_quotes?select=id,expires_at", {
         method: "POST", headers: { Prefer: "return=representation" },
@@ -197,28 +234,48 @@ Deno.serve(async (request: Request) => {
       const quotes = await rest(`fsb_store_checkout_quotes?id=eq.${id}&user_id=eq.${customer.id}&consumed_at=is.null&expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=id,quote,expires_at`) as Array<{ id: string; quote: { address: Record<string, string>; lines: PricedLine[]; rates: Array<Record<string, unknown>> }; expires_at: string }>;
       const saved = quotes[0];
       if (!saved) throw new Error("Your shipping quote expired. Please request new rates.");
-      const currentRates = await printfulRates(saved.quote.address, saved.quote.lines);
+      const freshLines = await resolveCart(saved.quote.lines.map(line => ({ id: line.product_id, size: line.variant_size || "", color: line.variant_color || "", quantity: line.quantity })));
+      if (JSON.stringify(freshLines) !== JSON.stringify(saved.quote.lines)) throw new Error("An item changed. Request new shipping options.");
+      const currentRates = await shippingRates(saved.quote.address, freshLines);
       const rate = currentRates.find((item) => item.id === rateId);
+      const quotedRate = saved.quote.rates.find(item => item.id === rateId);
+      if (rate && (!quotedRate || Math.round(Number(quotedRate.amount) * 100) !== Math.round(rate.amount * 100))) throw new Error("Shipping rates changed. Request new shipping options.");
       if (!rate) throw new Error("That shipping option is no longer available. Request new rates.");
+      const claim = await rest(`fsb_store_checkout_quotes?id=eq.${id}&user_id=eq.${customer.id}&consumed_at=is.null&select=id`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ consumed_at: new Date().toISOString() }) }) as Array<{ id: string }>;
+      if (!claim.length) throw new Error("This shipping quote was already used. Request new shipping options.");
       const subtotal = saved.quote.lines.reduce((sum, line) => sum + line.quantity * line.unit_price, 0);
       const total = subtotal + Number(rate.amount);
       const orderNumber = `FSB-${Date.now()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       const orderRows = await rest("fsb_store_orders?select=id,order_number", {
         method: "POST", headers: { Prefer: "return=representation" },
-        body: JSON.stringify({ order_number: orderNumber, customer_email: customer.email, currency: "usd", subtotal: subtotal.toFixed(2), shipping_total: Number(rate.amount).toFixed(2), tax_total: "0.00", grand_total: total.toFixed(2), payment_status: "pending", fulfillment_status: "unfulfilled", payment_provider: "stripe", shipping_address: { ...saved.quote.address, carrier: "Printful", service: rate.name, rate_id: rate.id }, user_id: customer.id, checkout_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString() }),
+        body: JSON.stringify({ order_number: orderNumber, customer_email: customer.email, customer_name: saved.quote.address.name, currency: "usd", subtotal: subtotal.toFixed(2), shipping_total: Number(rate.amount).toFixed(2), tax_total: "0.00", grand_total: total.toFixed(2), payment_status: "pending", fulfillment_status: "unfulfilled", payment_provider: "stripe", shipping_address: { ...saved.quote.address, carrier: saved.quote.lines.every(line => line.fulfillment_method === "printful") ? "Printful" : "FSB / suppliers", service: rate.name, rate_id: rate.id }, user_id: customer.id, checkout_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString() }),
       }) as Array<{ id: number; order_number: string }>;
       const order = orderRows[0];
       if (!order?.id) throw new Error("Could not create your order.");
+      createdOrderId = order.id;
       const itemRows = await rest("fsb_store_order_items", {
         method: "POST", headers: { Prefer: "return=minimal" },
-        body: JSON.stringify(saved.quote.lines.map((line) => ({ order_id: order.id, product_id: line.product_id, product_name: line.product_name, product_image: line.product_image, variant_size: line.variant_size, variant_color: line.variant_color, quantity: line.quantity, unit_price: line.unit_price.toFixed(2), fulfillment_method: "printful", printful_variant_id: line.printful_variant_id, fulfillment_status: "unfulfilled" }))),
+        body: JSON.stringify(saved.quote.lines.map((line) => ({ order_id: order.id, product_id: line.product_id, product_name: line.product_name, product_image: line.product_image, variant_size: line.variant_size, variant_color: line.variant_color, quantity: line.quantity, unit_price: line.unit_price.toFixed(2), fulfillment_method: line.fulfillment_method, supplier_name: line.supplier_name, printful_variant_id: line.printful_variant_id || null, fulfillment_status: "unfulfilled" }))),
       });
       void itemRows;
+      await rest("rpc/fsb_store_inventory", { method: "POST", body: JSON.stringify({ order_id_input: order.id, action_input: "reserve" }) });
       const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY")!;
+      // Isolate the quoted delivery address per order so another browser checkout cannot overwrite it.
+      const address = saved.quote.address;
+      const customerForm = new URLSearchParams({ email: customer.email, name: address.name, "shipping[name]": address.name });
+      for (const [field, value] of Object.entries({ line1: address.address1, line2: address.address2, city: address.city, state: address.state_code, postal_code: address.zip, country: address.country_code })) {
+        if (value) customerForm.set(`shipping[address][${field}]`, value);
+      }
+      customerForm.set("metadata[fsb_order_id]", String(order.id));
+      const stripeCustomerResult = await fetch("https://api.stripe.com/v1/customers", { method: "POST", headers: { Authorization: `Bearer ${stripeSecret}`, "Content-Type": "application/x-www-form-urlencoded", "Idempotency-Key": `fsb-merch-customer-${order.id}` }, body: customerForm });
+      const stripeCustomer = await stripeCustomerResult.json();
+      if (!stripeCustomerResult.ok || !stripeCustomer.id) throw new Error("Stripe could not prepare your delivery address. No payment was taken.");
       const form = new URLSearchParams();
       form.set("mode", "payment");
-      form.set("customer_email", customer.email);
+      form.set("customer", String(stripeCustomer.id));
+      form.set("customer_update[address]", "auto");
       form.set("automatic_tax[enabled]", "true");
+      form.set("billing_address_collection", "required");
       form.set("success_url", `${SITE_ORIGIN}${SITE_PATH}?store_order=${order.id}&stripe_session={CHECKOUT_SESSION_ID}`);
       form.set("cancel_url", `${SITE_ORIGIN}${SITE_PATH}?checkout_cancelled=1`);
       form.set("expires_at", String(Math.floor(Date.now() / 1000) + 30 * 60));
@@ -231,12 +288,12 @@ Deno.serve(async (request: Request) => {
         form.set(`line_items[${index}][price_data][product_data][name]`, `${line.product_name}${line.variant_size || line.variant_color ? ` (${[line.variant_size, line.variant_color].filter(Boolean).join(" / ")})` : ""}`.slice(0, 200));
         form.set(`line_items[${index}][quantity]`, String(line.quantity));
       });
-      const shippingIndex = saved.quote.lines.length;
-      form.set(`line_items[${shippingIndex}][price_data][currency]`, "usd");
-      form.set(`line_items[${shippingIndex}][price_data][unit_amount]`, String(Math.round(Number(rate.amount) * 100)));
-      form.set(`line_items[${shippingIndex}][price_data][product_data][name]`, `Shipping — ${rate.name}`.slice(0, 200));
-      form.set(`line_items[${shippingIndex}][quantity]`, "1");
-      const checkoutResult = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { Authorization: `Bearer ${stripeSecret}`, "Content-Type": "application/x-www-form-urlencoded" }, body: form });
+      form.set("shipping_options[0][shipping_rate_data][type]", "fixed_amount");
+      form.set("shipping_options[0][shipping_rate_data][fixed_amount][amount]", String(Math.round(rate.amount * 100)));
+      form.set("shipping_options[0][shipping_rate_data][fixed_amount][currency]", "usd");
+      form.set("shipping_options[0][shipping_rate_data][display_name]", rate.name.slice(0, 100));
+      form.set("shipping_options[0][shipping_rate_data][tax_behavior]", "exclusive");
+      const checkoutResult = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { Authorization: `Bearer ${stripeSecret}`, "Content-Type": "application/x-www-form-urlencoded", "Idempotency-Key": `fsb-merch-session-${order.id}` }, body: form });
       const checkout = await checkoutResult.json();
       if (!checkoutResult.ok || !checkout.id || !checkout.url) {
         await rest(`fsb_store_orders?id=eq.${order.id}`, { method: "PATCH", body: JSON.stringify({ payment_status: "failed", fulfillment_status: "cancelled" }) });
@@ -249,6 +306,12 @@ Deno.serve(async (request: Request) => {
 
     return response({ error: "Unknown checkout action." }, 400);
   } catch (error) {
+    if (createdOrderId) {
+      try {
+        await rest("rpc/fsb_store_inventory", { method: "POST", body: JSON.stringify({ order_id_input: createdOrderId, action_input: "release" }) });
+        await rest(`fsb_store_orders?id=eq.${createdOrderId}&payment_status=eq.pending`, { method: "PATCH", body: JSON.stringify({ payment_status: "failed", fulfillment_status: "cancelled" }) });
+      } catch (_) { console.error("Checkout cleanup needs attention", createdOrderId); }
+    }
     const message = error instanceof Error ? error.message : "Checkout could not be prepared.";
     if (/not configured/i.test(message)) return response({ error: message }, 503);
     return response({ error: message }, 400);

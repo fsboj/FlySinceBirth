@@ -24,7 +24,7 @@
     <label>COUNTRY CODE<input name="country_code" autocomplete="country" value="US" required minlength="2" maxlength="2" aria-describedby="merchCountryHelp"></label>
     <label class="wide">PHONE (OPTIONAL)<input name="phone" autocomplete="tel" maxlength="40"></label>
     <span id="merchCountryHelp" class="wide" style="color:#777;font-size:10px">Use the 2-letter country code, such as US, CA, or GB.</span>
-  </div><button class="outline" type="button" id="getPrintfulRates">GET SHIPPING OPTIONS</button><div class="merch-checkout-rates" id="merchCheckoutRates" role="radiogroup" aria-label="Printful shipping options"></div><p class="merch-checkout-status" id="merchCheckoutStatus" role="status" aria-live="polite"></p><p class="merch-checkout-terms">By continuing, you agree to the <button type="button" data-open-policy>Shipping & Returns</button> policy. Stripe will display applicable tax and the final amount before payment.</p><button class="add" type="button" id="payForMerch" disabled>CONTINUE TO SECURE PAYMENT</button>`;
+  </div><button class="outline" type="button" id="getPrintfulRates">GET SHIPPING OPTIONS</button><div class="merch-checkout-rates" id="merchCheckoutRates" role="radiogroup" aria-label="Shipping options"></div><p class="merch-checkout-status" id="merchCheckoutStatus" role="status" aria-live="polite"></p><p class="merch-checkout-terms">By continuing, you agree to the <button type="button" data-open-policy>Shipping & Returns</button> policy. Stripe will display applicable tax and the final amount before payment.</p><button class="add" type="button" id="payForMerch" disabled>CONTINUE TO SECURE PAYMENT</button>`;
   checkoutButton.onclick = null;
   checkoutButton.insertAdjacentElement("beforebegin", form);
 
@@ -61,8 +61,9 @@
       checkoutAvailable = configuration.enabled === true;
     } catch (_) { checkoutAvailable = false; }
     if (checkoutAvailable) {
-      note.innerHTML = "Shipping options are calculated for the Printful items in your bag. Stripe will show any applicable tax and your final amount before payment.";
-      checkoutButton.textContent = "CONTINUE TO CHECKOUT";
+      note.innerHTML = "Shipping is calculated for every item in your bag. Products from different suppliers may arrive separately. Stripe shows applicable tax and the final amount before payment.";
+      if (configuration.mode === "test") note.append(document.createTextNode(" TEST MODE: no real payment will be taken or products shipped."));
+      checkoutButton.textContent = configuration.mode === "test" ? "TEST CHECKOUT" : "CONTINUE TO CHECKOUT";
       checkoutButton.disabled = !Array.isArray(cart) || cart.length === 0;
     } else {
       note.replaceChildren();
@@ -100,7 +101,7 @@
     currentQuoteId = "";
     $("merchCheckoutRates").replaceChildren();
     $("payForMerch").disabled = true;
-    setStatus("Getting current Printful shipping rates…");
+    setStatus("Getting shipping options for your bag…");
     try {
       const items = cartInput();
       const result = await invoke({ action: "quote", address, items });

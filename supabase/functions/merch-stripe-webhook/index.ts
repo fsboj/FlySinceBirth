@@ -52,7 +52,8 @@ async function submitPrintfulOrder(order: Record<string, unknown>) {
     body: JSON.stringify({ fulfillment_status: "processing", updated_at: new Date().toISOString() }),
   }) as Array<{ id: number }>;
   if (!claimed.length) return;
-  const items = await rest(`fsb_store_order_items?order_id=eq.${order.id}&select=product_name,quantity,unit_price,printful_variant_id`) as Array<Record<string, unknown>>;
+  try {
+  const items = await rest(`fsb_store_order_items?order_id=eq.${order.id}&fulfillment_method=eq.printful&select=product_name,quantity,unit_price,printful_variant_id`) as Array<Record<string, unknown>>;
   if (!items.length || items.some((item) => !/^\d{1,20}$/.test(String(item.printful_variant_id || "")))) {
     throw new Error("Store order has an unmapped Printful variant.");
   }
@@ -65,19 +66,26 @@ async function submitPrintfulOrder(order: Record<string, unknown>) {
       state_code: address.state_code || "", country_code: address.country_code, zip: address.zip, phone: address.phone || "",
       email: order.customer_email,
     },
-    items: items.map((item) => ({ variant_id: Number(item.printful_variant_id), quantity: Number(item.quantity), retail_price: Number(item.unit_price).toFixed(2) })),
+    items: items.map((item) => ({ sync_variant_id: Number(item.printful_variant_id), quantity: Number(item.quantity), retail_price: Number(item.unit_price).toFixed(2) })),
   };
-  const result = await fetch("https://api.printful.com/orders?confirm=1&update_existing=true", {
+  const existingResult = await fetch(`https://api.printful.com/orders/@${encodeURIComponent(String(order.order_number))}`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!existingResult.ok && existingResult.status !== 404) throw new Error("Could not check the Printful order status.");
+  const existing = existingResult.ok ? await existingResult.json() : null;
+  const result = existing?.result?.id ? null : await fetch("https://api.printful.com/orders?confirm=1&update_existing=true", {
     method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
-  const data = await result.json();
-  if (!result.ok || data.code !== 200 || !data.result?.id) {
-    console.error("Printful order submission failed", data.code || result.status);
+  const data = existing?.result?.id ? existing : await result!.json();
+  if ((result && !result.ok) || data.code !== 200 || !data.result?.id) {
+    console.error("Printful order submission failed", data.code || result?.status);
     await rest(`fsb_store_orders?id=eq.${order.id}&fulfillment_status=eq.processing`, { method: "PATCH", body: JSON.stringify({ fulfillment_status: "unfulfilled", updated_at: new Date().toISOString() }) });
     throw new Error("Printful could not accept the paid order yet.");
   }
   await rest(`fsb_store_orders?id=eq.${order.id}`, { method: "PATCH", body: JSON.stringify({ printful_order_id: String(data.result.id), fulfillment_status: "processing", updated_at: new Date().toISOString() }) });
-  await rest(`fsb_store_order_items?order_id=eq.${order.id}`, { method: "PATCH", body: JSON.stringify({ supplier_order_id: String(data.result.id), fulfillment_status: "processing" }) });
+  await rest(`fsb_store_order_items?order_id=eq.${order.id}&fulfillment_method=eq.printful`, { method: "PATCH", body: JSON.stringify({ supplier_order_id: String(data.result.id), fulfillment_status: "processing" }) });
+  } catch (error) {
+    await rest(`fsb_store_orders?id=eq.${order.id}&printful_order_id=is.null&fulfillment_status=eq.processing`, { method: "PATCH", body: JSON.stringify({ fulfillment_status: "unfulfilled", updated_at: new Date().toISOString() }) });
+    throw error;
+  }
 }
 
 Deno.serve(async (request: Request) => {
@@ -88,21 +96,28 @@ Deno.serve(async (request: Request) => {
     const event = JSON.parse(payload);
     if (!["checkout.session.completed", "checkout.session.async_payment_succeeded", "checkout.session.expired"].includes(event.type)) return Response.json({ received: true });
     const session = event.data?.object;
+    if (session?.metadata?.order_type !== "merch") return Response.json({ received: true });
+    const isLive = (Deno.env.get("STRIPE_SECRET_KEY") || "").startsWith("sk_live_");
+    if (event.livemode !== isLive) return new Response("Stripe mode did not match", { status: 400 });
     const orderId = String(session?.metadata?.order_id || session?.client_reference_id || "");
     if (!/^\d+$/.test(orderId) || !session?.id) return new Response("Invalid store order reference", { status: 400 });
     const rows = await rest(`fsb_store_orders?id=eq.${encodeURIComponent(orderId)}&select=id,order_number,customer_email,subtotal,shipping_total,tax_total,grand_total,payment_status,payment_provider,payment_reference,stripe_session_id,shipping_address,printful_order_id,fulfillment_status`) as Array<Record<string, unknown>>;
     const order = rows[0];
     if (!order || order.payment_provider !== "stripe" || (order.stripe_session_id !== session.id && order.payment_reference !== session.id)) return new Response("Store order reference did not match", { status: 400 });
     if (event.type === "checkout.session.expired") {
+      if (order.payment_status === "pending") await rest("rpc/fsb_store_inventory", { method: "POST", body: JSON.stringify({ order_id_input: Number(orderId), action_input: "release" }) });
       if (order.payment_status === "pending") await rest(`fsb_store_orders?id=eq.${orderId}&payment_status=eq.pending`, { method: "PATCH", body: JSON.stringify({ payment_status: "failed", fulfillment_status: "cancelled", updated_at: new Date().toISOString() }) });
       return Response.json({ received: true });
     }
-    const expectedSubtotal = Math.round((Number(order.subtotal) + Number(order.shipping_total)) * 100);
-    if (session.payment_status !== "paid" || session.currency !== "usd" || Number(session.amount_subtotal) < expectedSubtotal || Number(session.amount_total) < expectedSubtotal) return new Response("Payment details did not match store order", { status: 400 });
+    const expectedSubtotal = Math.round(Number(order.subtotal) * 100);
+    const expectedShipping = Math.round(Number(order.shipping_total) * 100);
+    if (session.payment_status !== "paid" || session.currency !== "usd" || Number(session.amount_subtotal) !== expectedSubtotal || Number(session.total_details?.amount_shipping) !== expectedShipping || Number(session.amount_total) < expectedSubtotal + expectedShipping) return new Response("Payment details did not match store order", { status: 400 });
     const tax = Number(session.total_details?.amount_tax || 0) / 100;
     await rest(`fsb_store_orders?id=eq.${orderId}&payment_status=eq.pending`, { method: "PATCH", body: JSON.stringify({ payment_status: "paid", tax_total: tax.toFixed(2), grand_total: (Number(session.amount_total) / 100).toFixed(2), updated_at: new Date().toISOString() }) });
+    await rest("rpc/fsb_store_inventory", { method: "POST", body: JSON.stringify({ order_id_input: Number(orderId), action_input: "consume" }) });
+    const printfulItems = await rest(`fsb_store_order_items?order_id=eq.${orderId}&fulfillment_method=eq.printful&select=id&limit=1`) as Array<{ id: number }>;
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
-    if (stripeKey.startsWith("sk_live_") && Deno.env.get("MERCH_LIVE_CHECKOUT_ENABLED") === "true" && !order.printful_order_id) await submitPrintfulOrder({ ...order, payment_status: "paid" });
+    if (stripeKey.startsWith("sk_live_") && Deno.env.get("MERCH_LIVE_CHECKOUT_ENABLED") === "true" && !order.printful_order_id && printfulItems.length) await submitPrintfulOrder({ ...order, payment_status: "paid" });
     return Response.json({ received: true });
   } catch (error) {
     console.error("Store payment webhook failed:", error instanceof Error ? error.message : "unknown error");
