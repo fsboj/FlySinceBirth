@@ -306,6 +306,10 @@ function artistUploadTrackRow(container,number){
  row.dataset.externalFeatureId=externalId;
  row.style.cssText='display:grid;grid-template-columns:45px repeat(3,minmax(100px,1fr)) minmax(220px,1.8fr) auto;gap:10px;align-items:start';
  row.innerHTML='<div style="text-align:center;padding-top:12px">'+number+'</div><input class="artist-upload-track-title" placeholder="Track title"><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">AUDIO<input class="artist-upload-track-file" type="file" accept="audio/*"></label><label style="display:flex;flex-direction:column;gap:5px;font-size:11px">VIDEO<input class="artist-upload-track-video" type="file" accept="video/*"></label><div><strong style="display:block;font-size:11px;margin-bottom:6px">FEATURE ARTISTS</strong><div class="artist-feature-picker" data-select-id="'+pickerId+'"></div><select id="'+pickerId+'" class="artist-track-feature-select" multiple aria-label="Featured FSB artists for track" style="display:none"></select><div style="display:flex;align-items:center;gap:8px;margin:10px 0 5px"><span style="font-size:11px">NON-FSB ARTISTS</span><button class="button" type="button" data-add-external-feature>Add artist + link</button></div><div id="'+externalId+'"></div></div><button class="button danger" type="button">REMOVE</button>';
+ const earlyGroup=document.createElement('div');earlyGroup.style.cssText='grid-column:1/-1;padding:12px;border-top:1px solid #333;display:grid;gap:10px';
+ earlyGroup.innerHTML='<label style="display:flex;align-items:center;gap:8px;font-size:11px"><input class="artist-track-early-toggle" type="checkbox" style="width:auto"> RELEASE THIS TRACK EARLY</label><label class="artist-track-early-date-label" style="display:none;font-size:11px">EARLY RELEASE DATE · MIDNIGHT EASTERN<input class="artist-track-early-date" type="date" style="display:block;width:200px;margin-top:6px"><small style="display:block;margin-top:6px;line-height:1.6">Leave blank to release this track when you save. The rest of the album stays scheduled.</small></label>';
+ earlyGroup.querySelector('.artist-track-early-toggle').onchange=function(){earlyGroup.querySelector('.artist-track-early-date-label').style.display=this.checked?'block':'none';};
+ row.appendChild(earlyGroup);
  const lyricsGroup=document.createElement('details');lyricsGroup.className='artist-track-lyrics';lyricsGroup.style.cssText='grid-column:1/-1;padding:12px;border-top:1px solid #333';
  const lyricsSummary=document.createElement('summary');lyricsSummary.textContent='LYRICS · NO LYRICS YET';lyricsSummary.style.cursor='pointer';
  const lyricsLabel=document.createElement('label');lyricsLabel.textContent='LYRICS (OPTIONAL)';lyricsLabel.style.cssText='display:block;margin-top:12px;font-size:11px';
@@ -330,7 +334,9 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
   const trackTitle=titleEl&&titleEl.value.trim(),audio=audioEl&&audioEl.files[0],video=videoEl&&videoEl.files[0];
   if(!trackTitle)throw new Error('Enter a title for track '+(i+1)+'.');
   if(!audio)throw new Error('Select an audio file for track '+(i+1)+'.');
-  return {title:trackTitle,audio,video,lyrics:row.querySelector('.artist-track-lyrics-input')?.value.trim()||null,externalFeatures:window.collectExternalFeatureCredits(row.dataset.externalFeatureId),featureIds:[...(row.querySelector('.artist-track-feature-select')?.selectedOptions||[])].map(o=>o.value)};
+  const releaseEarly=!!row.querySelector('.artist-track-early-toggle')?.checked,earlyDate=row.querySelector('.artist-track-early-date')?.value||null;
+  if(releaseEarly&&earlyDate&&date&&earlyDate>date)throw new Error('Track '+(i+1)+' early-release date must be on or before the album release date.');
+  return {title:trackTitle,audio,video,releaseEarly,earlyDate,lyrics:row.querySelector('.artist-track-lyrics-input')?.value.trim()||null,externalFeatures:window.collectExternalFeatureCredits(row.dataset.externalFeatureId),featureIds:[...(row.querySelector('.artist-track-feature-select')?.selectedOptions||[])].map(o=>o.value)};
  });
  const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
  const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,release_date:date||null,hide_track_names:!!hideTrackNames,sort_order:0}).select().single();
@@ -349,7 +355,7 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
   const {title:trackTitle,audio,video}=tracks[i];
   const audioUrl=await artistUploadFile('artist-music',selectedArtistPageId,audio,'releases/'+ins.data.id);
   const videoUrl=await artistUploadFile('videos',selectedArtistPageId,video,'artist-videos/'+ins.data.id);
-  const song=await supabaseClient.from('artist_songs').insert({artist_id:selectedArtistPageId,title:trackTitle,lyrics:tracks[i].lyrics,audio_url:audioUrl,image_url:artwork,video_url:videoUrl,sort_order:i+1,plays:0,is_top_song:false,external_features:tracks[i].externalFeatures||[],sections:[type==='album'?'albums':'eps'],release_id:ins.data.id,track_number:i+1}).select('id').single();
+  const song=await supabaseClient.from('artist_songs').insert({artist_id:selectedArtistPageId,title:trackTitle,release_early:tracks[i].releaseEarly,release_date:tracks[i].releaseEarly?tracks[i].earlyDate:null,lyrics:tracks[i].lyrics,audio_url:audioUrl,image_url:artwork,video_url:videoUrl,sort_order:i+1,plays:0,is_top_song:false,external_features:tracks[i].externalFeatures||[],sections:[type==='album'?'albums':'eps'],release_id:ins.data.id,track_number:i+1}).select('id').single();
   if(song.error)throw song.error;
   await window.saveArtistFeatureLinks('artist_song_features','song_id',song.data.id,rows[i].querySelector('.artist-track-feature-select'),selectedArtistPageId);
  }

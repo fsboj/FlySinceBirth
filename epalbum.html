@@ -308,7 +308,7 @@ console.log("Supabase release error:", error);
 
 document.getElementById("releaseTitle").textContent =
     release.title || release.name || release.release_title || "Untitled";
-if(release.locked){const note=document.createElement("p");note.className="fsb-release-note";note.textContent=window.FSBRelease.label(release)+" · Favorite tracks now. Playback unlocks worldwide at midnight Eastern.";document.getElementById("releaseTracks").before(note);}
+if(release.locked){const note=document.createElement("p");note.className="fsb-release-note";note.textContent=window.FSBRelease.label(release)+(release.early_tracks_available?" · Early-release tracks are playable now. Remaining tracks unlock at midnight Eastern.":" · Favorite tracks now. Playback unlocks worldwide at midnight Eastern.");document.getElementById("releaseTracks").before(note);}
 document.title =
     (release.title || "Release") +
     " | Fly Since Birth";

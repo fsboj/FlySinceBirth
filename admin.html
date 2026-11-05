@@ -6539,11 +6539,13 @@ async function openArtistMediaEditor(kind,id){
  var featureOptions=kind==="song"?'<div class="form-group full" style="margin-top:18px"><label>FEATURED FSB ARTISTS</label><div class="artist-feature-picker" data-select-id="mediaEditFeatureArtistSelect"></div><select id="mediaEditFeatureArtistSelect" multiple hidden aria-hidden="true"></select><small>Search and select FSB featured artists for this song.</small><div style="margin-top:16px"><label>NON-FSB FEATURED ARTISTS</label><div id="mediaEditExternalFeatures" class="external-feature-list"></div><button type="button" class="button" id="mediaEditAddExternal">+ ADD NON-FSB ARTIST</button></div></div>':"";
  var lyricsOptions=kind==="song"?'<div class="form-group full"><label for="mediaEditLyrics">LYRICS (OPTIONAL)</label><textarea id="mediaEditLyrics" rows="10" placeholder="Paste lyrics, with line breaks for verses and choruses"></textarea><small id="mediaEditLyricsStatus"></small></div>':"";
  var typeOptions=kind==="release"?'<div class="form-group"><label>RELEASE TYPE</label><select id="mediaEditType"><option value="album">ALBUM</option><option value="ep">EP</option></select></div><div class="form-group"><label>RELEASE DATE</label><input id="mediaEditDate" type="date"></div><div class="form-group full"><label><input id="mediaEditHideNames" type="checkbox" style="width:auto;margin-right:8px"> HIDE TRACK NAMES UNTIL RELEASE</label></div>':'<div class="form-group"><label>RELEASE DATE · MIDNIGHT EASTERN</label><input id="mediaEditDate" type="date"></div>';
+ if(kind==='song'&&item.release_id)typeOptions+='<div class="form-group full"><label style="display:flex;gap:8px;align-items:center"><input id="mediaEditReleaseEarly" type="checkbox" style="width:auto"> RELEASE THIS TRACK EARLY</label><small>Use the release date above for an early date, or leave it blank to release this track when you save. Other album tracks stay locked.</small></div>';
  overlay.innerHTML='<div style="background:#090909;border:1px solid #333;border-radius:12px;padding:24px;width:min(760px,100%);max-height:92vh;overflow:auto"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div class="panel-title">'+(kind==="release"?"EDIT RELEASE":"EDIT SONG")+'</div><button type="button" class="button" id="mediaEditCancel">CLOSE</button></div><div class="form-grid" style="margin-top:18px"><div class="form-group"><label>NAME</label><input id="mediaEditName"></div>'+typeOptions+'<div class="form-group"><label>REPLACE ARTWORK FROM DEVICE</label><input id="mediaEditImage" type="file" accept="image/*"></div>'+(kind==="song"?'<div class="form-group"><label>REPLACE AUDIO FROM DEVICE</label><input id="mediaEditAudio" type="file" accept="audio/*"></div>':"")+'<div class="form-group"><label>REPLACE VIDEO FROM DEVICE</label><input id="mediaEditVideo" type="file" accept="video/*"></div>'+sectionOptions+featureOptions+lyricsOptions+'</div><label style="display:flex;gap:8px;margin-top:18px"><input id="mediaRemoveImage" type="checkbox"> REMOVE CURRENT ARTWORK</label><div class="actions"><button class="button primary" id="mediaEditSave">SAVE CHANGES</button></div></div>';
  document.body.appendChild(overlay);
  var card=overlay.firstElementChild;
  overlay.addEventListener("click",function(event){if(event.target===overlay)overlay.remove()});
  card.querySelector("#mediaEditName").value=item.title||"";
+ var earlyInput=card.querySelector("#mediaEditReleaseEarly");if(earlyInput)earlyInput.checked=!!item.release_early;
  var dateInput=card.querySelector("#mediaEditDate");if(dateInput)dateInput.value=item.release_date||"";
  var hideNames=card.querySelector("#mediaEditHideNames");if(hideNames)hideNames.checked=!!item.hide_track_names;
  var typeInput=card.querySelector("#mediaEditType");if(typeInput)typeInput.value=item.type==="ep"?"ep":"album";
@@ -6569,6 +6571,7 @@ async function openArtistMediaEditor(kind,id){
   if(kind==="song"){
    var sections=Array.from(card.querySelectorAll(".mediaEditSection:checked")).map(function(x){return x.value});
    if(!sections.length){alert("Select at least one music section.");return}
+   if(item.release_id)data.release_early=!!card.querySelector("#mediaEditReleaseEarly").checked;
    data.lyrics=card.querySelector("#mediaEditLyrics").value.trim()||null;
    data.sections=sections;data.is_top_song=sections.includes("top");
    try{await window.assertArtistTopSongLimit(selectedArtistPageId,id,sections)}catch(e){alert(e.message||e);return}
@@ -6742,7 +6745,7 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261105-release"></script>
+<script src="admin-tabs-fix.js?v=20261105-early-tracks"></script>
 <script src="store-orders-admin.js?v=20261102-orders"></script>
 <script src="store-aisles.js?v=20261018-store-aisle-system"></script>
 

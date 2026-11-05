@@ -3015,7 +3015,7 @@ function createArtistReleaseCard(release) {
         <div class="artist-release-tracklist"></div>
     `;
 
-    if(release.locked){const note=document.createElement("div");note.className="fsb-upcoming-label";note.textContent=window.FSBRelease.label(release);card.querySelector(".artist-release-info").appendChild(note);}
+    if(release.locked){const note=document.createElement("div");note.className="fsb-upcoming-label";note.textContent=(release.early_tracks_available?"EARLY TRACKS AVAILABLE · ":"")+window.FSBRelease.label(release);card.querySelector(".artist-release-info").appendChild(note);}
     const trackList =
         card.querySelector(
             ".artist-release-tracklist"
