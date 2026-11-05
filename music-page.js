@@ -6,11 +6,14 @@ const musicParams = new URLSearchParams(location.search);
 const musicEsc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 function setPlayerStatus(text) { document.getElementById("playerStatus").textContent = text; }
-function startSong(song, queue = [song]) {
-  if (!song?.audio_url) { setPlayerStatus("This song does not have a playable audio file yet."); return; }
+async function startSong(song, queue = [song]) {
+  if (song?.locked || !song?.audio_url) { setPlayerStatus("This song does not have a playable audio file yet."); return; }
   playQueue = queue.filter((item) => item?.audio_url);
   playIndex = Math.max(0, playQueue.findIndex((item) => String(item.id) === String(song.id)));
   const selected = playQueue[playIndex] || song;
+  const fresh=(await window.FSBRelease.catalog()).artist_songs.find(item=>String(item.id)===String(selected.id));
+  if(!fresh?.audio_url||fresh.locked){setPlayerStatus("This song is not available to play yet.");return;}
+  selected.audio_url=fresh.audio_url;
   const audio = document.getElementById("audioPlayer");
   document.getElementById("miniPlayer").hidden = false;
   document.body.classList.add("mini-player-open");
@@ -94,11 +97,7 @@ async function loadMusicHub() {
     loadAllMusicRows("artist_releases", "id,title,type,artwork_url,release_date")
   ]);
   const releaseById = new Map(releases.map(release => [String(release.id), release]));
-  const today = new Date().toLocaleDateString("en-CA");
-  const songs = allSongs.filter(song => {
-    const release = releaseById.get(String(song.release_id));
-    return (!song.release_date || song.release_date <= today) && (!release?.release_date || release.release_date <= today);
-  });
+  const songs = allSongs;
   const songFeatureResult = { data: (await loadAllMusicRows("artist_song_features", "song_id,artist_id,sort_order", "song_id")).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)), error: null };
   if (songFeatureResult.error) console.warn("Featured song credits could not be loaded:", songFeatureResult.error);
   const featureArtistsBySong = new Map();

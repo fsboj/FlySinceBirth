@@ -141,6 +141,7 @@
 
   window.decorateSongControls = function (element, song) {
     if (!element || !song?.id || element.querySelector(".fsb-song-actions")) return element;
+    window.FSBRelease?.decorateSong(element,song);
     const actions = document.createElement("span");
     actions.className = "fsb-song-actions";
     const favorite = document.createElement("button");

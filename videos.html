@@ -27,10 +27,10 @@ footer{padding:35px 6%;border-top:1px solid #202020;color:#555;font-size:9px;let
 <div id="videoGrid" class="video-grid"><p class="status">LOADING VIDEOS...</p></div>
 </main>
 <footer><span>© 2026 FLY SINCE BIRTH</span><span>FSB WORLDWIDE</span></footer>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseClient = supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co","sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
-</script><script src="music-library.js?v=6"></script><script>
+</script><script src="music-library.js?v=20261105-release"></script><script>
 async function loadVideos(){
  const grid=document.getElementById("videoGrid");
  const [videoResult,songVideoResult,releaseVideoResult]=await Promise.all([
@@ -39,13 +39,16 @@ async function loadVideos(){
   supabaseClient.from("artist_releases").select("id,title,artist_id,video_url,artwork_url,type,created_at").not("video_url","is",null).order("created_at",{ascending:false})
  ]);
  if(videoResult.error)console.error("Could not load videos:",videoResult.error);
- if(songVideoResult.error)console.error("Could not load song videos:",songVideoResult.error);\n if(releaseVideoResult.error)console.error("Could not load album/EP videos:",releaseVideoResult.error);
+ if(songVideoResult.error)console.error("Could not load song videos:",songVideoResult.error);
+ if(releaseVideoResult.error)console.error("Could not load album/EP videos:",releaseVideoResult.error);
  const videos=(videoResult.data||[]).filter(v=>v&&v.id!=null);
- const songVideos=(songVideoResult.data||[]).filter(song=>song&&song.video_url);\n const releaseVideos=(releaseVideoResult.data||[]).filter(release=>release&&release.video_url);
+ const songVideos=(songVideoResult.data||[]).filter(song=>song&&song.video_url);
+ const releaseVideos=(releaseVideoResult.data||[]).filter(release=>release&&release.video_url);
  if(videoResult.error&&songVideoResult.error&&releaseVideoResult.error){grid.innerHTML='<p class="status">VIDEOS COULD NOT BE LOADED. PLEASE TRY AGAIN LATER.</p>';return;}
  const items=[
   ...videos.map(video=>({...video,itemType:"video",link:video.link,image:video.image})),
-  ...songVideos.map(song=>({...song,itemType:"song",link:song.video_url,image:song.image_url})),\n  ...releaseVideos.map(release=>({...release,itemType:"release",link:release.video_url,image:release.artwork_url}))
+  ...songVideos.map(song=>({...song,itemType:"song",link:song.video_url,image:song.image_url})),
+ ...releaseVideos.map(release=>({...release,itemType:"release",link:release.video_url,image:release.artwork_url}))
  ];
  if(!items.length){grid.innerHTML='<p class="status">NO VIDEOS AVAILABLE YET.</p>';return;}
  const standaloneVideos=videos.filter(v=>v.id!=null);

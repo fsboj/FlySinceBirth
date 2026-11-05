@@ -1694,8 +1694,8 @@ footer {
      SUPABASE
 ===================================================== -->
 
-<script src="performance-tracker.js?v=20261103"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script defer src="music-library.js?v=20261102-lyrics"></script>
+<script src="performance-tracker.js?v=20261103"></script><script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="music-library.js?v=20261105-release"></script>
 
 
 <script>
@@ -1771,7 +1771,7 @@ function formatTime(seconds) {
    PLAY SONG
 ===================================================== */
 
-function playSong(index) {
+async function playSong(index) {
 
     if (
         index < 0 ||
@@ -1788,9 +1788,13 @@ document.querySelector(".player").style.display =
 
     const song =
         songs[index];
+    const fresh=(await window.FSBRelease.catalog()).artist_songs.find(item=>String(item.id)===String(song.id));
+    if(!fresh?.audio_url||fresh.locked)return;
+    song.audio_url=fresh.audio_url;
 
 
     window.fsbTrackMedia?.(audio,"music","song:"+song.id);
+    if(song.locked||!song.audio_url)return;
     audio.src =
         song.audio_url;
 
@@ -2319,7 +2323,7 @@ function createNewestReleaseButton(release) {
         "compact-song-artist";
 
     type.textContent =
-        (release.type || "RELEASE").toUpperCase();
+        (release.type || "RELEASE").toUpperCase()+(release.locked?" · "+window.FSBRelease.label(release):"");
 
 
     info.appendChild(title);
@@ -2684,10 +2688,7 @@ if (musicSection) {
 
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    const visibleNewestReleases = (newestReleases || []).filter(function(release) {
-        if (!release.release_date) return true;
-        return new Date(release.release_date + "T00:00:00") <= today;
-    });
+    const visibleNewestReleases = (newestReleases || []);
 
     /* ===============================
        COMBINE EVERYTHING
@@ -2916,10 +2917,7 @@ async function loadArtistReleases() {
     const today = new Date();
     today.setHours(23,59,59,999);
 
-    const visibleReleases = (releases || []).filter(function(release) {
-        if (!release.release_date) return true;
-        return new Date(release.release_date + "T00:00:00") <= today;
-    });
+    const visibleReleases = (releases || []);
 
     const albumList =
         visibleReleases.filter(
@@ -3017,6 +3015,7 @@ function createArtistReleaseCard(release) {
         <div class="artist-release-tracklist"></div>
     `;
 
+    if(release.locked){const note=document.createElement("div");note.className="fsb-upcoming-label";note.textContent=window.FSBRelease.label(release);card.querySelector(".artist-release-info").appendChild(note);}
     const trackList =
         card.querySelector(
             ".artist-release-tracklist"
@@ -3153,7 +3152,7 @@ async function loadArtistVideos() {
     const items = [
         ...(videoResult.data || []).map(video => ({ ...video, itemType: "video", link: video.link, image: video.image })),
         ...(songVideoResult.data || [])
-            .filter(song => song.video_url)
+            .filter(song => song.video_url || (song.locked && song.has_video))
             .map(song => ({ ...song, itemType: "song", link: song.video_url, image: song.image_url }))
     ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 

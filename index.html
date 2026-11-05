@@ -1314,7 +1314,7 @@ footer {
      JAVASCRIPT
 ===================================================== -->
    
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
@@ -1624,9 +1624,7 @@ async function loadSiteImages() {
 
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    const eligibleReleases = (releases || []).filter(function(release) {
-        return !release.release_date || new Date(release.release_date + "T00:00:00") <= today;
-    });
+    const eligibleReleases = (releases || []);
     const releaseById = new Map(eligibleReleases.map(function(release) {
         return [String(release.id), release];
     }));
@@ -1651,7 +1649,6 @@ async function loadSiteImages() {
     });
 
     const songsForDisplay = songRows.filter(function(song) {
-        if (song.release_date && new Date(song.release_date + "T00:00:00") > today) return false;
         return !song.release_id || releaseById.has(String(song.release_id));
     }).map(function(song) {
         const release = song.release_id ? releaseById.get(String(song.release_id)) : null;
@@ -1665,7 +1662,7 @@ async function loadSiteImages() {
             externalFeatures: song.external_features || [],
             isTopSong: song.is_top_song === true ||
                 (Array.isArray(song.sections) && song.sections.includes("top")),
-            trackType: release ? String(release.type || "album").toLowerCase() + " track" : "single",
+            trackType: song.locked ? window.FSBRelease.label(song) : (release ? String(release.type || "album").toLowerCase() + " track" : "single"),
             link: "artist.html?id=" + encodeURIComponent(song.artist_id)
         };
     }).sort(function(a, b) {
@@ -2397,10 +2394,7 @@ async function loadVipMusic() {
     const songs = songsResult.data || [];
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    const releases = (releasesResult.data || []).filter(function(release) {
-        if (!release.release_date) return true;
-        return new Date(release.release_date + "T00:00:00") <= today;
-    });
+    const releases = (releasesResult.data || []);
     const artists = artistsResult.data || [];
     const cards = [];
 
@@ -2473,13 +2467,16 @@ async function loadUpcomingHome(){
  const dateNode=document.getElementById("homeFeatureDate");
  const linkNode=document.getElementById("homeFeatureLink");
  const imageNode=document.getElementById("homeFeatureImage");
- typeNode.textContent=labels[type]||"FEATURED FROM FSB";
+ const scheduledCatalog=await window.FSBRelease.catalog();
+ const scheduledItem=item.song_id?scheduledCatalog.artist_songs.find(x=>String(x.id)===String(item.song_id)):item.release_id?scheduledCatalog.artist_releases.find(x=>String(x.id)===String(item.release_id)):item.video_id?scheduledCatalog.videos.find(x=>String(x.id)===String(item.video_id)):null;
+ const coming=!!scheduledItem?.locked;
+ typeNode.textContent=coming?"COMING SOON":(labels[type]||"FEATURED FROM FSB");
  titleNode.textContent=title;
  descriptionNode.textContent=String(item.description||"").trim();
  descriptionNode.hidden=!descriptionNode.textContent;
  dateNode.textContent=item.release_date?new Date(item.release_date+"T00:00:00").toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"}):"JUST ADDED";
  linkNode.href=href;
- linkNode.textContent=actions[type]||"EXPLORE FSB";
+ linkNode.textContent=coming?"VIEW UPCOMING RELEASE":(actions[type]||"EXPLORE FSB");
  linkNode.setAttribute("aria-label",(actions[type]||"EXPLORE FSB")+": "+title);
  imageNode.src=item.image_url||"fsblogo.PNG";
  imageNode.alt=item.image_url?title+" artwork":"";

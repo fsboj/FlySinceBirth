@@ -19,10 +19,10 @@
 <section><h2 class="section-heading">UP NEXT</h2><div class="next-grid" id="nextVideos"><div class="empty">LOADING VIDEOS...</div></div></section>
 </main>
 <footer><div>© 2026 FLY SINCE BIRTH</div><div>FSB WORLDWIDE</div></footer>
-<script src="performance-tracker.js?v=20261103"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="performance-tracker.js?v=20261103"></script><script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseClient=supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co","sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
-</script><script src="music-library.js?v=6"></script><script>
+</script><script src="music-library.js?v=20261105-release"></script><script>
 const params=new URLSearchParams(location.search);
 const videoId=params.get("video_id");
 const songId=params.get("song_id");
@@ -44,19 +44,23 @@ function videoPlayer(url,title){
  else if(vm)embed="https://player.vimeo.com/video/"+vm[1];
  const frame=document.createElement("iframe");frame.className="video-player";frame.src=embed;frame.title=title||"Video player";frame.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";frame.allowFullscreen=true;frame.referrerPolicy="strict-origin-when-cross-origin";host.appendChild(frame);window.fsbTrackVideo?.(frame,performanceVideoKey());
 }
+function showUpcomingVideo(item){document.getElementById("videoTitle").textContent=item.title||"Upcoming video";document.getElementById("playerHost").innerHTML="";const note=document.createElement("p");note.className="fsb-release-note";note.textContent=window.FSBRelease.label(item)+" · This video is not playable yet.";document.getElementById("playerHost").appendChild(note);}
 async function loadPage(){
  if(!videoId&&!songId&&!releaseId){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
  if(releaseId){
   const result=await supabaseClient.from("artist_releases").select("id,title,type,video_url,artist_id,artwork_url").eq("id",releaseId).single();
+  if(result.data?.locked){showUpcomingVideo(result.data);return;}
   if(result.error||!result.data||!result.data.video_url){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
   currentVideo={id:"release-"+result.data.id,release_id:result.data.id,title:result.data.title,link:result.data.video_url,artist_id:result.data.artist_id,image:result.data.artwork_url};
  }else if(songId){
   const result=await supabaseClient.from("artist_songs").select("id,title,video_url,artist_id,external_features").eq("id",songId).single();
+  if(result.data?.locked){showUpcomingVideo(result.data);return;}
   if(result.error||!result.data||!result.data.video_url){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
   currentVideo={id:"song-"+result.data.id,song_id:result.data.id,title:result.data.title,link:result.data.video_url,artist_id:result.data.artist_id,external_features:result.data.external_features||[]};
  }else{
   const result=await supabaseClient.from("videos").select("*").eq("id",videoId).single();
   if(result.error||!result.data){document.getElementById("playerHost").innerHTML='<div class="empty">VIDEO NOT FOUND</div>';return}
+  if(result.data?.locked){showUpcomingVideo(result.data);return;}
   currentVideo=result.data;
  }
  document.title=(currentVideo.title||"Video")+" | Fly Since Birth";

@@ -317,7 +317,7 @@ function artistUploadTrackRow(container,number){
  container.appendChild(row);
  window.populateArtistFeatureSelect(row.querySelector('.artist-track-feature-select')).catch(e=>alert('Could not load artists: '+e.message));
 }
-async function createArtistScheduledRelease(type,title,date,artworkFile,rows,releaseVideoFiles){
+async function createArtistScheduledRelease(type,title,date,artworkFile,rows,releaseVideoFiles,hideTrackNames=false){
  if(!selectedArtistPageId)throw new Error('Please select an artist page first.');
  if(!title)throw new Error('Enter a project title.');
  if(!date)throw new Error('Select a release date.');
@@ -333,7 +333,7 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
   return {title:trackTitle,audio,video,lyrics:row.querySelector('.artist-track-lyrics-input')?.value.trim()||null,externalFeatures:window.collectExternalFeatureCredits(row.dataset.externalFeatureId),featureIds:[...(row.querySelector('.artist-track-feature-select')?.selectedOptions||[])].map(o=>o.value)};
  });
  const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
- const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,release_date:date||null,sort_order:0}).select().single();
+ const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,release_date:date||null,hide_track_names:!!hideTrackNames,sort_order:0}).select().single();
  if(ins.error)throw ins.error;
  const releaseVideos=releaseVideoFiles||[];
  for(let i=0;i<releaseVideos.length;i++){
@@ -368,7 +368,7 @@ window.uploadArtistMusic=async function(){
   const art=document.getElementById('artistMusicProjectArtwork').files[0];
   const rows=[...document.querySelectorAll('#artistMusicProjectTracks .admin-item')];
   const button=document.getElementById('artistSongSubmitButton');if(button){button.disabled=true;button.textContent='UPLOADING...'}
-  await createArtistScheduledRelease(type,title,date,art,rows,[]);
+  await createArtistScheduledRelease(type,title,date,art,rows,[],!!document.getElementById('artistMusicProjectHideNames')?.checked);
   document.getElementById('artistMusicProjectTitle').value='';document.getElementById('artistMusicProjectDate').value='';document.getElementById('artistMusicProjectArtwork').value='';
   document.getElementById('artistMusicProjectTracks').innerHTML='';
   await renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('MUSIC UPLOADED');
@@ -387,7 +387,7 @@ window.saveArtistRelease=async function(){
   const art=document.getElementById('artistReleaseArtwork').files[0];
   const rows=[...document.querySelectorAll('#artistReleaseTracks .admin-item')];
   const b=document.getElementById('artistReleaseSubmitButton');if(b){b.disabled=true;b.textContent='UPLOADING...'}
-  const releaseVideos=[...document.querySelectorAll('#artistReleaseVideos .artist-release-video-row')].map(function(row){return {title:row.querySelector('.artist-release-video-title')?.value.trim()||'',file:row.querySelector('.artist-release-video-file')?.files[0]||null,thumbnail:row.querySelector('.artist-release-video-thumb')?.files[0]||null,featureSelect:row.querySelector('.artist-release-video-features'),externalFeatures:window.collectExternalFeatureCredits(row.dataset.externalFeatureId)}}); if(releaseVideos.some(function(v){return !v.file}))throw new Error('Select a video file for every release video row.'); await createArtistScheduledRelease(type,title,date,art,rows,releaseVideos);
+  const releaseVideos=[...document.querySelectorAll('#artistReleaseVideos .artist-release-video-row')].map(function(row){return {title:row.querySelector('.artist-release-video-title')?.value.trim()||'',file:row.querySelector('.artist-release-video-file')?.files[0]||null,thumbnail:row.querySelector('.artist-release-video-thumb')?.files[0]||null,featureSelect:row.querySelector('.artist-release-video-features'),externalFeatures:window.collectExternalFeatureCredits(row.dataset.externalFeatureId)}}); if(releaseVideos.some(function(v){return !v.file}))throw new Error('Select a video file for every release video row.'); await createArtistScheduledRelease(type,title,date,art,rows,releaseVideos,!!document.getElementById('artistReleaseHideNames')?.checked);
   document.getElementById('artistReleaseTitle').value='';document.getElementById('artistReleaseDate').value='';document.getElementById('artistReleaseArtwork').value='';if(document.getElementById('artistReleaseVideos'))document.getElementById('artistReleaseVideos').innerHTML='';document.getElementById('artistReleaseTracks').innerHTML='';
   await renderArtistMusic(selectedArtistPageId);if(typeof setStatus==='function')setStatus('UPCOMING RELEASE SAVED');
   alert('Upcoming '+type.toUpperCase()+' saved. It will appear publicly on '+(date||'the release date')+'.');
@@ -419,7 +419,7 @@ function setupArtistMusicUploadUI(){
   });
  }
  if(!type||!fields||!tracks||!add)return;
- const sync=()=>{const project=type.value!=='single';fields.style.display=project?'block':'none';['artistSingleTitleGroup','artistSingleArtworkGroup','artistSingleAudioGroup','artistSingleSectionsGroup','artistSingleFeaturesGroup','artistSingleLyricsGroup'].forEach(id=>{const x=document.getElementById(id);if(x)x.style.display=project?'none':''});if(project&&!tracks.children.length)artistUploadTrackRow(tracks,1)};
+ const sync=()=>{const project=type.value!=='single';fields.style.display=project?'block':'none';['artistSingleTitleGroup','artistSingleDateGroup','artistSingleArtworkGroup','artistSingleAudioGroup','artistSingleSectionsGroup','artistSingleFeaturesGroup','artistSingleLyricsGroup'].forEach(id=>{const x=document.getElementById(id);if(x)x.style.display=project?'none':''});if(project&&!tracks.children.length)artistUploadTrackRow(tracks,1)};
  type.addEventListener('change',sync);add.onclick=()=>artistUploadTrackRow(tracks,tracks.children.length+1);sync();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupArtistMusicUploadUI);else setupArtistMusicUploadUI();

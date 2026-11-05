@@ -204,7 +204,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Release | Fly Since Birth</title>
-    <script src="performance-tracker.js?v=20261103"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="performance-tracker.js?v=20261103"></script><script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="public-polish.css?v=5">
   <link rel="icon" type="image/png" href="fsb-favicon.png?v=4">
 </head>
@@ -288,21 +288,6 @@ const { data: release, error } = await supabaseClient
 
 console.log("Supabase release data:", release);
 console.log("Supabase release error:", error);
-    if (release && release.release_date) {
-        const releaseDay = new Date(release.release_date + "T00:00:00");
-        const today = new Date();
-        today.setHours(23,59,59,999);
-        if (releaseDay > today) {
-            document.getElementById("releaseTitle").textContent = "Upcoming Release";
-            document.getElementById("releaseType").textContent = (release.type || "RELEASE").toUpperCase();
-            document.getElementById("releaseArtist").textContent = "";
-            document.getElementById("releaseDate").textContent = "Releases " + releaseDay.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"});
-            document.getElementById("releaseImage").style.display = "none";
-            document.getElementById("releaseTracks").style.display = "none";
-            return;
-        }
-    }
-
     if (error || !release) {
 
         console.error("Release error:", error);
@@ -323,6 +308,7 @@ console.log("Supabase release error:", error);
 
 document.getElementById("releaseTitle").textContent =
     release.title || release.name || release.release_title || "Untitled";
+if(release.locked){const note=document.createElement("p");note.className="fsb-release-note";note.textContent=window.FSBRelease.label(release)+" · Favorite tracks now. Playback unlocks worldwide at midnight Eastern.";document.getElementById("releaseTracks").before(note);}
 document.title =
     (release.title || "Release") +
     " | Fly Since Birth";
@@ -344,7 +330,7 @@ document.getElementById("releaseArtist").textContent =
 
 if (release.release_date) {
 
-    const date = new Date(release.release_date);
+    const date = new Date(release.release_at || release.release_date+"T12:00:00Z");
 
     document.getElementById("releaseDate").textContent =
         date.toLocaleDateString("en-US", {
@@ -448,7 +434,7 @@ if (!tracks || tracks.length === 0) {
         ids.forEach((id,creditIndex)=>{const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(id);link.textContent=creditArtistNames[id]||"Artist";if(creditIndex)credits.appendChild(document.createTextNode(creditIndex===1?" feat. ":", "));credits.appendChild(link);link.addEventListener("click",event=>event.stopPropagation())});
         let trackCreditCount=ids.length;
         (track.external_features||[]).forEach(credit=>{if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;if(trackCreditCount)credits.appendChild(document.createTextNode(trackCreditCount===1?" feat. ":", "));credits.appendChild(link);link.addEventListener("click",event=>event.stopPropagation());trackCreditCount++}catch(_){}});
-trackRow.onclick = function() {
+trackRow.onclick = async function() {
 
     if (!track.audio_url) {
         return;
@@ -458,7 +444,9 @@ trackRow.onclick = function() {
         document.getElementById("releaseAudioPlayer");
 
 window.fsbTrackMedia?.(player,"music","song:"+track.id);
-player.src = track.audio_url;
+const fresh=(await window.FSBRelease.catalog()).artist_songs.find(item=>String(item.id)===String(track.id));
+if(!fresh?.audio_url||fresh.locked)return;
+player.src = fresh.audio_url;
 player.style.display = "block";
 player.play().catch(function(error) {
         console.error("Audio playback failed:", error);
@@ -467,7 +455,7 @@ player.play().catch(function(error) {
 };
         const playButton = trackRow.querySelector(".track-play");
 
-playButton.onclick = function(event) {
+playButton.onclick = async function(event) {
 
     event.stopPropagation();
 
@@ -480,7 +468,9 @@ playButton.onclick = function(event) {
 
     player.style.display = "block";
     window.fsbTrackMedia?.(player,"music","song:"+track.id);
-player.src = track.audio_url;
+const fresh=(await window.FSBRelease.catalog()).artist_songs.find(item=>String(item.id)===String(track.id));
+if(!fresh?.audio_url||fresh.locked)return;
+player.src = fresh.audio_url;
     
     player.play().catch(function(error) {
         console.error("Audio playback failed:", error);
@@ -601,7 +591,7 @@ loadReleaseVideos();
     
 </script>
     
-<script src="music-library.js?v=20261102-lyrics"></script>
+<script src="music-library.js?v=20261105-release"></script>
 <script src="shared-nav.js?v=20261102-library-nav"></script>
 </body>
 </html>
