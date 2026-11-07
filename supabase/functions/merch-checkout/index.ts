@@ -137,10 +137,15 @@ async function resolveCart(raw: unknown): Promise<PricedLine[]> {
       if (!token) throw new Error("Printful is not configured yet.");
       const result = await fetch(`https://api.printful.com/store/variants/${variantId}`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await result.json();
-      if (!result.ok || !data.result?.sync_variant?.synced || !data.result.sync_variant.variant_id) {
+      // Manual/API stores return the variant directly; platform stores may wrap it.
+      const syncVariant = data.result?.sync_variant || data.result;
+      if (!result.ok || !syncVariant?.synced || !syncVariant.variant_id || String(syncVariant.id) !== variantId) {
         throw new Error("A Printful product needs a configured sync variant with its print design.");
       }
-      catalogVariantId = String(data.result.sync_variant.variant_id);
+      if (syncVariant.is_ignored || ["discontinued", "out_of_stock", "temporary_out_of_stock"].includes(syncVariant.availability_status)) {
+        throw new Error("That Printful size and color is currently unavailable.");
+      }
+      catalogVariantId = String(syncVariant.variant_id);
     }
     const images = Array.isArray(product.images) ? product.images as unknown[] : [];
     const price = Number(product.price);
