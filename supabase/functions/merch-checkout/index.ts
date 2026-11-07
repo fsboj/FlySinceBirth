@@ -206,6 +206,16 @@ async function printfulRates(address: Record<string, string>, lines: PricedLine[
   return rates;
 }
 
+// JSONB may reorder object keys; compare values rather than insertion order.
+function stableQuoteValue(value: unknown): string {
+  if (Array.isArray(value)) return "[" + value.map(stableQuoteValue).join(",") + "]";
+  if (value !== null && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return "{" + Object.keys(record).filter(key => record[key] !== undefined).sort().map(key => JSON.stringify(key) + ":" + stableQuoteValue(record[key])).join(",") + "}";
+  }
+  return JSON.stringify(value) ?? "null";
+}
+
 function quoteId(value: unknown) { return typeof value === "string" && /^[0-9a-f-]{36}$/i.test(value) ? value : ""; }
 
 Deno.serve(async (request: Request) => {
@@ -241,7 +251,7 @@ Deno.serve(async (request: Request) => {
       const saved = quotes[0];
       if (!saved) throw new Error("Your shipping quote expired. Please request new rates.");
       const freshLines = await resolveCart(saved.quote.lines.map(line => ({ id: line.product_id, size: line.variant_size || "", color: line.variant_color || "", quantity: line.quantity })));
-      if (JSON.stringify(freshLines) !== JSON.stringify(saved.quote.lines)) throw new Error("An item changed. Request new shipping options.");
+      if (stableQuoteValue(freshLines) !== stableQuoteValue(saved.quote.lines)) throw new Error("An item changed. Request new shipping options.");
       const currentRates = await shippingRates(saved.quote.address, freshLines);
       const rate = currentRates.find((item) => item.id === rateId);
       const quotedRate = saved.quote.rates.find(item => item.id === rateId);
