@@ -3,43 +3,14 @@ const musicById = new Map();
 let hubUser = null;
 let savedProductIds = new Set();
 let activeMerchProducts = [];
-let playQueue = [];
-let playIndex = -1;
 const musicParams = new URLSearchParams(location.search);
 const musicEsc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 function setPlayerStatus(text) { document.getElementById("playerStatus").textContent = text; }
 async function startSong(song, queue = [song]) {
-  if (song?.locked || !song?.audio_url) { setPlayerStatus("This song does not have a playable audio file yet."); return; }
-  playQueue = queue.filter((item) => item?.audio_url);
-  playIndex = Math.max(0, playQueue.findIndex((item) => String(item.id) === String(song.id)));
-  const selected = playQueue[playIndex] || song;
-  const fresh=(await window.FSBRelease.catalog()).artist_songs.find(item=>String(item.id)===String(selected.id));
-  if(!fresh?.audio_url||fresh.locked){setPlayerStatus("This song is not available to play yet.");return;}
-  selected.audio_url=fresh.audio_url;
-  const audio = document.getElementById("audioPlayer");
-  document.getElementById("miniPlayer").hidden = false;
-  document.body.classList.add("mini-player-open");
-  document.getElementById("nowTitle").textContent = selected.title || "Untitled";
-  window.FSBPlayerCredits.set(document.getElementById("nowArtist"),{...selected,...fresh});
-  window.fsbTrackMedia?.(audio,"music","song:"+selected.id);
-  window.FSBMotion?.player({...selected,...fresh});
-  audio.src = selected.audio_url;
-  setPlayerStatus("Now playing from FSB Music.");
-  audio.play().catch(() => setPlayerStatus("Press play to start listening."));
-  document.getElementById("videoPlayerHost").innerHTML = '<p class="empty">Choose a video to play here.</p>';
+ document.getElementById("videoPlayerHost").innerHTML='<p class="empty">Choose a video to play here.</p>';
+ return window.FSBPlayer.play(song,queue);
 }
-document.getElementById("audioPlayer").addEventListener("ended", () => {
-  if (playIndex >= 0 && playIndex + 1 < playQueue.length) startSong(playQueue[playIndex + 1], playQueue);
-});
-document.getElementById("closeMiniPlayer").addEventListener("click", () => {
-  const audio = document.getElementById("audioPlayer");
-  audio.pause();
-  audio.removeAttribute("src");
-  audio.load();
-  document.getElementById("miniPlayer").hidden = true;
-  document.body.classList.remove("mini-player-open");
-});
 
 function playVideo(video) {
   const host = document.getElementById("videoPlayerHost");
@@ -47,9 +18,7 @@ function playVideo(video) {
   let url;
   try { url = new URL(raw, location.href); } catch (_) { host.innerHTML = '<p class="empty">VIDEO LINK IS UNAVAILABLE.</p>'; return; }
   if (!/^https?:$/.test(url.protocol)) { host.innerHTML = '<p class="empty">VIDEO LINK IS UNAVAILABLE.</p>'; return; }
-  document.getElementById("audioPlayer").pause();
-  document.getElementById("miniPlayer").hidden = true;
-  document.body.classList.remove("mini-player-open");
+  window.FSBPlayer.close();
   if (/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url.href)) {
     host.innerHTML = "";
     const videoElement = document.createElement("video");
@@ -365,7 +334,7 @@ function renderHubFavoriteSongs(favoriteSongs) {
     play.className = "hub-play hub-fav-play";
     play.textContent = song.audio_url ? "PLAY" : "UNAVAILABLE";
     play.disabled = !song.audio_url;
-    play.addEventListener("click", () => startSong(song));
+    play.addEventListener("click", () => startSong(song,favoriteSongs));
     const favorite = document.createElement("button");
     favorite.type = "button";
     favorite.className = "fsb-song-action fsb-song-favorite";
@@ -677,11 +646,11 @@ async function loadMusicHub() {
   document.getElementById("songSearch").addEventListener("input", renderCatalog);
   document.addEventListener("click", event => {
     const button = event.target.closest("[data-hub-play-song]");
-    if (button) startSong(bySongId.get(button.dataset.hubPlaySong));
+    if (button) startSong(bySongId.get(button.dataset.hubPlaySong),recommendedOrder.filter(song=>{const term=document.getElementById("songSearch").value.trim().toLowerCase();return `${song.title||""} ${song.artist_name||""} ${(song.feature_artist_ids||[]).map(id=>names.get(id)||"").join(" ")}`.toLowerCase().includes(term);}));
   });
   await loadMerchRecommendations(user);
   const requestedSong = musicParams.get("song_id");
-  if (requestedSong && bySongId.has(requestedSong)) { startSong(bySongId.get(requestedSong)); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  if (requestedSong && bySongId.has(requestedSong)) { startSong(bySongId.get(requestedSong),recommendedOrder); window.scrollTo({ top: 0, behavior: "smooth" }); }
   const requestedVideo = musicParams.get("video_id");
   if (requestedVideo) {
     window.location.replace("video.html?video_id=" + encodeURIComponent(requestedVideo));
@@ -693,6 +662,7 @@ loadMusicHub().catch((error) => {
   document.getElementById("songCatalog").innerHTML = '<p class="empty">Music could not be loaded. Please refresh and try again.</p>';
   document.getElementById("playerStatus").textContent = error.message || "Music could not be loaded.";
 });
+
 
 
 

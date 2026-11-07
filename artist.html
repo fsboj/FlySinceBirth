@@ -1586,93 +1586,6 @@ footer {
      MUSIC PLAYER
 ===================================================== -->
 
-<div class="player">
-
-    <div class="player-top">
-
-        <div class="player-title">
-
-            <div
-                id="playerSongName"
-                class="player-song-name"
-            >
-                Nothing Playing
-            </div>
-
-            <div
-                id="playerArtistName"
-                class="player-artist-name"
-            >
-                FLY SINCE BIRTH
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <div class="player-controls">
-
-        <!-- PLAY / PAUSE -->
-
-        <button
-            id="playPauseButton"
-            class="player-button"
-            type="button"
-        >
-            ▶
-        </button>
-
-
-        <!-- PREVIOUS -->
-
-        <button
-            id="previousButton"
-            class="player-button"
-            type="button"
-        >
-            ◀
-        </button>
-
-
-        <!-- SCRUB / SEEK -->
-
-        <input
-            id="progressBar"
-            class="player-progress"
-            type="range"
-            min="0"
-            max="100"
-            value="0"
-            step="0.1"
-        >
-
-
-        <!-- NEXT -->
-
-        <button
-            id="nextButton"
-            class="player-button"
-            type="button"
-        >
-            ▶
-        </button>
-
-
-        <!-- CURRENT TIME / DURATION -->
-
-        <div
-            id="playerTime"
-            class="player-time"
-        >
-            0:00 / 0:00
-        </div>
-
-    </div>
-
-</div>
-
-
 <!-- =====================================================
      FOOTER
 ===================================================== -->
@@ -1696,6 +1609,7 @@ footer {
 
 <script src="performance-tracker.js?v=20261103"></script><script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="motion-artwork.js?v=20261107"></script>
+<script src="site-player.js?v=20261107"></script>
 <script defer src="music-library.js?v=20261107-motion"></script>
 
 
@@ -1732,268 +1646,9 @@ console.log("ARTIST PAGE ID:", artistId);
    AUDIO PLAYER
 ===================================================== */
 
-const audio =
-    new Audio();
-
-let songs = [];
-let artistFeatureNameMap = new Map();
-
-let currentSongIndex = -1;
-
-
-/* =====================================================
-   FORMAT TIME
-===================================================== */
-
-function formatTime(seconds) {
-
-    if (!Number.isFinite(seconds)) {
-        return "0:00";
-    }
-
-    const minutes =
-        Math.floor(seconds / 60);
-
-    const remainingSeconds =
-        Math.floor(seconds % 60)
-            .toString()
-            .padStart(2, "0");
-
-    return (
-        minutes +
-        ":" +
-        remainingSeconds
-    );
-
-}
-
-
-/* =====================================================
-   PLAY SONG
-===================================================== */
-
-async function playSong(index) {
-
-    if (
-        index < 0 ||
-        index >= songs.length
-    ) {
-        return;
-    }
-
-
-    currentSongIndex =
-        index;
-document.querySelector(".player").style.display =
-    "block";
-
-    const song =
-        songs[index];
-    const fresh=(await window.FSBRelease.catalog()).artist_songs.find(item=>String(item.id)===String(song.id));
-    if(!fresh?.audio_url||fresh.locked)return;
-    song.audio_url=fresh.audio_url;
-    window.FSBMotion?.player({...song,...fresh});
-
-
-    window.fsbTrackMedia?.(audio,"music","song:"+song.id);
-    if(song.locked||!song.audio_url)return;
-    audio.src =
-        song.audio_url;
-
-
-    document.getElementById(
-        "playerSongName"
-    ).textContent =
-        song.title ||
-        "Untitled";
-
-
-    window.FSBPlayerCredits.set(document.getElementById("playerArtistName"),{...song,...fresh},document.getElementById("artistName").textContent);
-
-
-    audio.play();
-
-
-    document.getElementById(
-        "playPauseButton"
-    ).textContent = "❚❚";
-
-}
-
-
-/* =====================================================
-   PLAY / PAUSE
-===================================================== */
-
-document.getElementById(
-    "playPauseButton"
-).onclick = function() {
-
-    if (!audio.src) {
-
-        if (songs.length > 0) {
-            playSong(0);
-        }
-
-        return;
-    }
-
-
-    if (audio.paused) {
-
-        audio.play();
-
-        this.textContent = "❚❚";
-
-    } else {
-
-        audio.pause();
-
-        this.textContent = "▶";
-
-    }
-
-};
-
-
-/* =====================================================
-   PREVIOUS
-===================================================== */
-
-document.getElementById(
-    "previousButton"
-).onclick = function() {
-
-    if (!songs.length) {
-        return;
-    }
-
-
-    let index =
-        currentSongIndex - 1;
-
-
-    if (index < 0) {
-        index = songs.length - 1;
-    }
-
-
-    playSong(index);
-
-};
-
-
-/* =====================================================
-   NEXT
-===================================================== */
-
-document.getElementById(
-    "nextButton"
-).onclick = function() {
-
-    if (!songs.length) {
-        return;
-    }
-
-
-    let index =
-        currentSongIndex + 1;
-
-
-    if (index >= songs.length) {
-        index = 0;
-    }
-
-
-    playSong(index);
-
-};
-
-
-/* =====================================================
-   AUDIO TIME
-===================================================== */
-
-audio.addEventListener(
-    "timeupdate",
-    function() {
-
-        const progress =
-            document.getElementById(
-                "progressBar"
-            );
-
-
-        if (audio.duration) {
-
-            progress.value =
-                (
-                    audio.currentTime /
-                    audio.duration
-                ) * 100;
-
-        }
-
-
-        document.getElementById(
-            "playerTime"
-        ).textContent =
-            formatTime(
-                audio.currentTime
-            ) +
-            " / " +
-            formatTime(
-                audio.duration
-            );
-
-    }
-);
-
-
-/* =====================================================
-   SEEK
-===================================================== */
-
-document.getElementById(
-    "progressBar"
-).addEventListener(
-    "input",
-    function() {
-
-        if (!audio.duration) {
-            return;
-        }
-
-
-        audio.currentTime =
-            (
-                this.value / 100
-            ) *
-            audio.duration;
-
-    }
-);
-
-
-/* =====================================================
-   AUTO NEXT
-===================================================== */
-
-audio.addEventListener(
-    "ended",
-    function() {
-
-        document.getElementById(
-            "nextButton"
-        ).click();
-
-    }
-);
-
-
-/* =====================================================
-   LOAD ARTIST
-===================================================== */
+let songs=[];
+let artistFeatureNameMap=new Map();
+async function playSong(index,source=songs){const song=songs[index];if(song)return window.FSBPlayer.play(song,source);}
 
 async function loadArtist() {
 
@@ -3107,7 +2762,7 @@ async function loadArtistReleaseTracks(
                     );
 
                 if (index !== -1) {
-                    playSong(index);
+                    playSong(index,tracks);
                 }
 
             };
@@ -3309,6 +2964,7 @@ loadArtist();
 </body>
 
 </html>
+
 
 
 

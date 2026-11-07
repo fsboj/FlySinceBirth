@@ -236,7 +236,8 @@
             <h2>TRACKLIST</h2><div class="album-playback-actions"><button id="albumPlayAll" type="button" disabled>▶ PLAY ALBUM</button><button id="albumShuffle" type="button" disabled>SHUFFLE</button></div><p id="albumPlayerStatus" role="status" aria-live="polite">Play the album in order, shuffle it, or choose a track. Unreleased tracks are skipped.</p>
 
             <div id="trackList"></div>
-<audio id="releaseAudioPlayer" controls controlsList="nodownload" style="width: 100%; margin-top: 20px; display: none;"></audio><div class="album-transport"><button id="albumPrevious" type="button" disabled aria-label="Previous track">‹ PREVIOUS</button><span id="albumNowPlaying"><strong id="albumNowTitle"></strong><small id="albumPlayerCredit"></small></span><button id="albumNext" type="button" disabled aria-label="Next track">NEXT ›</button></div><section id="albumQueuePanel" hidden aria-labelledby="albumQueueTitle"><h3 id="albumQueueTitle">UP NEXT</h3><div id="albumQueue" tabindex="0" aria-label="Album playback queue"></div></section><script src="album-player.js?v=20261107-credits"></script>
+<audio id="releaseAudioPlayer" controls controlsList="nodownload" style="width: 100%; margin-top: 20px; display: none;"></audio><section id="albumQueuePanel" hidden aria-labelledby="albumQueueTitle"><h3 id="albumQueueTitle">UP NEXT</h3><div id="albumQueue" tabindex="0" aria-label="Album playback queue"></div></section><script src="site-player.js?v=20261107"></script>
+<script src="album-player.js?v=20261107-shared-player"></script>
             <div id="releaseVideos" style="margin-top: 50px;">
 
     <h2>VIDEOS</h2>
@@ -562,6 +563,7 @@ loadReleaseVideos();
 <script src="shared-nav.js?v=20261107-orders"></script>
 </body>
 </html>
+
 
 
 
