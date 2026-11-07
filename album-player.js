@@ -24,9 +24,9 @@
    const latest=new Map(catalog.artist_songs.map(song=>[String(song.id),song]));
    let chosen=next;while(chosen>=0&&chosen<queue.length&&!playable(latest.get(String(queue[chosen].id))))chosen+=step;
    if(chosen<0||chosen>=queue.length){status('No released tracks remain in this direction.');return;}
-   const song=latest.get(String(queue[chosen].id));queue[chosen]={...queue[chosen],...song};index=chosen;
+   const song={...queue[chosen],...latest.get(String(queue[chosen].id))};queue[chosen]={...queue[chosen],...song};index=chosen;
    window.fsbTrackMedia?.(audio,'music','song:'+song.id);window.FSBMotion?.player(song);
-   audio.src=song.audio_url;audio.style.display='block';$('albumNowPlaying').textContent=song.title||'Untitled';render();
+   audio.src=song.audio_url;audio.style.display='block';$('albumNowTitle').textContent=song.title||'Untitled';window.FSBPlayerCredits.set($('albumPlayerCredit'),song);render();
    await audio.play();if(token===request)status('Playing '+song.title);
   }catch(error){if(token===request)status(error?.name==='NotAllowedError'?'Press play in the audio player to continue.':'Playback could not start. Try this track again.');}
  }

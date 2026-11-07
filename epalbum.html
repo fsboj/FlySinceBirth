@@ -207,7 +207,7 @@
     <script src="performance-tracker.js?v=20261103"></script><script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="public-polish.css?v=5">
   <link rel="icon" type="image/png" href="fsb-favicon.png?v=4">
-<style>.album-playback-actions,.album-transport{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0}.album-playback-actions button,.album-transport button{padding:12px 16px;background:#eee;color:#080808;border:1px solid #777;cursor:pointer;font:11px Arial,sans-serif;letter-spacing:1px}.album-playback-actions button:disabled,.album-transport button:disabled{opacity:.35;cursor:default}.album-transport #albumNowPlaying{flex:1;min-width:100px;font-size:13px;overflow-wrap:anywhere}#albumPlayerStatus{color:#aaa;font-size:12px;line-height:1.7}#albumQueuePanel{border:1px solid #333;padding:18px;margin-top:20px}#albumQueueTitle{font-size:12px;letter-spacing:2px;margin:0 0 14px}#albumQueue{max-height:300px;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#666 #111}.album-queue-song{display:flex;gap:12px;align-items:center;width:100%;padding:14px 10px;border:0;border-top:1px solid #272727;background:transparent;color:#ddd;text-align:left;cursor:pointer}.album-queue-song>span:nth-child(2){flex:1;overflow-wrap:anywhere}.album-queue-song small{font-size:9px;color:#888;white-space:nowrap}.album-queue-song[aria-current=true],.album-track-current{background:#202020!important;color:#fff}.album-queue-song:focus-visible{outline:2px solid white;outline-offset:-2px}@media(max-width:500px){.album-transport{gap:8px}.album-transport #albumNowPlaying{order:-1;flex-basis:100%}.album-transport button{flex:1}}</style></head>
+<style>.album-playback-actions,.album-transport{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0}.album-playback-actions button,.album-transport button{padding:12px 16px;background:#eee;color:#080808;border:1px solid #777;cursor:pointer;font:11px Arial,sans-serif;letter-spacing:1px}.album-playback-actions button:disabled,.album-transport button:disabled{opacity:.35;cursor:default}.album-transport #albumNowPlaying{flex:1;min-width:100px;font-size:13px;overflow-wrap:anywhere}#albumPlayerStatus{color:#aaa;font-size:12px;line-height:1.7}#albumQueuePanel{border:1px solid #333;padding:18px;margin-top:20px}#albumQueueTitle{font-size:12px;letter-spacing:2px;margin:0 0 14px}#albumQueue{max-height:300px;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#666 #111}.album-queue-song{display:flex;gap:12px;align-items:center;width:100%;padding:14px 10px;border:0;border-top:1px solid #272727;background:transparent;color:#ddd;text-align:left;cursor:pointer}.album-queue-song>span:nth-child(2){flex:1;overflow-wrap:anywhere}.album-queue-song small{font-size:9px;color:#888;white-space:nowrap}.album-queue-song[aria-current=true],.album-track-current{background:#202020!important;color:#fff}.album-queue-song:focus-visible{outline:2px solid white;outline-offset:-2px}@media(max-width:500px){.album-transport{gap:8px}.album-transport #albumNowPlaying{order:-1;flex-basis:100%}.album-transport button{flex:1}}</style><script src="player-credits.js?v=20261107"></script></head>
 
 <body>
     <header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="my-fsb.html">FSB</a><a id="topnavArtist" href="artists.html">Artists</a><a id="topnavLibrary" href="music.html">Music</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav></header>
@@ -236,7 +236,7 @@
             <h2>TRACKLIST</h2><div class="album-playback-actions"><button id="albumPlayAll" type="button" disabled>▶ PLAY ALBUM</button><button id="albumShuffle" type="button" disabled>SHUFFLE</button></div><p id="albumPlayerStatus" role="status" aria-live="polite">Play the album in order, shuffle it, or choose a track. Unreleased tracks are skipped.</p>
 
             <div id="trackList"></div>
-<audio id="releaseAudioPlayer" controls controlsList="nodownload" style="width: 100%; margin-top: 20px; display: none;"></audio><div class="album-transport"><button id="albumPrevious" type="button" disabled aria-label="Previous track">‹ PREVIOUS</button><span id="albumNowPlaying"></span><button id="albumNext" type="button" disabled aria-label="Next track">NEXT ›</button></div><section id="albumQueuePanel" hidden aria-labelledby="albumQueueTitle"><h3 id="albumQueueTitle">UP NEXT</h3><div id="albumQueue" tabindex="0" aria-label="Album playback queue"></div></section><script src="album-player.js?v=20261107"></script>
+<audio id="releaseAudioPlayer" controls controlsList="nodownload" style="width: 100%; margin-top: 20px; display: none;"></audio><div class="album-transport"><button id="albumPrevious" type="button" disabled aria-label="Previous track">‹ PREVIOUS</button><span id="albumNowPlaying"><strong id="albumNowTitle"></strong><small id="albumPlayerCredit"></small></span><button id="albumNext" type="button" disabled aria-label="Next track">NEXT ›</button></div><section id="albumQueuePanel" hidden aria-labelledby="albumQueueTitle"><h3 id="albumQueueTitle">UP NEXT</h3><div id="albumQueue" tabindex="0" aria-label="Album playback queue"></div></section><script src="album-player.js?v=20261107-credits"></script>
             <div id="releaseVideos" style="margin-top: 50px;">
 
     <h2>VIDEOS</h2>
@@ -420,7 +420,7 @@ if (!tracks || tracks.length === 0) {
     const creditArtistIds=[...new Set([...tracks.map(track=>track.artist_id),...trackFeatures.map(row=>row.artist_id)].filter(Boolean).map(String))];
     const creditArtistNames={};
     if(creditArtistIds.length){const artistsResult=await supabaseClient.from("artists").select("id,name").in("id",creditArtistIds);if(!artistsResult.error)(artistsResult.data||[]).forEach(artist=>creditArtistNames[String(artist.id)]=artist.name||"Artist")}
-    window.FSBAlbum.setTracks(tracks);
+    window.FSBAlbum.setTracks(tracks.map(track=>({...track,artist_name:creditArtistNames[String(track.artist_id)]||"FLY SINCE BIRTH"})));
     tracks.forEach((track, index) => {
 
         const trackRow = document.createElement("div");
@@ -562,6 +562,7 @@ loadReleaseVideos();
 <script src="shared-nav.js?v=20261107-orders"></script>
 </body>
 </html>
+
 
 
 

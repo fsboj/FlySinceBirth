@@ -21,7 +21,7 @@ async function startSong(song, queue = [song]) {
   document.getElementById("miniPlayer").hidden = false;
   document.body.classList.add("mini-player-open");
   document.getElementById("nowTitle").textContent = selected.title || "Untitled";
-  document.getElementById("nowArtist").textContent = selected.artist_name || "FLY SINCE BIRTH";
+  window.FSBPlayerCredits.set(document.getElementById("nowArtist"),{...selected,...fresh});
   window.fsbTrackMedia?.(audio,"music","song:"+selected.id);
   window.FSBMotion?.player({...selected,...fresh});
   audio.src = selected.audio_url;
@@ -693,6 +693,7 @@ loadMusicHub().catch((error) => {
   document.getElementById("songCatalog").innerHTML = '<p class="empty">Music could not be loaded. Please refresh and try again.</p>';
   document.getElementById("playerStatus").textContent = error.message || "Music could not be loaded.";
 });
+
 
 
 

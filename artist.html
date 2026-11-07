@@ -1309,7 +1309,7 @@ footer {
 .section .section-heading { letter-spacing: 0; line-height: 1.1; }
 </style>
   <link rel="icon" type="image/png" href="fsb-favicon.png?v=4">
-</head>
+<script src="player-credits.js?v=20261107"></script></head>
 
 
 <body>
@@ -1808,13 +1808,7 @@ document.querySelector(".player").style.display =
         "Untitled";
 
 
-    document.getElementById(
-        "playerArtistName"
-    ).textContent =
-        song.artist_name ||
-        document.getElementById(
-            "artistName"
-        ).textContent;
+    window.FSBPlayerCredits.set(document.getElementById("playerArtistName"),{...song,...fresh},document.getElementById("artistName").textContent);
 
 
     audio.play();
@@ -3315,6 +3309,7 @@ loadArtist();
 </body>
 
 </html>
+
 
 
 
