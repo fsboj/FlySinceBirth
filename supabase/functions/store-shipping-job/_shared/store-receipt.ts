@@ -149,7 +149,7 @@ export async function syncPrintfulTracking(order:any){
  const shipments=(d.result.shipments||[]).map((s:any)=>({id:String(s.id),carrier:String(s.carrier||""),service:String(s.service||""),tracking_number:String(s.tracking_number||""),tracking_url:safeTrackingUrl(s.tracking_url),ship_date:s.ship_date||null}));
  const lines=await rest(`fsb_store_order_items?order_id=eq.${order.id}&select=id,fulfillment_method,fulfillment_status`) as any[];
  const state=d.result.status==="fulfilled"?"fulfilled":d.result.status==="partial"?"partially_fulfilled":d.result.status==="canceled"?"cancelled":null;
- const update:any={shipments,tracking_checked_at:new Date().toISOString()};
+ const update:any={shipments,tracking_checked_at:new Date().toISOString(),supplier_status:String(d.result.status||"unknown"),supplier_status_updated_at:new Date().toISOString()};
  if(order.production_approval==="pending" && ["pending","inprocess","onhold","partial","fulfilled"].includes(d.result.status)){update.production_approval="approved";if(lines.every(i=>i.fulfillment_method==="printful"))update.fulfillment_status="processing";}
  if(state&&lines.length&&lines.every(i=>i.fulfillment_method==="printful"))update.fulfillment_status=state;
  if(state==="fulfilled")await rest(`fsb_store_order_items?order_id=eq.${order.id}&fulfillment_method=eq.printful`,{method:"PATCH",body:JSON.stringify({fulfillment_status:"fulfilled"})});
@@ -188,4 +188,41 @@ export async function sendShippingNotifications(orderId:number){
  try{await sendOrderEmail(order.customer_email,order,items,'shipping-'+s.key,shippingEmailContent(order,s));await rest(path,{method:'PATCH',body:JSON.stringify({status:'sent',sent_at:new Date().toISOString(),updated_at:new Date().toISOString(),last_error:''})});results.push('sent');}
  catch{await rest(path,{method:'PATCH',body:JSON.stringify({status:'failed',updated_at:new Date().toISOString(),last_error:'Shipping email could not be delivered'})});results.push('failed');}}
  return results;
+}
+
+export function orderProblem(order:any,items:any[],supplierError=false,now=Date.now()){
+ if(order.payment_status!=='paid'||order.payment_provider!=='stripe'||!String(order.stripe_session_id).startsWith('cs_live_'))return null;
+ const age=now-Date.parse(order.updated_at||order.created_at),hasPrintful=items.some(i=>i.fulfillment_method==='printful');
+ if(order.fulfillment_status==='cancelled')return {reason:'paid_cancelled',title:'Paid order is cancelled',detail:'This order still has a paid payment status but fulfilment is cancelled. Review whether the customer needs a refund or another fulfillment arrangement.',threshold:1};
+ if(hasPrintful){
+  if(!order.printful_order_id)return age>=15*60000?{reason:'not_submitted',title:'Paid order has not reached Printful',detail:'No Printful order ID has been saved after 15 minutes. Review this order in FSB Admin and check Printful for its FSB order number before creating anything else, to avoid a duplicate.',threshold:1}:null;
+  if(['failed','onhold','canceled'].includes(order.supplier_status))return {reason:'supplier_'+order.supplier_status,title:'Printful order needs attention',detail:'Printful reports this order as '+order.supplier_status+'. Open the matching order in Printful and review its billing, design, address, or cancellation notice.',threshold:1};
+  if(order.production_approval==='pending'||order.supplier_status==='draft')return {reason:'approval_required',title:'Paid order is waiting for your approval',detail:'An unpaid Printful draft is waiting. After funds are available, review and confirm the matching draft in Printful. Confirming it charges your Printful billing method.',threshold:1};
+  if(supplierError)return {reason:'supplier_check_failed',title:'Order status could not be checked',detail:'FSB has been unable to check this Printful order on several consecutive background checks. Open Printful to verify the order and its fulfillment status.',threshold:3};
+  if(order.fulfillment_status!=='fulfilled'&&age>=7*86400000)return {reason:'production_delay',title:'Review production progress',detail:'This paid order has not been marked fulfilled after seven days. Check Printful for an updated production or shipping estimate, then contact the customer if needed.',threshold:1};
+ }else if(['unfulfilled','processing'].includes(order.fulfillment_status)&&age>=86400000)return {reason:'manual_fulfillment_pending',title:'Paid order still needs manual fulfillment',detail:'This order has been waiting for at least 24 hours. Review your own-inventory or supplier fulfillment and add tracking in FSB Admin when available.',threshold:1};
+ return null;
+}
+export function orderAlertContent(order:any,problem:any){
+ const link=SITE_ORIGIN+'/admin.html',printful='https://www.printful.com/dashboard/default/orders';
+ const plain=[problem.title,order.order_number,problem.detail,'Customer: '+(order.customer_name||'')+' · '+order.customer_email,'Total paid: '+money(order.grand_total),'Printful order: '+(order.printful_order_id||'Not submitted'),'FSB Admin → Store → Customer Orders: '+link,'Printful orders: '+printful,'You may receive one reminder per 24 hours while this issue remains.'].join('\n');
+ const html=`<!doctype html><html><body style="font-family:Arial,sans-serif;background:#f3f3f3;color:#111"><div style="max-width:620px;margin:24px auto;padding:30px;background:#fff"><p style="letter-spacing:3px;font-size:12px">FSB SUPPORT · ORDER ALERT</p><h1>${escapeHtml(problem.title)}</h1><p><strong>${escapeHtml(order.order_number)}</strong></p><p>${escapeHtml(problem.detail)}</p><p>Customer: ${escapeHtml(order.customer_name||'')} · ${escapeHtml(order.customer_email)}<br>Total paid: ${money(order.grand_total)}<br>Printful order: ${escapeHtml(order.printful_order_id||'Not submitted')}</p><p><a href="${link}">Open FSB Admin</a> → Store → Customer Orders</p><p><a href="${printful}">Open Printful orders</a></p><p>You may receive one reminder per 24 hours while this issue remains.</p></div></body></html>`;
+ return {subject:'FSB action required — '+order.order_number,html,plain};
+}
+export async function sendOrderProblemAlert(orderId:number,supplierError=false){
+ const [order]=await rest(`fsb_store_orders?id=eq.${orderId}&select=*`) as any[];if(!order)return 'none';
+ const items=await rest(`fsb_store_order_items?order_id=eq.${orderId}&select=fulfillment_method`) as any[];
+ const now=new Date(),period=now.toISOString().slice(0,10),problem=orderProblem(order,items,supplierError,now.getTime());
+ if(!supplierError)await rest(`fsb_store_order_alert_emails?order_id=eq.${orderId}&reason=eq.supplier_check_failed&period=eq.${period}`,{method:'PATCH',body:JSON.stringify({observations:0})});
+ if(!problem)return 'none';
+ const base=`fsb_store_order_alert_emails?order_id=eq.${orderId}&reason=eq.${problem.reason}`,path=base+`&period=eq.${period}`;
+ const recent=await rest(base+`&status=eq.sent&sent_at=gt.${encodeURIComponent(new Date(now.getTime()-86400000).toISOString())}&select=order_id&limit=1`) as any[];if(recent.length)return 'already_sent';
+ const inserted=await rest('fsb_store_order_alert_emails?on_conflict=order_id,reason,period&select=*',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=representation'},body:JSON.stringify({order_id:orderId,reason:problem.reason,period,status:'idle',observations:1,attempts:0})}) as any[];
+ let row=inserted[0];
+ if(!row){[row]=await rest(path+'&select=*') as any[];if(!row)return 'pending';if(row.status==='sent')return 'already_sent';if(row.attempts>=5)return 'failed';if(row.status==='sending'&&now.getTime()-Date.parse(row.updated_at)<600000)return 'pending';
+ const updated=await rest(path+`&updated_at=eq.${encodeURIComponent(row.updated_at)}&status=eq.${row.status}&select=*`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({observations:row.observations+1,updated_at:now.toISOString()})}) as any[];if(!updated.length)return 'pending';row=updated[0];}
+ if(row.observations<problem.threshold)return 'observing';
+ const claimed=await rest(path+`&updated_at=eq.${encodeURIComponent(row.updated_at)}&status=eq.${row.status}&attempts=eq.${row.attempts}&select=order_id`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({status:'sending',attempts:row.attempts+1,updated_at:new Date().toISOString(),last_error:null})}) as any[];if(!claimed.length)return 'pending';
+ try{await sendOrderEmail(SUPPORT_ADDRESS,order,items,'alert-'+problem.reason+'-'+period,orderAlertContent(order,problem));await rest(path,{method:'PATCH',body:JSON.stringify({status:'sent',sent_at:new Date().toISOString(),updated_at:new Date().toISOString(),last_error:null})});return 'sent';}
+ catch{await rest(path,{method:'PATCH',body:JSON.stringify({status:'failed',updated_at:new Date().toISOString(),last_error:'Support order alert could not be delivered'})});return 'failed';}
 }
