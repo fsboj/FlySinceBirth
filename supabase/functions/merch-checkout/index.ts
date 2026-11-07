@@ -102,6 +102,8 @@ type PricedLine = {
 async function resolveCart(raw: unknown): Promise<PricedLine[]> {
   if (!Array.isArray(raw) || raw.length < 1 || raw.length > 20) throw new Error("Your bag is empty or has too many different items.");
   const items = raw as CartInput[];
+  const totalQuantity = items.reduce((sum,item) => sum + Number(item.quantity), 0);
+  if (!Number.isSafeInteger(totalQuantity) || totalQuantity > 20) throw new Error("Maximum 20 items per order. Contact fsbsupport@flysbirth.com for bulk orders.");
   const ids = [...new Set(items.map((item) => Number(item.id)))];
   if (ids.some((id) => !Number.isSafeInteger(id) || id < 1)) throw new Error("The bag contains an invalid item.");
   const rows = await rest(`merch_products?id=in.(${ids.join(",")})&active=eq.true&select=id,name,price,images,sizes,colors,variants,fulfillment_method,printful_variant_id,supplier_name,shipping_price,shipping_countries,track_inventory,stock_quantity`) as Array<Record<string, unknown>>;
@@ -264,7 +266,7 @@ Deno.serve(async (request: Request) => {
       const orderNumber = `FSB-${Date.now()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       const orderRows = await rest("fsb_store_orders?select=id,order_number", {
         method: "POST", headers: { Prefer: "return=representation" },
-        body: JSON.stringify({ order_number: orderNumber, customer_email: customer.email, customer_name: saved.quote.address.name, currency: "usd", subtotal: subtotal.toFixed(2), shipping_total: Number(rate.amount).toFixed(2), tax_total: "0.00", grand_total: total.toFixed(2), payment_status: "pending", fulfillment_status: "unfulfilled", payment_provider: "stripe", shipping_address: { ...saved.quote.address, carrier: saved.quote.lines.every(line => line.fulfillment_method === "printful") ? "Printful" : "FSB / suppliers", service: rate.name, rate_id: rate.id }, user_id: customer.id, checkout_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString() }),
+        body: JSON.stringify({ order_number: orderNumber, customer_email: customer.email, customer_name: saved.quote.address.name, currency: "usd", subtotal: subtotal.toFixed(2), shipping_total: Number(rate.amount).toFixed(2), tax_total: "0.00", grand_total: total.toFixed(2), payment_status: "pending", production_approval: saved.quote.lines.some(line=>line.fulfillment_method==="printful") ? "pending" : "automatic", fulfillment_status: "unfulfilled", payment_provider: "stripe", shipping_address: { ...saved.quote.address, carrier: saved.quote.lines.every(line => line.fulfillment_method === "printful") ? "Printful" : "FSB / suppliers", service: rate.name, rate_id: rate.id }, user_id: customer.id, checkout_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString() }),
       }) as Array<{ id: number; order_number: string }>;
       const order = orderRows[0];
       if (!order?.id) throw new Error("Could not create your order.");
@@ -336,4 +338,3 @@ Deno.serve(async (request: Request) => {
     return response({ error: message }, 400);
   }
 });
-

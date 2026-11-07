@@ -61,7 +61,7 @@
       checkoutAvailable = configuration.enabled === true;
     } catch (_) { checkoutAvailable = false; }
     if (checkoutAvailable) {
-      note.innerHTML = "Shipping is calculated for every item in your bag. Products from different suppliers may arrive separately. Stripe shows applicable tax and the final amount before payment.";
+      note.innerHTML = "Shipping is calculated for every item in your bag. Products from different suppliers may arrive separately. Maximum 20 items per order. All orders are reviewed before production and may take extra processing time. Carrier transit estimates begin after production and shipment. Contact FSB Support for bulk orders or a processing estimate. Stripe shows applicable tax and the final amount before payment.";
       if (configuration.mode === "test") note.append(document.createTextNode(" TEST MODE: no real payment will be taken or products shipped."));
       checkoutButton.textContent = configuration.mode === "test" ? "TEST CHECKOUT" : "CONTINUE TO CHECKOUT";
       checkoutButton.disabled = !Array.isArray(cart) || cart.length === 0;
@@ -151,4 +151,3 @@
   });
   cartObserver.observe($("cartItems"), { childList: true, subtree: true });
 })();
-

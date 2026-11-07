@@ -10,6 +10,13 @@ Deno.serve(async req=>{
  const {data:{user},error}=await client.auth.getUser(token);if(error||!user?.email_confirmed_at)return reply({error:"Sign in with a verified FSB account"},401);
  try{
  const body=await req.json();let query=client.from("fsb_store_orders").select("*").eq("user_id",user.id);
+ if(body.action==="admin_sync"){
+ if(!Number.isSafeInteger(Number(body.orderId))||Number(body.orderId)<1)return reply({error:"Invalid order"},400);
+ const {data:admins,error:adminError}=await client.from("fsb_store_admins").select("user_id").eq("user_id",user.id).ilike("email",user.email!);
+ if(adminError||!admins?.length)return reply({error:"Admin access required"},403);
+ const {data:order}=await client.from("fsb_store_orders").select("*").eq("id",Number(body.orderId)).maybeSingle();if(!order)return reply({error:"Order not found"},404);
+ await syncPrintfulTracking(order);return reply({refreshed:true});
+ }
  if(body.action==="receipts"){
  if(!Number.isSafeInteger(Number(body.orderId))||Number(body.orderId)<1)return reply({error:"Invalid order"},400);
  const {data:admins}=await client.from("fsb_store_admins").select("user_id,email").eq("user_id",user.id).ilike("email",user.email!);

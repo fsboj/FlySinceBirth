@@ -72,7 +72,7 @@ async function submitPrintfulOrder(order: Record<string, unknown>) {
   const existingResult = await fetch(`https://api.printful.com/orders/@${encodeURIComponent(String(order.order_number))}`, { headers: { Authorization: `Bearer ${token}` } });
   if (!existingResult.ok && existingResult.status !== 404) throw new Error("Could not check the Printful order status.");
   const existing = existingResult.ok ? await existingResult.json() : null;
-  const result = existing?.result?.id ? null : await fetch("https://api.printful.com/orders?confirm=1&update_existing=true", {
+  const result = existing?.result?.id ? null : await fetch(`https://api.printful.com/orders?confirm=0&update_existing=true`, {
     method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
   const data = existing?.result?.id ? existing : await result!.json();
@@ -81,8 +81,8 @@ async function submitPrintfulOrder(order: Record<string, unknown>) {
     await rest(`fsb_store_orders?id=eq.${order.id}&fulfillment_status=eq.processing`, { method: "PATCH", body: JSON.stringify({ fulfillment_status: "unfulfilled", updated_at: new Date().toISOString() }) });
     throw new Error("Printful could not accept the paid order yet.");
   }
-  await rest(`fsb_store_orders?id=eq.${order.id}`, { method: "PATCH", body: JSON.stringify({ printful_order_id: String(data.result.id), fulfillment_status: "processing", updated_at: new Date().toISOString() }) });
-  await rest(`fsb_store_order_items?order_id=eq.${order.id}&fulfillment_method=eq.printful`, { method: "PATCH", body: JSON.stringify({ supplier_order_id: String(data.result.id), fulfillment_status: "processing" }) });
+  await rest(`fsb_store_orders?id=eq.${order.id}`, { method: "PATCH", body: JSON.stringify({ printful_order_id: String(data.result.id), production_approval: "pending", fulfillment_status: "unfulfilled", updated_at: new Date().toISOString() }) });
+  await rest(`fsb_store_order_items?order_id=eq.${order.id}&fulfillment_method=eq.printful`, { method: "PATCH", body: JSON.stringify({ supplier_order_id: String(data.result.id), fulfillment_status: "unfulfilled" }) });
   } catch (error) {
     await rest(`fsb_store_orders?id=eq.${order.id}&printful_order_id=is.null&fulfillment_status=eq.processing`, { method: "PATCH", body: JSON.stringify({ fulfillment_status: "unfulfilled", updated_at: new Date().toISOString() }) });
     throw error;
@@ -120,7 +120,10 @@ Deno.serve(async (request: Request) => {
     const tax = Number(session.total_details?.amount_tax || 0) / 100;
     await rest(`fsb_store_orders?id=eq.${orderId}&payment_status=eq.pending`, { method: "PATCH", body: JSON.stringify({ payment_status: "paid", tax_total: tax.toFixed(2), grand_total: (Number(session.amount_total) / 100).toFixed(2), updated_at: new Date().toISOString() }) });
     await rest("rpc/fsb_store_inventory", { method: "POST", body: JSON.stringify({ order_id_input: Number(orderId), action_input: "consume" }) });
-    const printfulItems = await rest(`fsb_store_order_items?order_id=eq.${orderId}&fulfillment_method=eq.printful&select=id&limit=1`) as Array<{ id: number }>;
+    const allItems = await rest(`fsb_store_order_items?order_id=eq.${orderId}&select=quantity,fulfillment_method`) as Array<{quantity:number;fulfillment_method:string}>;
+    
+    const printfulItems = allItems.filter(item=>item.fulfillment_method==="printful");
+    if(printfulItems.length && !order.printful_order_id) await rest(`fsb_store_orders?id=eq.${orderId}&printful_order_id=is.null`,{method:"PATCH",body:JSON.stringify({production_approval:"pending"})});
     const stripeKey = (Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) || "";
     let fulfillmentError: unknown=null;
     try {
@@ -134,4 +137,3 @@ Deno.serve(async (request: Request) => {
     return new Response("Store payment confirmation is processing. Stripe will retry.", { status: 500 });
   }
 });
-

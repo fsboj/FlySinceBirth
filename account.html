@@ -68,7 +68,7 @@ async function loadOrders(user){
  const tickets=$("ticketOrders"),stores=$("storeOrders");tickets.innerHTML='<div class="empty">No tickets yet.</div>';stores.innerHTML='<div class="empty">No store orders yet.</div>';
  const [{data:ticketData,error:ticketError},{data:storeData,error:storeError}]=await Promise.all([
   supabaseClient.from("event_ticket_orders").select("id,event_id,quantity,unit_price,status,ticket_code,created_at").eq("user_id",user.id).order("created_at",{ascending:false}),
-  supabaseClient.from("fsb_store_orders").select("id,order_number,grand_total,payment_status,fulfillment_status,created_at,shipments").eq("user_id",user.id).order("created_at",{ascending:false})
+  supabaseClient.from("fsb_store_orders").select("id,order_number,grand_total,payment_status,fulfillment_status,created_at,production_approval,shipments").eq("user_id",user.id).order("created_at",{ascending:false})
  ]);
  if(ticketError)tickets.innerHTML='<div class="empty">Tickets could not be loaded.</div>';else if(ticketData?.length){const ids=[...new Set(ticketData.map(t=>t.event_id))];const {data:events}=await supabaseClient.from("events").select("id,title,date").in("id",ids);const map=new Map((events||[]).map(e=>[e.id,e]));tickets.innerHTML=ticketData.map(t=>{const e=map.get(t.event_id)||{};return '<article class="order"><div><strong>'+safe(e.title||"FSB Event")+'</strong><br><span class="muted">'+safe(e.date||"")+' · '+safe(t.quantity)+' ticket(s) · '+safe(t.status)+'</span>'+(t.status==="paid"?'<br><span class="muted">Ticket code: '+safe(t.ticket_code)+'</span>':'')+'</div><strong>'+money(Number(t.quantity)*Number(t.unit_price))+'</strong></article>'}).join("")}
 
@@ -79,7 +79,7 @@ async function loadOrders(user){
    for(const order of storeData){
      const article=document.createElement("article");article.className="order";
      const details=document.createElement("div"),heading=document.createElement("strong");heading.textContent=order.order_number||("Order #"+order.id);details.appendChild(heading);
-     const state=document.createElement("p");state.className="muted";state.textContent=order.payment_status+" · "+order.fulfillment_status;details.appendChild(state);
+     const state=document.createElement("p");state.className="muted";state.textContent=order.payment_status+" · "+(order.production_approval==="pending"?"Awaiting production approval":order.fulfillment_status);details.appendChild(state);
      for(const item of (itemResult.data||[]).filter(item=>item.order_id===order.id)){
        const line=document.createElement("p");line.className="muted";line.textContent=item.product_name+" × "+item.quantity+[item.variant_size,item.variant_color].filter(Boolean).map(value=>" · "+value).join("")+" · "+item.fulfillment_status;details.appendChild(line);
        if(item.tracking_number){const tracking=document.createElement("p");tracking.className="muted";tracking.textContent="Tracking: "+item.tracking_number;details.appendChild(tracking);}
@@ -184,4 +184,3 @@ supabaseClient.auth.onAuthStateChange(event=>{if(event==="PASSWORD_RECOVERY")ope
 supabaseClient.auth.getSession().then(({data,error})=>{if(error)message(error.message);else if(data.session?.user)routeSignedInUser(data.session.user).catch(err=>message("Your account could not load: "+err.message))});
 </script><script src="shared-nav.js?v=20261107-orders"></script><script src="video-favorites.js?v=7"></script>
 </body></html>
-

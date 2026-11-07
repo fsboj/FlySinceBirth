@@ -4,7 +4,7 @@
   if (!host) return;
   const section = document.createElement("div");
   section.style.cssText = "margin-top:40px;padding-top:28px;border-top:1px solid #333";
-  section.innerHTML = '<div class="panel-title">CUSTOMER ORDERS</div><p class="panel-description">Paid orders are ready for fulfillment. Ship your own inventory or place other supplier orders manually using the product link. Add tracking here for the customer to see in their account.</p><button class="button" type="button" id="refreshStoreOrders">REFRESH ORDERS</button><p id="storeOrdersStatus" class="item-meta" role="status"></p><div id="storeOrdersList"></div><button class="button" type="button" id="moreStoreOrders" hidden>LOAD MORE ORDERS</button>';
+  section.innerHTML = '<div class="panel-title">CUSTOMER ORDERS</div><p class="panel-description">Every new Printful order waits for production approval. Confirm their draft in Printful only after funds are available. Maximum 20 items per checkout. Ship your own inventory or place other supplier orders manually using the product link. Add tracking here for the customer to see in their account.</p><button class="button" type="button" id="refreshStoreOrders">REFRESH ORDERS</button><p id="storeOrdersStatus" class="item-meta" role="status"></p><div id="storeOrdersList"></div><button class="button" type="button" id="moreStoreOrders" hidden>LOAD MORE ORDERS</button>';
   host.appendChild(section);
   let limit = 30, busy = false;
   const text = (tag, value, parent) => { const e = document.createElement(tag); e.textContent = value; parent.appendChild(e); return e; };
@@ -37,6 +37,14 @@
         const delivery=text("p",[address.name,address.address1,address.address2,address.city,address.state_code,address.zip,address.country_code,address.phone].filter(Boolean).join(" · "),card);
         delivery.style.cssText="font-size:12px;color:#aaa;line-height:1.8;overflow-wrap:anywhere";
         const orderItems=items.filter(i=>i.order_id===order.id);
+        if(order.payment_status==="paid" && order.production_approval==="pending"){
+          const review=document.createElement("div");review.style.cssText="padding:16px;border:1px solid #c9a456;margin-top:16px;background:#241d10;line-height:1.7";
+          text("strong","AWAITING PRODUCTION APPROVAL",review);
+          text("p",order.printful_order_id?"An unpaid Printful draft is ready. Wait until the funds are available, then review and confirm the matching order in Printful. Confirming charges your Printful billing method. Refresh this order afterward to update its status.":"Printful draft submission is pending. Do not create a duplicate order; contact support if it does not appear.",review);
+          if(order.printful_order_id){text("p","Printful order ID: "+order.printful_order_id,review);const link=text("a","REVIEW IN PRINTFUL",review);link.href="https://www.printful.com/dashboard/default/orders";link.target="_blank";link.rel="noopener noreferrer";link.style.cssText="color:#fff;text-decoration:underline";}
+          const refresh=text("button","REFRESH PRODUCTION STATUS",review);refresh.className="button";refresh.type="button";refresh.onclick=async()=>{refresh.disabled=true;const r=await supabaseClient.functions.invoke("store-order-sync",{body:{action:"admin_sync",orderId:order.id}});if(r.error||r.data?.error){refresh.disabled=false;refresh.textContent="COULD NOT REFRESH — TRY AGAIN";}else await load();};
+          card.appendChild(review);
+        }
         for(const item of orderItems){
           const row=document.createElement("div");row.style.cssText="margin-top:18px;padding-top:16px;border-top:1px solid #333";card.appendChild(row);
           const product=products.get(item.product_id)||{};
@@ -53,9 +61,9 @@
           const trackingUrl=field("TRACKING LINK (HTTPS)",item.tracking_url,fields);
           const save=text("button","SAVE FULFILLMENT",row);save.type="button";save.className="button";
           const message=text("p","",row);message.setAttribute("role","status");message.className="item-meta";
-          const paid=order.payment_status==="paid";
+          const paid=order.payment_status==="paid" && !(order.production_approval==="pending" && item.fulfillment_method==="printful");
           [status,supplierOrder,tracking,trackingUrl,save].forEach(e=>e.disabled=!paid);
-          if(!paid)message.textContent="Fulfill only after payment is confirmed.";
+          if(!paid)message.textContent=order.production_approval==="pending"?"Confirm the draft in Printful to start production, then refresh production status above.":"Fulfill only after payment is confirmed.";
           save.onclick=async()=>{
             const link=trackingUrl.value.trim();if(link&&!safeUrl(link)){message.textContent="Use a tracking link beginning with https://.";return;}
             save.disabled=true;message.textContent="Saving…";
