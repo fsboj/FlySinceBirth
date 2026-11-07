@@ -18,7 +18,7 @@
   <link rel="icon" type="image/png" href="fsb-favicon.png?v=4">
 </head>
 <body>
-<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="my-fsb.html">My FSB</a><a id="topnavArtist" href="artists.html">Artists</a><a id="topnavLibrary" href="music.html">Music</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav></header>
+<header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="my-fsb.html">FSB</a><a id="topnavArtist" href="artists.html">Artists</a><a id="topnavLibrary" href="music.html">Music</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav></header>
 <main class="account-wrap"><h1 id="pageTitle">ACCOUNT SETTINGS<br>&amp; HELP</h1>
 <section class="auth-grid" id="authPanel">
 <form class="card" id="signinForm"><h2>Sign in</h2><div class="field"><label for="signinEmail">Email</label><input id="signinEmail" type="email" autocomplete="email" required></div><div class="field"><label for="signinPassword">Password</label><div class="password-input-wrap"><input id="signinPassword" type="password" autocomplete="current-password" required><button class="password-toggle" type="button" data-password-toggle="signinPassword" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path class="eye-slash" d="m4 4 16 16"></path></svg></button></div></div><button class="primary" type="submit">SIGN IN</button><button class="auth-create" id="openSignupModal" type="button">Create an account</button><button class="auth-create" id="openPasswordReset" type="button">Forgot password?</button></form>
@@ -64,10 +64,11 @@ async function profile(user){
  $("profileName").value=display;$("profilePhone").value=data?.phone||"";$("accountName").textContent=display||"FSB Member";
 }
 async function loadOrders(user){
+ try{await supabaseClient.functions.invoke("store-order-sync",{body:{action:"sync"}})}catch(_){}
  const tickets=$("ticketOrders"),stores=$("storeOrders");tickets.innerHTML='<div class="empty">No tickets yet.</div>';stores.innerHTML='<div class="empty">No store orders yet.</div>';
  const [{data:ticketData,error:ticketError},{data:storeData,error:storeError}]=await Promise.all([
   supabaseClient.from("event_ticket_orders").select("id,event_id,quantity,unit_price,status,ticket_code,created_at").eq("user_id",user.id).order("created_at",{ascending:false}),
-  supabaseClient.from("fsb_store_orders").select("id,order_number,grand_total,payment_status,fulfillment_status,created_at").eq("user_id",user.id).order("created_at",{ascending:false})
+  supabaseClient.from("fsb_store_orders").select("id,order_number,grand_total,payment_status,fulfillment_status,created_at,shipments").eq("user_id",user.id).order("created_at",{ascending:false})
  ]);
  if(ticketError)tickets.innerHTML='<div class="empty">Tickets could not be loaded.</div>';else if(ticketData?.length){const ids=[...new Set(ticketData.map(t=>t.event_id))];const {data:events}=await supabaseClient.from("events").select("id,title,date").in("id",ids);const map=new Map((events||[]).map(e=>[e.id,e]));tickets.innerHTML=ticketData.map(t=>{const e=map.get(t.event_id)||{};return '<article class="order"><div><strong>'+safe(e.title||"FSB Event")+'</strong><br><span class="muted">'+safe(e.date||"")+' · '+safe(t.quantity)+' ticket(s) · '+safe(t.status)+'</span>'+(t.status==="paid"?'<br><span class="muted">Ticket code: '+safe(t.ticket_code)+'</span>':'')+'</div><strong>'+money(Number(t.quantity)*Number(t.unit_price))+'</strong></article>'}).join("")}
 
@@ -84,6 +85,8 @@ async function loadOrders(user){
        if(item.tracking_number){const tracking=document.createElement("p");tracking.className="muted";tracking.textContent="Tracking: "+item.tracking_number;details.appendChild(tracking);}
        if(item.tracking_url){try{const url=new URL(item.tracking_url);if(url.protocol==="https:"){const link=document.createElement("a");link.href=url.href;link.textContent="TRACK SHIPMENT";link.target="_blank";link.rel="noopener noreferrer";link.style.cssText="display:inline-block;color:#fff;text-decoration:underline;margin:8px 0;font-size:11px";details.appendChild(link);}}catch(_){}}
      }
+     for(const shipment of order.shipments||[]){try{const url=new URL(shipment.tracking_url);if(url.protocol==="https:"&&!url.username&&!url.password){const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent="TRACK PACKAGE · "+(shipment.carrier||"Carrier")+(shipment.tracking_number?" · "+shipment.tracking_number:"");link.style.cssText="display:block;text-decoration:underline;margin:8px 0;font-size:11px";details.appendChild(link);}}catch(_){}}
+     const inquiry=document.createElement("a");inquiry.href="account.html?order="+encodeURIComponent(order.id)+"#supportForm";inquiry.textContent="ORDER INQUIRY";inquiry.style.cssText="display:block;text-decoration:underline;margin:8px 0;font-size:11px";details.appendChild(inquiry);
      if(itemResult.error){const note=document.createElement("p");note.className="muted";note.textContent="Shipment details could not be loaded. Refresh to try again.";details.appendChild(note);}
      const total=document.createElement("strong");total.textContent=money(order.grand_total);article.append(details,total);stores.appendChild(article);
    }
@@ -92,6 +95,7 @@ async function loadOrders(user){
  const orderSelect=$("supportOrder");orderSelect.innerHTML='<option value="">No specific order</option>';
  (ticketData||[]).forEach(t=>{const option=document.createElement('option');option.value='ticket:'+t.id;option.textContent='Ticket order · '+t.quantity+' ticket(s) · '+new Date(t.created_at).toLocaleDateString();orderSelect.appendChild(option)});
  (storeData||[]).forEach(o=>{const option=document.createElement('option');option.value='store:'+o.id;option.textContent=(o.order_number||('Store order #'+o.id))+' · '+money(o.grand_total);orderSelect.appendChild(option)});
+ const requestedOrder=new URLSearchParams(location.search).get("order");const selectedOrder=(storeData||[]).find(o=>String(o.id)===requestedOrder);if(selectedOrder){orderSelect.value="store:"+selectedOrder.id;$("supportTopic").value="order";if(!$("supportSubject").value)$("supportSubject").value="Question about "+(selectedOrder.order_number||("order #"+selectedOrder.id));}
 }
 async function showUser(user){$("accountResetEmailAddress").textContent=user.email||"your account email";$("authPanel").style.display="none";$("authStatus").textContent="";$("dashboard").style.display="block";$("pageTitle").innerHTML="ACCOUNT SETTINGS<br>&amp; HELP";await profile(user);await loadOrders(user);if(location.hash==="#supportForm")setTimeout(()=>document.getElementById("supportForm")?.scrollIntoView({behavior:"smooth",block:"start"}),0);if(pendingSettingsReauth){pendingSettingsReauth=false;showAccountSettings(user)}if(pendingPasswordUpdate)await completePendingPasswordUpdate()}
 function showAccountSettings(user){$("accountSettingsPanel").style.display="block";$("accountSettingsToggle").setAttribute("aria-expanded","true");$("accountReauthForm").style.display="none";$("accountDetailsForm").style.display="block";$("passwordSettingsPanel").style.display="block";$("accountConfirmPassword").value="";$("currentAccountEmail").textContent=user.email||"";$("newAccountEmail").value="";$("accountDetailsStatus").textContent="Password confirmed. Update the fields you want, then save."}
@@ -178,6 +182,6 @@ const hasPasswordRecovery=resetUrlParams.get("password_reset")==="1"||resetHashP
 if(hasPasswordRecovery)openPasswordResetCompletion();
 supabaseClient.auth.onAuthStateChange(event=>{if(event==="PASSWORD_RECOVERY")openPasswordResetCompletion()});
 supabaseClient.auth.getSession().then(({data,error})=>{if(error)message(error.message);else if(data.session?.user)routeSignedInUser(data.session.user).catch(err=>message("Your account could not load: "+err.message))});
-</script><script src="shared-nav.js?v=20261102-library-nav"></script><script src="video-favorites.js?v=7"></script>
+</script><script src="shared-nav.js?v=20261107-orders"></script><script src="video-favorites.js?v=7"></script>
 </body></html>
 

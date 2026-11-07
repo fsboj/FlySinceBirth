@@ -10,7 +10,7 @@
   };
 
   const musicLink = document.getElementById("topnavMusic");
-  if (musicLink) { musicLink.textContent = "My FSB"; musicLink.href = "my-fsb.html"; }
+  if (musicLink) { musicLink.textContent = "FSB"; musicLink.href = "my-fsb.html"; }
   const artistLink = document.getElementById("topnavArtist");
   if (artistLink) artistLink.textContent = "Artists";
   if (artistLink && !document.getElementById("topnavLibrary")) {
@@ -59,7 +59,7 @@
       (data || []).forEach(function (item) {
         const link = document.getElementById(labels[item.key]);
         const value = typeof item.value === "string" ? item.value.trim() : "";
-        if (link && value) link.textContent = value;
+        if (link && value) link.textContent = item.key === "topnav_music" ? "FSB" : value;
       });
     } catch (error) {
       console.warn("Could not load shared navigation labels:", error);

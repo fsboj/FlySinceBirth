@@ -1,3 +1,4 @@
+import {sendStoreReceipts} from "./_shared/store-receipt.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 function serviceKey(): { key: string; secret: boolean } {
@@ -121,7 +122,12 @@ Deno.serve(async (request: Request) => {
     await rest("rpc/fsb_store_inventory", { method: "POST", body: JSON.stringify({ order_id_input: Number(orderId), action_input: "consume" }) });
     const printfulItems = await rest(`fsb_store_order_items?order_id=eq.${orderId}&fulfillment_method=eq.printful&select=id&limit=1`) as Array<{ id: number }>;
     const stripeKey = (Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) || "";
+    let fulfillmentError: unknown=null;
+    try {
     if (/^(sk|rk)_live_/.test(stripeKey) && Deno.env.get("MERCH_LIVE_CHECKOUT_ENABLED") === "true" && !order.printful_order_id && printfulItems.length) await submitPrintfulOrder({ ...order, payment_status: "paid" });
+    }catch(error){fulfillmentError=error;}
+    if(event.livemode){const deliveries=await sendStoreReceipts(Number(orderId));if(Object.values(deliveries).some(status=>status==="failed"||status==="sending"))throw new Error("Order email delivery is pending");}
+    if(fulfillmentError)throw fulfillmentError;
     return Response.json({ received: true });
   } catch (error) {
     console.error("Store payment webhook failed:", error instanceof Error ? error.message : "unknown error");
