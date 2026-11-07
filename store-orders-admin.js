@@ -6,7 +6,7 @@
   section.style.cssText = "margin-top:40px;padding-top:28px;border-top:1px solid #333";
   section.innerHTML = '<div class="panel-title">CUSTOMER ORDERS</div><p class="panel-description">Every new Printful order waits for production approval. Confirm their draft in Printful only after funds are available. Maximum 20 items per checkout. Ship your own inventory or place other supplier orders manually using the product link. Add tracking here for the customer to see in their account.</p><p id="storeApprovalSummary" class="item-meta" role="status">Checking order approvals…</p><label style="display:flex;align-items:center;gap:8px;margin:14px 0;font-size:12px"><input type="checkbox" id="onlyPendingOrders" style="width:auto"> SHOW ONLY ORDERS AWAITING APPROVAL</label><button class="button" type="button" id="refreshStoreOrders">REFRESH ORDERS</button><p id="storeOrdersStatus" class="item-meta" role="status"></p><div id="storeOrdersList"></div><button class="button" type="button" id="moreStoreOrders" hidden>LOAD MORE ORDERS</button>';
   host.appendChild(section);
-  let limit = 30, busy = false;
+  let limit = 30, busy = false, reloadQueued = false;
   const banner=document.createElement("aside");banner.id="storeApprovalAlert";banner.hidden=true;banner.setAttribute("role","status");banner.setAttribute("aria-live","polite");banner.style.cssText="margin:18px 24px;padding:18px;border:1px solid #bca16c;background:#211b10;color:#f0ddb4;line-height:1.7";banner.innerHTML='<strong id="storeApprovalAlertText"></strong><p style="margin:6px 0 12px;font-size:12px">These customers have paid. Review the unpaid drafts in Printful when funds are available to start production.</p><button type="button" class="button" id="reviewPendingStoreOrders">REVIEW ORDERS</button>';document.querySelector(".admin-nav")?.insertAdjacentElement("afterend",banner);
   let alertBusy=false;
   async function refreshApprovalAlert(){if(alertBusy||document.hidden)return;alertBusy=true;try{const {data:{session}}=await supabaseClient.auth.getSession();if(!session){banner.hidden=true;return;}const r=await supabaseClient.from("fsb_store_orders").select("id",{count:"exact",head:true}).eq("payment_status","paid").eq("production_approval","pending").neq("fulfillment_status","cancelled").neq("fulfillment_status","fulfilled");if(r.error)throw r.error;const count=r.count||0;banner.hidden=count===0;$("storeApprovalAlertText").textContent=count+" PAID ORDER"+(count===1?"":"S")+" AWAITING PRODUCTION APPROVAL";$("storeApprovalSummary").textContent=count?count+" paid order"+(count===1?"":"s")+" awaiting approval.":"No paid orders are awaiting production approval.";}catch{$("storeApprovalSummary").textContent="Approval status could not be checked. Refresh orders to try again.";}finally{alertBusy=false;}}
@@ -21,7 +21,7 @@
     const input = document.createElement("input"); input.value = value || ""; input.style.cssText = "background:#111;color:#fff;border:1px solid #444;padding:10px"; wrap.appendChild(input); parent.appendChild(wrap); return input;
   }
   async function load() {
-    if (busy) return; refreshApprovalAlert(); busy = true; $("refreshStoreOrders").disabled = true; $("storeOrdersStatus").textContent = "Loading orders…";
+    if (busy) {reloadQueued=true;return;} refreshApprovalAlert(); busy = true; $("refreshStoreOrders").disabled = true; $("storeOrdersStatus").textContent = "Loading orders…";
     try {
       let query=supabaseClient.from("fsb_store_orders").select("*");if($("onlyPendingOrders").checked)query=query.eq("payment_status","paid").eq("production_approval","pending").neq("fulfillment_status","cancelled").neq("fulfillment_status","fulfilled");
       const result = await query.order("created_at",{ascending:false}).limit(limit+1);
@@ -91,7 +91,7 @@
         $("storeOrdersList").appendChild(card);
       }
       $("storeOrdersStatus").textContent=orders.length?"Showing "+orders.length+" recent orders." : ($("onlyPendingOrders").checked?"No paid orders are awaiting production approval.":"No store orders yet.");
-    }catch(error){$("storeOrdersStatus").textContent=error.message||"Could not load orders.";}finally{busy=false;$("refreshStoreOrders").disabled=false;}
+    }catch(error){$("storeOrdersStatus").textContent=error.message||"Could not load orders.";}finally{busy=false;$("refreshStoreOrders").disabled=false;if(reloadQueued){reloadQueued=false;queueMicrotask(load);}}
   }
   $("refreshStoreOrders").onclick=()=>{limit=30;load();};
   $("moreStoreOrders").onclick=()=>{limit+=30;load();};
