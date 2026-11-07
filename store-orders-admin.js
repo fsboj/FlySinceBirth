@@ -90,7 +90,7 @@
         }
         $("storeOrdersList").appendChild(card);
       }
-      $("storeOrdersStatus").textContent=orders.length?"Showing "+orders.length+" recent orders.":"No store orders yet.";
+      $("storeOrdersStatus").textContent=orders.length?"Showing "+orders.length+" recent orders." : ($("onlyPendingOrders").checked?"No paid orders are awaiting production approval.":"No store orders yet.");
     }catch(error){$("storeOrdersStatus").textContent=error.message||"Could not load orders.";}finally{busy=false;$("refreshStoreOrders").disabled=false;}
   }
   $("refreshStoreOrders").onclick=()=>{limit=30;load();};
