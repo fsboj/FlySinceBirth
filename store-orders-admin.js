@@ -4,9 +4,15 @@
   if (!host) return;
   const section = document.createElement("div");
   section.style.cssText = "margin-top:40px;padding-top:28px;border-top:1px solid #333";
-  section.innerHTML = '<div class="panel-title">CUSTOMER ORDERS</div><p class="panel-description">Every new Printful order waits for production approval. Confirm their draft in Printful only after funds are available. Maximum 20 items per checkout. Ship your own inventory or place other supplier orders manually using the product link. Add tracking here for the customer to see in their account.</p><button class="button" type="button" id="refreshStoreOrders">REFRESH ORDERS</button><p id="storeOrdersStatus" class="item-meta" role="status"></p><div id="storeOrdersList"></div><button class="button" type="button" id="moreStoreOrders" hidden>LOAD MORE ORDERS</button>';
+  section.innerHTML = '<div class="panel-title">CUSTOMER ORDERS</div><p class="panel-description">Every new Printful order waits for production approval. Confirm their draft in Printful only after funds are available. Maximum 20 items per checkout. Ship your own inventory or place other supplier orders manually using the product link. Add tracking here for the customer to see in their account.</p><p id="storeApprovalSummary" class="item-meta" role="status">Checking order approvals…</p><label style="display:flex;align-items:center;gap:8px;margin:14px 0;font-size:12px"><input type="checkbox" id="onlyPendingOrders" style="width:auto"> SHOW ONLY ORDERS AWAITING APPROVAL</label><button class="button" type="button" id="refreshStoreOrders">REFRESH ORDERS</button><p id="storeOrdersStatus" class="item-meta" role="status"></p><div id="storeOrdersList"></div><button class="button" type="button" id="moreStoreOrders" hidden>LOAD MORE ORDERS</button>';
   host.appendChild(section);
   let limit = 30, busy = false;
+  const banner=document.createElement("aside");banner.id="storeApprovalAlert";banner.hidden=true;banner.setAttribute("role","status");banner.setAttribute("aria-live","polite");banner.style.cssText="margin:18px 24px;padding:18px;border:1px solid #bca16c;background:#211b10;color:#f0ddb4;line-height:1.7";banner.innerHTML='<strong id="storeApprovalAlertText"></strong><p style="margin:6px 0 12px;font-size:12px">These customers have paid. Review the unpaid drafts in Printful when funds are available to start production.</p><button type="button" class="button" id="reviewPendingStoreOrders">REVIEW ORDERS</button>';document.querySelector(".admin-nav")?.insertAdjacentElement("afterend",banner);
+  let alertBusy=false;
+  async function refreshApprovalAlert(){if(alertBusy||document.hidden)return;alertBusy=true;try{const {data:{session}}=await supabaseClient.auth.getSession();if(!session){banner.hidden=true;return;}const r=await supabaseClient.from("fsb_store_orders").select("id",{count:"exact",head:true}).eq("payment_status","paid").eq("production_approval","pending").neq("fulfillment_status","cancelled").neq("fulfillment_status","fulfilled");if(r.error)throw r.error;const count=r.count||0;banner.hidden=count===0;$("storeApprovalAlertText").textContent=count+" PAID ORDER"+(count===1?"":"S")+" AWAITING PRODUCTION APPROVAL";$("storeApprovalSummary").textContent=count?count+" paid order"+(count===1?"":"s")+" awaiting approval.":"No paid orders are awaiting production approval.";}catch{$("storeApprovalSummary").textContent="Approval status could not be checked. Refresh orders to try again.";}finally{alertBusy=false;}}
+  $("reviewPendingStoreOrders").onclick=()=>{$("onlyPendingOrders").checked=true;limit=30;document.querySelector('.admin-nav button[onclick*=store]')?.click();load();section.scrollIntoView({block:"start",behavior:"smooth"});};
+  $("onlyPendingOrders").onchange=()=>{limit=30;load();};
+  window.addEventListener("focus",refreshApprovalAlert);document.addEventListener("visibilitychange",refreshApprovalAlert);setInterval(refreshApprovalAlert,60000);supabaseClient.auth.onAuthStateChange(()=>setTimeout(refreshApprovalAlert,0));refreshApprovalAlert();
   const text = (tag, value, parent) => { const e = document.createElement(tag); e.textContent = value; parent.appendChild(e); return e; };
   function safeUrl(value) { try { const url = new URL(value); return url.protocol === "https:" ? url.href : ""; } catch (_) { return ""; } }
   function field(label, value, parent) {
@@ -15,9 +21,10 @@
     const input = document.createElement("input"); input.value = value || ""; input.style.cssText = "background:#111;color:#fff;border:1px solid #444;padding:10px"; wrap.appendChild(input); parent.appendChild(wrap); return input;
   }
   async function load() {
-    if (busy) return; busy = true; $("refreshStoreOrders").disabled = true; $("storeOrdersStatus").textContent = "Loading orders…";
+    if (busy) return; refreshApprovalAlert(); busy = true; $("refreshStoreOrders").disabled = true; $("storeOrdersStatus").textContent = "Loading orders…";
     try {
-      const result = await supabaseClient.from("fsb_store_orders").select("*").order("created_at",{ascending:false}).limit(limit+1);
+      let query=supabaseClient.from("fsb_store_orders").select("*");if($("onlyPendingOrders").checked)query=query.eq("payment_status","paid").eq("production_approval","pending").neq("fulfillment_status","cancelled").neq("fulfillment_status","fulfilled");
+      const result = await query.order("created_at",{ascending:false}).limit(limit+1);
       if (result.error) throw result.error;
       const orders = (result.data || []).slice(0,limit), ids = orders.map(o=>o.id);
       $("moreStoreOrders").hidden = (result.data || []).length <= limit;
