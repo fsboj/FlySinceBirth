@@ -446,6 +446,7 @@ trackRow.onclick = async function() {
 window.fsbTrackMedia?.(player,"music","song:"+track.id);
 const fresh=(await window.FSBRelease.catalog()).artist_songs.find(item=>String(item.id)===String(track.id));
 if(!fresh?.audio_url||fresh.locked)return;
+window.FSBMotion?.player(fresh);
 player.src = fresh.audio_url;
 player.style.display = "block";
 player.play().catch(function(error) {
@@ -470,6 +471,7 @@ playButton.onclick = async function(event) {
     window.fsbTrackMedia?.(player,"music","song:"+track.id);
 const fresh=(await window.FSBRelease.catalog()).artist_songs.find(item=>String(item.id)===String(track.id));
 if(!fresh?.audio_url||fresh.locked)return;
+window.FSBMotion?.player(fresh);
 player.src = fresh.audio_url;
     
     player.play().catch(function(error) {
@@ -591,9 +593,11 @@ loadReleaseVideos();
     
 </script>
     
-<script src="music-library.js?v=20261105-release"></script>
+<script src="motion-artwork.js?v=20261107"></script>
+<script src="music-library.js?v=20261107-motion"></script>
 <script src="shared-nav.js?v=20261107-orders"></script>
 </body>
 </html>
+
 
 

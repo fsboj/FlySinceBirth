@@ -20,6 +20,7 @@ async function startSong(song, queue = [song]) {
   document.getElementById("nowTitle").textContent = selected.title || "Untitled";
   document.getElementById("nowArtist").textContent = selected.artist_name || "FLY SINCE BIRTH";
   window.fsbTrackMedia?.(audio,"music","song:"+selected.id);
+  window.FSBMotion?.player({...selected,...fresh});
   audio.src = selected.audio_url;
   setPlayerStatus("Now playing from FSB Music.");
   audio.play().catch(() => setPlayerStatus("Press play to start listening."));
@@ -93,7 +94,7 @@ function filterMusicCatalog(catalog, { term = "", artistId = "", type = "", sort
 
 async function loadMusicHub() {
   const [allSongs, releases] = await Promise.all([
-    loadAllMusicRows("artist_songs", "id,title,artist_id,audio_url,image_url,release_id,track_number,external_features,created_at,release_date,lyrics"),
+    loadAllMusicRows("artist_songs", "id,title,artist_id,audio_url,animated_artwork_url,image_url,release_id,track_number,external_features,created_at,release_date,lyrics"),
     loadAllMusicRows("artist_releases", "id,title,type,artwork_url,release_date")
   ]);
   const releaseById = new Map(releases.map(release => [String(release.id), release]));
@@ -205,6 +206,7 @@ loadMusicHub().catch((error) => {
   document.getElementById("songCatalog").innerHTML = '<p class="empty">Music could not be loaded. Please refresh and try again.</p>';
   document.getElementById("playerStatus").textContent = error.message || "Music could not be loaded.";
 });
+
 
 
 

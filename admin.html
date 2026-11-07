@@ -1197,7 +1197,7 @@ body {
       <div class="form-group full" id="artistSingleFeaturesGroup"><label>FEATURED FSB ARTISTS</label><div class="artist-feature-picker" data-select-id="artistSongFeatureArtists"></div><select id="artistSongFeatureArtists" multiple hidden aria-hidden="true"></select><small id="artistSongFeatureHelp">Search for and select one or more FSB artists. Selected artists are linked to this song on their artist pages.</small></div><div class="form-group full"><label>NON-FSB FEATURED ARTISTS</label><div id="artistSongExternalFeatures" class="external-feature-list"></div><button type="button" class="button" onclick="addExternalFeatureRow('artistSongExternalFeatures')">+ ADD NON-FSB ARTIST</button><small>Add an artist name and a link to their page or profile.</small></div>
       <div class="form-group" id="artistSingleArtworkGroup"><label>SONG ARTWORK</label><input type="file" id="artistSongImageFile" accept="image/*"><div id="artistSongImagePreview" style="margin-top:12px;"></div></div>
       <div class="form-group full" id="artistSingleAudioGroup"><label>AUDIO FILE</label><input type="file" id="artistSongFile" accept="audio/*"><label style="display:block;margin-top:15px;">OPTIONAL VIDEO</label><input type="file" id="artistSongVideoFile" accept="video/*"></div>
-      <div class="form-group full" id="artistSingleLyricsGroup"><label for="artistSongLyrics">LYRICS (OPTIONAL)</label><textarea id="artistSongLyrics" rows="8" placeholder="Paste this song’s lyrics here. Keep line breaks for verses and choruses."></textarea><small>Leave blank if lyrics are not available yet. You can add them later by editing the song.</small></div>
+      <div id="artistSingleMotionGroup" class="form-group full"><div class="form-group full"><label for="artistSongMotionFile">ANIMATED COVER (OPTIONAL)</label><input id="artistSongMotionFile" type="file" accept="video/mp4,video/webm" data-motion-upload><small>MP4 or WebM · max 20 MB · up to 30 seconds. Silent loop. Keep the regular cover as fallback.</small><div data-motion-preview></div></div></div><div class="form-group full" id="artistSingleLyricsGroup"><label for="artistSongLyrics">LYRICS (OPTIONAL)</label><textarea id="artistSongLyrics" rows="8" placeholder="Paste this song’s lyrics here. Keep line breaks for verses and choruses."></textarea><small>Leave blank if lyrics are not available yet. You can add them later by editing the song.</small></div>
       <div class="form-group" id="artistSingleSectionsGroup"><label>MUSIC SECTIONS</label><div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:18px;margin-top:10px;">
         <label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" class="artist-song-section" value="singles"> SINGLES</label>
         <label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" class="artist-song-section" value="albums"> ALBUMS</label>
@@ -4357,6 +4357,8 @@ async function uploadArtistSong() {
         }
 
         await window.assertArtistTopSongLimit(selectedArtistPageId, editingArtistSongId, sections);
+        const motionFile=document.getElementById("artistSongMotionFile").files[0];
+        const motionUrl=await window.FSBMotionAdmin.upload(motionFile,selectedArtistPageId);
 
         /* ============================================
            EDIT EXISTING SONG
@@ -4373,6 +4375,7 @@ async function uploadArtistSong() {
                 external_features: externalFeatures
             };
 
+            if(motionUrl)updateData.animated_artwork_url=motionUrl;
             if (videoFile) {
                 const videoExtension = videoFile.name.split(".").pop().toLowerCase();
                 const videoPath = selectedArtistPageId + "/artist-videos/" + Date.now() + "-" + Math.random().toString(36).substring(2) + "." + videoExtension;
@@ -4515,6 +4518,7 @@ async function uploadArtistSong() {
         lyricsInput.value = "";
             audioInput.value = "";
             artworkInput.value = "";
+        document.getElementById("artistSongMotionFile").value="";window.FSBMotionAdmin.preview(document.getElementById("artistSongMotionFile"),null);
             if (videoInput) videoInput.value = "";
 
             document.querySelectorAll(
@@ -4674,6 +4678,7 @@ async function uploadArtistSong() {
             await supabaseClient
                 .from("artist_songs")
                 .insert({
+                    animated_artwork_url: motionUrl,
                     lyrics: lyrics,
                     artist_id:
                         selectedArtistPageId,
@@ -4717,6 +4722,7 @@ async function uploadArtistSong() {
         lyricsInput.value = "";
         audioInput.value = "";
         artworkInput.value = "";
+        document.getElementById("artistSongMotionFile").value="";window.FSBMotionAdmin.preview(document.getElementById("artistSongMotionFile"),null);
 
         document.querySelectorAll(
             ".artist-song-section"
@@ -6032,6 +6038,7 @@ async function saveArtistRelease() {
 
         if (artworkInput) {
             artworkInput.value = "";
+        document.getElementById("artistSongMotionFile").value="";window.FSBMotionAdmin.preview(document.getElementById("artistSongMotionFile"),null);
         }
 
 
@@ -6540,9 +6547,10 @@ async function openArtistMediaEditor(kind,id){
  var lyricsOptions=kind==="song"?'<div class="form-group full"><label for="mediaEditLyrics">LYRICS (OPTIONAL)</label><textarea id="mediaEditLyrics" rows="10" placeholder="Paste lyrics, with line breaks for verses and choruses"></textarea><small id="mediaEditLyricsStatus"></small></div>':"";
  var typeOptions=kind==="release"?'<div class="form-group"><label>RELEASE TYPE</label><select id="mediaEditType"><option value="album">ALBUM</option><option value="ep">EP</option></select></div><div class="form-group"><label>RELEASE DATE</label><input id="mediaEditDate" type="date"></div><div class="form-group full"><label><input id="mediaEditHideNames" type="checkbox" style="width:auto;margin-right:8px"> HIDE TRACK NAMES UNTIL RELEASE</label></div>':'<div class="form-group"><label>RELEASE DATE · MIDNIGHT EASTERN</label><input id="mediaEditDate" type="date"></div>';
  if(kind==='song'&&item.release_id)typeOptions+='<div class="form-group full"><label style="display:flex;gap:8px;align-items:center"><input id="mediaEditReleaseEarly" type="checkbox" style="width:auto"> RELEASE THIS TRACK EARLY</label><small>Use the release date above for an early date, or leave it blank to release this track when you save. Other album tracks stay locked.</small></div>';
- overlay.innerHTML='<div style="background:#090909;border:1px solid #333;border-radius:12px;padding:24px;width:min(760px,100%);max-height:92vh;overflow:auto"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div class="panel-title">'+(kind==="release"?"EDIT RELEASE":"EDIT SONG")+'</div><button type="button" class="button" id="mediaEditCancel">CLOSE</button></div><div class="form-grid" style="margin-top:18px"><div class="form-group"><label>NAME</label><input id="mediaEditName"></div>'+typeOptions+'<div class="form-group"><label>REPLACE ARTWORK FROM DEVICE</label><input id="mediaEditImage" type="file" accept="image/*"></div>'+(kind==="song"?'<div class="form-group"><label>REPLACE AUDIO FROM DEVICE</label><input id="mediaEditAudio" type="file" accept="audio/*"></div>':"")+'<div class="form-group"><label>REPLACE VIDEO FROM DEVICE</label><input id="mediaEditVideo" type="file" accept="video/*"></div>'+sectionOptions+featureOptions+lyricsOptions+'</div><label style="display:flex;gap:8px;margin-top:18px"><input id="mediaRemoveImage" type="checkbox"> REMOVE CURRENT ARTWORK</label><div class="actions"><button class="button primary" id="mediaEditSave">SAVE CHANGES</button></div></div>';
+ overlay.innerHTML='<div style="background:#090909;border:1px solid #333;border-radius:12px;padding:24px;width:min(760px,100%);max-height:92vh;overflow:auto"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div class="panel-title">'+(kind==="release"?"EDIT RELEASE":"EDIT SONG")+'</div><button type="button" class="button" id="mediaEditCancel">CLOSE</button></div><div class="form-grid" style="margin-top:18px"><div class="form-group"><label>NAME</label><input id="mediaEditName"></div>'+typeOptions+'<div class="form-group"><label>REPLACE ARTWORK FROM DEVICE</label><input id="mediaEditImage" type="file" accept="image/*"></div>'+(kind==="song"?'<div class="form-group"><label>REPLACE AUDIO FROM DEVICE</label><input id="mediaEditAudio" type="file" accept="audio/*"></div>':"")+'<div class="form-group"><label>REPLACE VIDEO FROM DEVICE</label><input id="mediaEditVideo" type="file" accept="video/*"></div>'+(kind==="song"?"<div class=\"form-group full\"><label for=\"mediaEditMotion\">ANIMATED COVER (OPTIONAL)</label><input id=\"mediaEditMotion\" type=\"file\" accept=\"video/mp4,video/webm\" data-motion-upload><small>MP4 or WebM · max 20 MB · up to 30 seconds. Silent loop. Keep the regular cover as fallback.</small><div data-motion-preview></div></div><label class=\"form-group full\"><input id=\"mediaRemoveMotion\" type=\"checkbox\" style=\"width:auto\"> REMOVE ANIMATED COVER (KEEP STILL IMAGE)</label>":"")+sectionOptions+featureOptions+lyricsOptions+'</div><label style="display:flex;gap:8px;margin-top:18px"><input id="mediaRemoveImage" type="checkbox"> REMOVE CURRENT ARTWORK</label><div class="actions"><button class="button primary" id="mediaEditSave">SAVE CHANGES</button></div></div>';
  document.body.appendChild(overlay);
  var card=overlay.firstElementChild;
+ if(kind==="song"&&item.animated_artwork_url)window.FSBMotionAdmin.preview(card.querySelector("#mediaEditMotion"),item.animated_artwork_url);
  overlay.addEventListener("click",function(event){if(event.target===overlay)overlay.remove()});
  card.querySelector("#mediaEditName").value=item.title||"";
  var earlyInput=card.querySelector("#mediaEditReleaseEarly");if(earlyInput)earlyInput.checked=!!item.release_early;
@@ -6585,6 +6593,7 @@ async function openArtistMediaEditor(kind,id){
   if(card.querySelector("#mediaRemoveImage").checked)data[kind==="release"?"artwork_url":"image_url"]=null;
   async function upload(bucket,file,folder){if(!file)return null;var path=selectedArtistPageId+"/"+folder+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"-"+file.name;var up=await supabaseClient.storage.from(bucket).upload(path,file);if(up.error)throw up.error;return supabaseClient.storage.from(bucket).getPublicUrl(path).data.publicUrl}
   try{
+   if(kind==="song"){var motionUrl=await window.FSBMotionAdmin.upload(card.querySelector("#mediaEditMotion").files[0],selectedArtistPageId);if(motionUrl)data.animated_artwork_url=motionUrl;else if(card.querySelector("#mediaRemoveMotion").checked)data.animated_artwork_url=null;}
    var imageUrl=await upload("artist-artwork",imageFile,"artist-edits");if(imageUrl)data[kind==="release"?"artwork_url":"image_url"]=imageUrl;
    var videoUrl=await upload("videos",videoFile,"artist-videos");if(videoUrl)data.video_url=videoUrl;
    var audioUrl=await upload("artist-music",audioFile,"artist-audio");if(audioUrl)data.audio_url=audioUrl;
@@ -6745,7 +6754,8 @@ document.addEventListener("DOMContentLoaded", function(){
   else initAdminTabs();
 })();
 </script>
-<script src="admin-tabs-fix.js?v=20261107-variant-prices"></script>
+<script src="motion-admin.js?v=20261107"></script>
+<script src="admin-tabs-fix.js?v=20261107-motion"></script>
 <script src="store-orders-admin.js?v=20261107-approval"></script>
 <script src="store-aisles.js?v=20261018-store-aisle-system"></script>
 
@@ -6816,4 +6826,5 @@ document.addEventListener("DOMContentLoaded", function(){
 </body>
 
 </html>
+
 

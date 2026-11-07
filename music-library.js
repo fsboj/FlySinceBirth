@@ -141,6 +141,7 @@
 
   window.decorateSongControls = function (element, song) {
     if (!element || !song?.id || element.querySelector(".fsb-song-actions")) return element;
+    window.FSBMotion?.decorate(element,song);
     window.FSBRelease?.decorateSong(element,song);
     const actions = document.createElement("span");
     actions.className = "fsb-song-actions";
@@ -393,7 +394,7 @@
   }, true);
 
   async function loadCatalog() {
-    const { data, error } = await supabaseClient.from("artist_songs").select("id,title,artist_id,image_url,audio_url,lyrics").order("title", { ascending: true });
+    const { data, error } = await supabaseClient.from("artist_songs").select("id,title,artist_id,image_url,animated_artwork_url,audio_url,lyrics").order("title", { ascending: true });
     if (error) throw error;
     allSongs = data || [];
     const ids = [...new Set(allSongs.map((song) => song.artist_id).filter(Boolean))];
@@ -472,5 +473,6 @@
     });
   });
 })();
+
 
 

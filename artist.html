@@ -1695,7 +1695,8 @@ footer {
 ===================================================== -->
 
 <script src="performance-tracker.js?v=20261103"></script><script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script defer src="music-library.js?v=20261105-release"></script>
+<script src="motion-artwork.js?v=20261107"></script>
+<script defer src="music-library.js?v=20261107-motion"></script>
 
 
 <script>
@@ -1791,6 +1792,7 @@ document.querySelector(".player").style.display =
     const fresh=(await window.FSBRelease.catalog()).artist_songs.find(item=>String(item.id)===String(song.id));
     if(!fresh?.audio_url||fresh.locked)return;
     song.audio_url=fresh.audio_url;
+    window.FSBMotion?.player({...song,...fresh});
 
 
     window.fsbTrackMedia?.(audio,"music","song:"+song.id);
@@ -3313,6 +3315,7 @@ loadArtist();
 </body>
 
 </html>
+
 
 
 

@@ -157,7 +157,7 @@ function renderSingles(list,songs){
   const card=document.createElement('div');card.className='admin-item artist-single-editor-card';card.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;box-sizing:border-box;padding:14px;overflow:visible';
   const summary=document.createElement('div');summary.className='artist-single-summary';summary.style.cssText='display:flex;align-items:center;gap:14px;min-height:65px;min-width:0;flex:1';
   const img=song.image_url?'<img src="'+esc(song.image_url)+'" alt="" style="width:54px;height:54px;object-fit:cover;border:1px solid #242424;flex:0 0 auto">':'<div style="width:54px;height:54px;border:1px solid #242424;display:flex;align-items:center;justify-content:center;color:#555;font-size:10px;flex:0 0 auto">SINGLE</div>';
-  summary.innerHTML=img+'<div><div class="item-name" style="font-size:12px;line-height:1.25">'+esc(song.title)+'</div><div class="item-meta">SINGLE · '+(song.lyrics&&song.lyrics.trim()?'LYRICS ADDED':'NO LYRICS YET')+'</div></div>';
+  summary.innerHTML=img+'<div><div class="item-name" style="font-size:12px;line-height:1.25">'+esc(song.title)+'</div><div class="item-meta">SINGLE · '+(song.animated_artwork_url?'ANIMATED COVER · ':'')+(song.lyrics&&song.lyrics.trim()?'LYRICS ADDED':'NO LYRICS YET')+'</div></div>';
   const actions=document.createElement('div');actions.className='actions';actions.style.cssText='margin:0;flex:0 0 auto';
   const edit=document.createElement('button');edit.type='button';edit.className='button';edit.textContent='EDIT';edit.onclick=()=>window.editArtistSong(song.id);
   const remove=document.createElement('button');remove.type='button';remove.className='button danger';remove.textContent='DELETE';remove.onclick=()=>deleteArtistSong(song.id).then(()=>renderArtistMusic(selectedArtistPageId));
@@ -207,7 +207,7 @@ function renderReleases(list,releases,songs){
   const body=document.createElement('div');body.className='release-tracks';body.style.cssText='padding:0 20px 20px 20px';
   body.innerHTML='<div class="actions" style="margin-top:0"><button class="button release-edit">EDIT RELEASE</button><button class="button danger release-delete">DELETE RELEASE</button></div>';
   const trackBox=document.createElement('div');trackBox.style.cssText='margin-top:18px;display:flex;flex-direction:column;gap:8px';
-  tracks.forEach((t,i)=>{const tr=document.createElement('div');tr.className='admin-item';tr.style.padding='12px 14px';tr.innerHTML='<div><div class="item-name">'+(i+1)+'. '+esc(t.title)+'</div><div class="item-meta">TRACK · '+(t.lyrics&&t.lyrics.trim()?'LYRICS ADDED':'NO LYRICS YET')+'</div></div><div class="actions" style="margin-top:0"><button class="button track-edit">EDIT SONG</button><button class="button danger track-delete">DELETE</button></div>';tr.querySelector('.track-edit').onclick=()=>editArtistSong(t.id);tr.querySelector('.track-delete').onclick=async()=>{await deleteArtistSong(t.id);await renderArtistMusic(selectedArtistPageId)};trackBox.appendChild(tr)});
+  tracks.forEach((t,i)=>{const tr=document.createElement('div');tr.className='admin-item';tr.style.padding='12px 14px';tr.innerHTML='<div><div class="item-name">'+(i+1)+'. '+esc(t.title)+'</div><div class="item-meta">TRACK · '+(t.animated_artwork_url?'ANIMATED COVER · ':'')+(t.lyrics&&t.lyrics.trim()?'LYRICS ADDED':'NO LYRICS YET')+'</div></div><div class="actions" style="margin-top:0"><button class="button track-edit">EDIT SONG</button><button class="button danger track-delete">DELETE</button></div>';tr.querySelector('.track-edit').onclick=()=>editArtistSong(t.id);tr.querySelector('.track-delete').onclick=async()=>{await deleteArtistSong(t.id);await renderArtistMusic(selectedArtistPageId)};trackBox.appendChild(tr)});
   body.appendChild(trackBox);
   head.onclick=()=>{const open=body.style.display==='block';document.querySelectorAll('#artistReleasesAdminList .release-tracks').forEach(x=>x.style.display='none');document.querySelectorAll('#artistReleasesAdminList .release-toggle span:last-child').forEach(x=>x.textContent='+');body.style.display=open?'none':'block';head.querySelector('span:last-child').textContent=open?'+':'−'};
   body.querySelector('.release-edit').onclick=e=>{e.stopPropagation();editArtistRelease(rel.id)};
@@ -310,6 +310,7 @@ function artistUploadTrackRow(container,number){
  earlyGroup.innerHTML='<label style="display:flex;align-items:center;gap:8px;font-size:11px"><input class="artist-track-early-toggle" type="checkbox" style="width:auto"> RELEASE THIS TRACK EARLY</label><label class="artist-track-early-date-label" style="display:none;font-size:11px">EARLY RELEASE DATE · MIDNIGHT EASTERN<input class="artist-track-early-date" type="date" style="display:block;width:200px;margin-top:6px"><small style="display:block;margin-top:6px;line-height:1.6">Leave blank to release this track when you save. The rest of the album stays scheduled.</small></label>';
  earlyGroup.querySelector('.artist-track-early-toggle').onchange=function(){earlyGroup.querySelector('.artist-track-early-date-label').style.display=this.checked?'block':'none';};
  row.appendChild(earlyGroup);
+ const motionGroup=document.createElement('details');motionGroup.style.cssText='grid-column:1/-1;padding:12px;border-top:1px solid #333';motionGroup.innerHTML='<summary style="cursor:pointer">ANIMATED COVER · OPTIONAL</summary><label style="display:grid;gap:8px;margin-top:12px">TRACK ANIMATED COVER<input class="artist-track-motion" type="file" accept="video/mp4,video/webm" data-motion-upload><small>Silent MP4/WebM loop · max 20 MB · up to 30 seconds. Album still artwork remains the fallback.</small><div data-motion-preview></div></label>';row.appendChild(motionGroup);
  const lyricsGroup=document.createElement('details');lyricsGroup.className='artist-track-lyrics';lyricsGroup.style.cssText='grid-column:1/-1;padding:12px;border-top:1px solid #333';
  const lyricsSummary=document.createElement('summary');lyricsSummary.textContent='LYRICS · NO LYRICS YET';lyricsSummary.style.cursor='pointer';
  const lyricsLabel=document.createElement('label');lyricsLabel.textContent='LYRICS (OPTIONAL)';lyricsLabel.style.cssText='display:block;margin-top:12px;font-size:11px';
@@ -336,8 +337,9 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
   if(!audio)throw new Error('Select an audio file for track '+(i+1)+'.');
   const releaseEarly=!!row.querySelector('.artist-track-early-toggle')?.checked,earlyDate=row.querySelector('.artist-track-early-date')?.value||null;
   if(releaseEarly&&earlyDate&&date&&earlyDate>date)throw new Error('Track '+(i+1)+' early-release date must be on or before the album release date.');
-  return {title:trackTitle,audio,video,releaseEarly,earlyDate,lyrics:row.querySelector('.artist-track-lyrics-input')?.value.trim()||null,externalFeatures:window.collectExternalFeatureCredits(row.dataset.externalFeatureId),featureIds:[...(row.querySelector('.artist-track-feature-select')?.selectedOptions||[])].map(o=>o.value)};
+  return {motion:row.querySelector('.artist-track-motion')?.files[0],title:trackTitle,audio,video,releaseEarly,earlyDate,lyrics:row.querySelector('.artist-track-lyrics-input')?.value.trim()||null,externalFeatures:window.collectExternalFeatureCredits(row.dataset.externalFeatureId),featureIds:[...(row.querySelector('.artist-track-feature-select')?.selectedOptions||[])].map(o=>o.value)};
  });
+ for(const track of tracks)await window.FSBMotionAdmin.validate(track.motion);
  const artwork=await artistUploadFile('artist-artwork',selectedArtistPageId,artworkFile,'releases');
  const ins=await supabaseClient.from('artist_releases').insert({artist_id:selectedArtistPageId,title,type,artwork_url:artwork,release_date:date||null,hide_track_names:!!hideTrackNames,sort_order:0}).select().single();
  if(ins.error)throw ins.error;
@@ -355,7 +357,8 @@ async function createArtistScheduledRelease(type,title,date,artworkFile,rows,rel
   const {title:trackTitle,audio,video}=tracks[i];
   const audioUrl=await artistUploadFile('artist-music',selectedArtistPageId,audio,'releases/'+ins.data.id);
   const videoUrl=await artistUploadFile('videos',selectedArtistPageId,video,'artist-videos/'+ins.data.id);
-  const song=await supabaseClient.from('artist_songs').insert({artist_id:selectedArtistPageId,title:trackTitle,release_early:tracks[i].releaseEarly,release_date:tracks[i].releaseEarly?tracks[i].earlyDate:null,lyrics:tracks[i].lyrics,audio_url:audioUrl,image_url:artwork,video_url:videoUrl,sort_order:i+1,plays:0,is_top_song:false,external_features:tracks[i].externalFeatures||[],sections:[type==='album'?'albums':'eps'],release_id:ins.data.id,track_number:i+1}).select('id').single();
+  const motionUrl=await window.FSBMotionAdmin.upload(tracks[i].motion,selectedArtistPageId);
+  const song=await supabaseClient.from('artist_songs').insert({animated_artwork_url:motionUrl,artist_id:selectedArtistPageId,title:trackTitle,release_early:tracks[i].releaseEarly,release_date:tracks[i].releaseEarly?tracks[i].earlyDate:null,lyrics:tracks[i].lyrics,audio_url:audioUrl,image_url:artwork,video_url:videoUrl,sort_order:i+1,plays:0,is_top_song:false,external_features:tracks[i].externalFeatures||[],sections:[type==='album'?'albums':'eps'],release_id:ins.data.id,track_number:i+1}).select('id').single();
   if(song.error)throw song.error;
   await window.saveArtistFeatureLinks('artist_song_features','song_id',song.data.id,rows[i].querySelector('.artist-track-feature-select'),selectedArtistPageId);
  }
@@ -425,7 +428,7 @@ function setupArtistMusicUploadUI(){
   });
  }
  if(!type||!fields||!tracks||!add)return;
- const sync=()=>{const project=type.value!=='single';fields.style.display=project?'block':'none';['artistSingleTitleGroup','artistSingleDateGroup','artistSingleArtworkGroup','artistSingleAudioGroup','artistSingleSectionsGroup','artistSingleFeaturesGroup','artistSingleLyricsGroup'].forEach(id=>{const x=document.getElementById(id);if(x)x.style.display=project?'none':''});if(project&&!tracks.children.length)artistUploadTrackRow(tracks,1)};
+ const sync=()=>{const project=type.value!=='single';fields.style.display=project?'block':'none';['artistSingleTitleGroup','artistSingleDateGroup','artistSingleArtworkGroup','artistSingleAudioGroup','artistSingleSectionsGroup','artistSingleFeaturesGroup','artistSingleLyricsGroup','artistSingleMotionGroup'].forEach(id=>{const x=document.getElementById(id);if(x)x.style.display=project?'none':''});if(project&&!tracks.children.length)artistUploadTrackRow(tracks,1)};
  type.addEventListener('change',sync);add.onclick=()=>artistUploadTrackRow(tracks,tracks.children.length+1);sync();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupArtistMusicUploadUI);else setupArtistMusicUploadUI();
@@ -781,5 +784,6 @@ window.addEvent = async function(){
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(setup,0),{once:true});else setTimeout(setup,0);
 })();
+
 
 
