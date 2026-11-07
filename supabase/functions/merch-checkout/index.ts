@@ -147,8 +147,9 @@ async function resolveCart(raw: unknown): Promise<PricedLine[]> {
       }
       catalogVariantId = String(syncVariant.variant_id);
     }
+    if (mapped?.available === false) throw new Error("That size and color combination is currently unavailable.");
     const images = Array.isArray(product.images) ? product.images as unknown[] : [];
-    const price = Number(product.price);
+    const price = Number(mapped?.price == null || mapped.price === "" ? product.price : mapped.price);
     if (!Number.isFinite(price) || price <= 0) throw new Error(`The price for ${String(product.name)} is not valid.`);
     lines.push({
       product_id: Number(product.id), product_name: String(product.name), product_image: images.length ? String(images[0]) : null,
