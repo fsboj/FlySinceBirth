@@ -1196,7 +1196,7 @@ body {
       <div class="form-group" id="artistSingleTitleGroup"><label>SONG TITLE</label><input type="text" id="artistSongTitle" placeholder="Song title"></div><div class="form-group" id="artistSingleDateGroup"><label>RELEASE DATE · MIDNIGHT EASTERN</label><input type="date" id="artistSongReleaseDate"><small>Leave blank to release immediately.</small></div>
       <div class="form-group full" id="artistSingleFeaturesGroup"><label>FEATURED FSB ARTISTS</label><div class="artist-feature-picker" data-select-id="artistSongFeatureArtists"></div><select id="artistSongFeatureArtists" multiple hidden aria-hidden="true"></select><small id="artistSongFeatureHelp">Search for and select one or more FSB artists. Selected artists are linked to this song on their artist pages.</small></div><div class="form-group full"><label>NON-FSB FEATURED ARTISTS</label><div id="artistSongExternalFeatures" class="external-feature-list"></div><button type="button" class="button" onclick="addExternalFeatureRow('artistSongExternalFeatures')">+ ADD NON-FSB ARTIST</button><small>Add an artist name and a link to their page or profile.</small></div>
       <div class="form-group" id="artistSingleArtworkGroup"><label>SONG ARTWORK</label><input type="file" id="artistSongImageFile" accept="image/*"><div id="artistSongImagePreview" style="margin-top:12px;"></div></div>
-      <div class="form-group full" id="artistSingleAudioGroup"><label>AUDIO FILE</label><input type="file" id="artistSongFile" accept="audio/*"><label style="display:block;margin-top:15px;">OPTIONAL VIDEO</label><input type="file" id="artistSongVideoFile" accept="video/*"></div>
+      <div class="form-group full" id="artistSingleAudioGroup"><label>AUDIO FILE</label><input type="file" id="artistSongFile" accept="audio/*"><label style="display:block;margin-top:15px;">OPTIONAL VIDEO</label><input type="file" id="artistSongVideoFile" accept="video/*"><label for="artistSongVideoDate" style="display:block;margin-top:15px">VIDEO RELEASE DATE · MIDNIGHT EASTERN</label><input id="artistSongVideoDate" type="date"><small>Optional. Blank follows the song release date.</small></div>
       <div id="artistSingleMotionGroup" class="form-group full"><div class="form-group full"><label for="artistSongMotionFile">ANIMATED COVER (OPTIONAL)</label><input id="artistSongMotionFile" type="file" accept="video/mp4,video/webm" data-motion-upload><small>MP4 or WebM · max 20 MB · up to 30 seconds. Silent loop. Keep the regular cover as fallback.</small><div data-motion-preview></div></div></div><div class="form-group full" id="artistSingleLyricsGroup"><label for="artistSongLyrics">LYRICS (OPTIONAL)</label><textarea id="artistSongLyrics" rows="8" placeholder="Paste this song’s lyrics here. Keep line breaks for verses and choruses."></textarea><small>Leave blank if lyrics are not available yet. You can add them later by editing the song.</small></div>
       <div class="form-group" id="artistSingleSectionsGroup"><label>MUSIC SECTIONS</label><div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:18px;margin-top:10px;">
         <label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" class="artist-song-section" value="singles"> SINGLES</label>
@@ -1324,7 +1324,7 @@ body {
             <option value="">SELECT ALBUM / EP (OPTIONAL)</option>
           </select>
         </div>
-        <div class="form-group full" id="videoFeatureArtistGroup">
+        <div class="form-group full"><label for="videoReleaseDateInput">VIDEO RELEASE DATE · MIDNIGHT EASTERN</label><input id="videoReleaseDateInput" type="date"><small>Optional. A specific date schedules this video independently, before or after the music. Blank follows the linked song or album; standalone videos publish immediately.</small></div><div class="form-group full" id="videoFeatureArtistGroup">
           <label for="videoFeatureArtistSelect">FEATURE ARTISTS (OPTIONAL)</label>
           <div class="artist-feature-picker" data-select-id="videoFeatureArtistSelect"></div>
           <select id="videoFeatureArtistSelect" class="admin-input" multiple hidden aria-hidden="true"></select>
@@ -3271,15 +3271,18 @@ async function replaceSongVideo(songId, file, input) {
 }
 
 async function editReleaseVideo(id){
- try{const result=await supabaseClient.from('artist_releases').select('id,title,artist_id,video_url').eq('id',id).single();if(result.error)throw result.error;
- openVideoModal();editingSongVideo={...result.data,videoSourceTable:'artist_releases'};
- document.getElementById('videoUploadModalTitle').textContent='EDIT ALBUM / EP VIDEO';
- const submit=document.getElementById('videoUploadSubmit');submit.textContent='SAVE VIDEO';submit.onclick=saveEditedVideo;
- document.getElementById('videoTitleInput').value=result.data.title;document.getElementById('videoTitleInput').readOnly=true;
- document.getElementById('videoThumbnailField').style.display='none';
- document.getElementById('videoArtistSelect').disabled=true;document.getElementById('videoReleaseSelect').disabled=true;
- document.getElementById('videoFeatureArtistGroup').style.display='none';document.getElementById('videoExternalFeatureGroup').style.display='none';
- document.getElementById('videoEditNote').textContent='Choose a replacement video. The album / EP, tracks, artwork and credits stay linked.';document.getElementById('videoEditNote').style.display='block';
+ try{
+  const result=await supabaseClient.from('artist_releases').select('*').eq('id',id).single();if(result.error)throw result.error;
+  openVideoModal();editingSongVideo={...result.data,videoSourceTable:'artist_releases'};
+  document.getElementById('videoUploadModalTitle').textContent='EDIT ALBUM / EP VIDEO';
+  const submit=document.getElementById('videoUploadSubmit');submit.textContent='SAVE VIDEO';submit.onclick=saveEditedVideo;
+  document.getElementById('videoTitleInput').value=result.data.title;document.getElementById('videoTitleInput').readOnly=true;
+  document.getElementById('videoReleaseDateInput').value=result.data.video_release_date||'';
+  document.getElementById('videoThumbnailField').style.display='none';
+  await loadVideoArtistSelector();document.getElementById('videoArtistSelect').value=String(result.data.artist_id);await loadVideoReleases(String(result.data.artist_id));document.getElementById('videoReleaseSelect').value=String(id);
+  document.getElementById('videoArtistSelect').disabled=true;document.getElementById('videoReleaseSelect').disabled=true;
+  document.getElementById('videoFeatureArtistGroup').style.display='none';document.getElementById('videoExternalFeatureGroup').style.display='none';
+  document.getElementById('videoEditNote').textContent='Change the video release date or replace the file. The album / EP, music, artwork and credits stay linked.';document.getElementById('videoEditNote').style.display='block';
  }catch(error){alert('Could not open release video: '+error.message);}
 }
 async function removeReleaseVideo(id){if(!confirm('Remove this album / EP video? Its music, tracks and artwork will remain.'))return;const result=await supabaseClient.from('artist_releases').update({video_url:null}).eq('id',id);if(result.error){alert('Could not remove video: '+result.error.message);return;}await loadVideos();}
@@ -3307,6 +3310,7 @@ function openVideoModal() {
     if (!dialog) return;
     editingStandaloneVideo = null;
     editingSongVideo = null;
+    document.getElementById("videoReleaseDateInput").value="";
     document.getElementById("videoEditNote").textContent = "Leave either file blank to keep the current media. Artist, release, and feature credits stay linked.";
     document.getElementById("videoTitleInput").readOnly = false;
     document.getElementById("videoThumbnailField").style.display = "";
@@ -3371,8 +3375,8 @@ async function addVideo() {
     if (button) { button.disabled = true; button.textContent = "UPLOADING…"; }
     const suffix = Date.now() + "-" + Math.random().toString(36).slice(2);
     const safeName = file => file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const videoPath = (window.FSBArtistAccess?.isArtist()?String(selectedArtistPageId)+"/":"")+"videos/" + suffix + "-" + safeName(videoFile);
-    const imagePath = (window.FSBArtistAccess?.isArtist()?String(selectedArtistPageId)+"/":"")+"videos/" + suffix + "-thumb-" + safeName(imageFile);
+    const videoPath = String(artistId)+"/videos/" + suffix + "-" + safeName(videoFile);
+    const imagePath = String(artistId)+"/videos/" + suffix + "-thumb-" + safeName(imageFile);
     let videoUploaded = false;
     let imageUploaded = false;
 
@@ -3393,7 +3397,7 @@ async function addVideo() {
 
         const inserted = await supabaseClient.from("videos").insert({
             title, link: videoUrl, image: imageUrl, sort_order: nextOrder,
-            artist_id: artistId, release_id: releaseId, external_features: externalFeatures
+            artist_id: artistId, release_id: releaseId, release_date:document.getElementById("videoReleaseDateInput").value||null, external_features: externalFeatures
         }).select("id").single();
         if (inserted.error) {
             await supabaseClient.storage.from("videos").remove([videoPath, imagePath]);
@@ -3441,7 +3445,7 @@ async function saveEditedVideo() {
     const record = songRecord || editingStandaloneVideo;
     if (!record) return alert("Open the video editor again and retry.");
     if (!songRecord && !title) return alert("Enter a video title.");
-    if (songRecord && !videoFile) return alert("Choose a replacement video file from your device.");
+
 
     const uploadedPaths = [];
     let recordSaved = false;
@@ -3449,11 +3453,11 @@ async function saveEditedVideo() {
     if (button) { button.disabled = true; button.textContent = "SAVING…"; }
 
     try {
-        let link = record.link || "";
+        let link = songRecord ? (record.video_url||"") : (record.link||"");
         let image = record.image || "";
         async function upload(file, label) {
             const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-            const path = (window.FSBArtistAccess?.isArtist()?String(selectedArtistPageId)+"/":"")+"videos/" + suffix + (label ? "-" + label : "") + "-" + safeName;
+            const path = String(record.artist_id)+"/videos/" + suffix + (label ? "-" + label : "") + "-" + safeName;
             const result = await supabaseClient.storage.from("videos").upload(path, file);
             if (result.error) throw new Error("Could not upload " + (label ? "thumbnail" : "video") + ": " + result.error.message);
             uploadedPaths.push(path);
@@ -3463,8 +3467,8 @@ async function saveEditedVideo() {
         if (imageFile) image = await upload(imageFile, "thumb");
 
         const result = songRecord
-            ? await supabaseClient.from(songRecord.videoSourceTable||"artist_songs").update({video_url: link}).eq("id", record.id)
-            : await supabaseClient.from("videos").update({title, link, image}).eq("id", record.id);
+            ? await supabaseClient.from(songRecord.videoSourceTable||"artist_songs").update({video_url: link,video_release_date:document.getElementById("videoReleaseDateInput").value||null}).eq("id", record.id)
+            : await supabaseClient.from("videos").update({title, link, image,release_id:document.getElementById("videoReleaseSelect").value||null,release_date:document.getElementById("videoReleaseDateInput").value||null}).eq("id", record.id);
         if (result.error) throw new Error("Could not save video: " + result.error.message);
         recordSaved = true;
         try { await loadVideos(); } catch (refreshError) { console.warn("Video saved, but the list could not refresh:", refreshError); }
@@ -3487,10 +3491,11 @@ async function editVideo(id) {
         if (typeof loadVideoArtistSelector === "function") await loadVideoArtistSelector();
 
         editingStandaloneVideo = video;
+        document.getElementById("videoReleaseDateInput").value=video.release_date||"";
         document.getElementById("videoUploadModalTitle").textContent = "EDIT VIDEO";
         document.getElementById("videoUploadSubmit").textContent = "SAVE VIDEO";
         document.getElementById("videoUploadSubmit").onclick = saveEditedVideo;
-        document.getElementById("videoEditNote").textContent = "Leave either file blank to keep the current media. Artist, release, and feature credits stay linked.";
+        document.getElementById("videoEditNote").textContent = "Leave files blank to keep the current media. You can change the linked album / EP and video release date.";
         document.getElementById("videoEditNote").style.display = "block";
         document.getElementById("videoTitleInput").readOnly = false;
         document.getElementById("videoThumbnailField").style.display = "";
@@ -3510,7 +3515,7 @@ async function editVideo(id) {
             releaseSelect.value = video.release_id ? String(video.release_id) : "";
         }
         artistSelect.disabled = true;
-        releaseSelect.disabled = true;
+        releaseSelect.disabled = false;
         document.getElementById("videoFeatureArtistGroup").style.display = "none";
         document.getElementById("videoExternalFeatureGroup").style.display = "none";
         const dialog = document.getElementById("videoUploadModal");
@@ -3524,7 +3529,7 @@ async function editVideo(id) {
 async function editSongVideo(id) {
     try {
         const result = await supabaseClient.from("artist_songs")
-            .select("id,title,artist_id,release_id,video_url,image_url")
+            .select("id,title,artist_id,release_id,video_url,image_url,video_release_date")
             .eq("id", id)
             .single();
         if (result.error) throw result.error;
@@ -3533,10 +3538,11 @@ async function editSongVideo(id) {
 
         editingStandaloneVideo = null;
         editingSongVideo = song;
+        document.getElementById("videoReleaseDateInput").value=song.video_release_date||"";
         document.getElementById("videoUploadModalTitle").textContent = "EDIT SONG VIDEO";
         document.getElementById("videoUploadSubmit").textContent = "SAVE VIDEO";
         document.getElementById("videoUploadSubmit").onclick = saveEditedVideo;
-        document.getElementById("videoEditNote").textContent = "Choose a replacement video from your device. The song, artwork, artist, release, and feature credits stay linked.";
+        document.getElementById("videoEditNote").textContent = "Change the video release date or choose a replacement file. The song, artwork, artist, release, and credits stay linked.";
         document.getElementById("videoEditNote").style.display = "block";
         document.getElementById("videoTitleInput").value = song.title || "";
         document.getElementById("videoTitleInput").readOnly = true;
@@ -4385,6 +4391,7 @@ async function uploadArtistSong() {
             let updateData = {
                 title: title,
                 release_date: document.getElementById("artistSongReleaseDate").value||null,
+                video_release_date:document.getElementById("artistSongVideoDate").value||null,
                 lyrics: lyrics,
                 sections: sections,
                 is_top_song: sections.includes("top"),
@@ -4703,6 +4710,7 @@ async function uploadArtistSong() {
                         title,
 
                     release_date: document.getElementById("artistSongReleaseDate").value||null,
+                video_release_date:document.getElementById("artistSongVideoDate").value||null,
                     audio_url:
                         audioUrl,
 
@@ -6504,6 +6512,7 @@ async function openArtistMediaEditor(kind,id){
  var typeOptions=kind==="release"?'<div class="form-group"><label>RELEASE TYPE</label><select id="mediaEditType"><option value="album">ALBUM</option><option value="ep">EP</option></select></div><div class="form-group"><label>RELEASE DATE</label><input id="mediaEditDate" type="date"></div><div class="form-group full"><label><input id="mediaEditHideNames" type="checkbox" style="width:auto;margin-right:8px"> HIDE TRACK NAMES UNTIL RELEASE</label></div>':'<div class="form-group"><label>RELEASE DATE · MIDNIGHT EASTERN</label><input id="mediaEditDate" type="date"></div>';
  if(kind==='song'&&item.release_id)typeOptions+='<div class="form-group"><label for="mediaEditTrackNumber">TRACK NUMBER</label><input id="mediaEditTrackNumber" type="number" min="1" step="1"></div>';
  if(kind==='song'&&item.release_id)typeOptions+='<div class="form-group full"><label style="display:flex;gap:8px;align-items:center"><input id="mediaEditReleaseEarly" type="checkbox" style="width:auto"> RELEASE THIS TRACK EARLY</label><small>Use the release date above for an early date, or leave it blank to release this track when you save. Other album tracks stay locked.</small></div>';
+ typeOptions+='<div class="form-group full"><label for="mediaEditVideoDate">VIDEO RELEASE DATE · MIDNIGHT EASTERN</label><input id="mediaEditVideoDate" type="date"><small>Blank follows the music release date. Choose a different date to release the connected video independently.</small></div>';
  overlay.innerHTML='<div style="background:#090909;border:1px solid #333;border-radius:12px;padding:24px;width:min(760px,100%);max-height:92vh;overflow:auto"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div class="panel-title">'+(kind==="release"?"EDIT RELEASE":"EDIT SONG")+'</div><button type="button" class="button" id="mediaEditCancel">CLOSE</button></div><div class="form-grid" style="margin-top:18px"><div class="form-group"><label>NAME</label><input id="mediaEditName"></div>'+typeOptions+'<div class="form-group"><label>REPLACE ARTWORK FROM DEVICE</label><input id="mediaEditImage" type="file" accept="image/*"></div>'+(kind==="song"?'<div class="form-group"><label>REPLACE AUDIO FROM DEVICE</label><input id="mediaEditAudio" type="file" accept="audio/*"></div>':"")+'<div class="form-group"><label for="mediaEditVideo">CONNECTED VIDEO</label><div class="item-meta" style="margin:8px 0">'+(item.video_url?'<strong>VIDEO ATTACHED</strong> · <a href="video.html?'+(kind==="song"?'song_id=':'release_id=')+encodeURIComponent(id)+'" target="_blank" rel="noopener noreferrer">VIEW CURRENT VIDEO</a>':'No video attached.')+'</div><label for="mediaEditVideo">ADD / REPLACE VIDEO FROM DEVICE</label><input id="mediaEditVideo" type="file" accept="video/*">'+(item.video_url?'<label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input id="mediaRemoveVideo" type="checkbox" style="width:auto"> REMOVE CONNECTED VIDEO</label><small style="display:block;margin-top:7px;color:#aaa">Applies when you save changes. The music and artwork stay in place.</small>':'')+'</div>'+(kind==="song"?"<div class=\"form-group full\"><label for=\"mediaEditMotion\">ANIMATED COVER (OPTIONAL)</label><input id=\"mediaEditMotion\" type=\"file\" accept=\"video/mp4,video/webm\" data-motion-upload><small>MP4 or WebM · max 20 MB · up to 30 seconds. Silent loop. Keep the regular cover as fallback.</small><div data-motion-preview></div></div><label class=\"form-group full\"><input id=\"mediaRemoveMotion\" type=\"checkbox\" style=\"width:auto\"> REMOVE ANIMATED COVER (KEEP STILL IMAGE)</label>":"")+sectionOptions+featureOptions+lyricsOptions+'</div><label style="display:flex;gap:8px;margin-top:18px"><input id="mediaRemoveImage" type="checkbox"> REMOVE CURRENT ARTWORK</label><div class="actions"><button class="button primary" id="mediaEditSave">SAVE CHANGES</button></div></div>';
  document.body.appendChild(overlay);
  var card=overlay.firstElementChild;
@@ -6514,6 +6523,7 @@ async function openArtistMediaEditor(kind,id){
 
  overlay.addEventListener("click",function(event){if(event.target===overlay)overlay.remove()});
  card.querySelector("#mediaEditName").value=item.title||"";
+ card.querySelector("#mediaEditVideoDate").value=item.video_release_date||"";
  var trackNumberInput=card.querySelector("#mediaEditTrackNumber");if(trackNumberInput)trackNumberInput.value=item.track_number||"";
  var earlyInput=card.querySelector("#mediaEditReleaseEarly");if(earlyInput)earlyInput.checked=!!item.release_early;
  var dateInput=card.querySelector("#mediaEditDate");if(dateInput)dateInput.value=item.release_date||"";
@@ -6537,7 +6547,7 @@ async function openArtistMediaEditor(kind,id){
  }
  card.querySelector("#mediaEditSave").onclick=async function(){
   var name=card.querySelector("#mediaEditName").value.trim();if(!name){alert("Enter a name.");return}
-  var data={title:name,release_date:card.querySelector("#mediaEditDate").value||null};
+  var data={title:name,release_date:card.querySelector("#mediaEditDate").value||null,video_release_date:card.querySelector("#mediaEditVideoDate").value||null};
   if(kind==="song"){
    var sections=Array.from(card.querySelectorAll(".mediaEditSection:checked")).map(function(x){return x.value});
    if(!sections.length){alert("Select at least one music section.");return}
@@ -6720,7 +6730,7 @@ document.addEventListener("DOMContentLoaded", function(){
 })();
 </script>
 <script src="motion-admin.js?v=20261107"></script>
-<script src="admin-tabs-fix.js?v=20261107-motion"></script>
+<script src="admin-tabs-fix.js?v=20261108-video-dates"></script>
 <script src="store-aisles.js?v=20261018-store-aisle-system"></script>
 
 <script>

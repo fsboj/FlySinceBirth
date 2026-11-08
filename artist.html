@@ -1617,7 +1617,7 @@ footer {
      SUPABASE
 ===================================================== -->
 
-<script src="performance-tracker.js?v=20261103"></script><script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="performance-tracker.js?v=20261103"></script><script src="release-catalog.js?v=20261108-video-dates"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="motion-artwork.js?v=20261107"></script>
 <script src="site-player.js?v=20261107"></script>
 <script defer src="music-library.js?v=20261107-motion"></script>
@@ -2809,8 +2809,8 @@ async function loadArtistVideos() {
     ]);
     const featuredVideos=new Set((videoRefs.data||[]).map(row=>String(row.video_id))),featuredSongs=new Set((songRefs.data||[]).map(row=>String(row.song_id)));
     const candidates=[
-        ...catalog.artist_songs.filter(row=>row.video_url||row.has_video).map(row=>({...row,itemType:"song",link:row.video_url,image:row.image_url})),
-        ...catalog.artist_releases.filter(row=>row.video_url||row.has_video).map(row=>({...row,itemType:"release",link:row.video_url,image:row.artwork_url})),
+        ...catalog.artist_songs.filter(row=>row.video_url||row.has_video).map(row=>({...window.FSBRelease.videoItem(row),itemType:"song",link:row.video_url,image:row.image_url})),
+        ...catalog.artist_releases.filter(row=>row.video_url||row.has_video).map(row=>({...window.FSBRelease.videoItem(row),itemType:"release",link:row.video_url,image:row.artwork_url})),
         ...catalog.videos.filter(row=>row.link||row.has_video).map(row=>({...row,itemType:"video"}))
     ].sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")));
     function unique(items){const seen=new Set();return items.filter(item=>{let identity=item.itemType+":"+item.id;if(item.link){if(window.FSBVideoSource)identity=window.FSBVideoSource.key(item.link);else{try{const url=new URL(item.link);url.searchParams.delete("token");identity=url.href;}catch(_){}}}if(seen.has(identity))return false;seen.add(identity);return true;});}
