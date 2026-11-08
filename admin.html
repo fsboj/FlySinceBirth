@@ -3087,11 +3087,13 @@ async function loadVideos() {
         songVideoQuery = songVideoQuery.eq("artist_id", selectedArtistId);
     }
 
-    const [videoResult, songResult] = await Promise.all([videoQuery, songVideoQuery]);
+    let releaseVideoQuery=supabaseClient.from('artist_releases').select('id,title,type,artist_id,video_url,artwork_url,created_at').not('video_url','is',null).order('created_at',{ascending:false});
+    if(selectedArtistId)releaseVideoQuery=releaseVideoQuery.eq('artist_id',selectedArtistId);
+    const [videoResult, songResult, releaseVideoResult] = await Promise.all([videoQuery, songVideoQuery, releaseVideoQuery]);
     if (videoResult.error) console.error("VIDEOS LOAD ERROR:", videoResult.error);
     if (songResult.error) console.error("SONG VIDEO LOAD ERROR:", songResult.error);
 
-    if (videoResult.error && songResult.error) {
+    if (videoResult.error && songResult.error && releaseVideoResult.error) {
         container.innerHTML = '<div class="admin-item"><div class="item-name">ERROR LOADING VIDEOS</div><div class="item-meta">' + escapeHtml(videoResult.error.message || songResult.error.message) + '</div></div>';
         return;
     }
@@ -3101,6 +3103,7 @@ async function loadVideos() {
     const releaseIds = [...new Set(songVideos.map(song => song.release_id).filter(Boolean).map(String))];
     const artistIds = [...new Set([
         ...videos.map(video => video.artist_id),
+        ...(releaseVideoResult.data||[]).map(release=>release.artist_id),
         ...songVideos.map(song => song.artist_id)
     ].filter(Boolean).map(String))];
 
@@ -3116,6 +3119,7 @@ async function loadVideos() {
     const artistsById = new Map((artistResult.data || []).map(artist => [String(artist.id), artist.name || "Artist"]));
 
     const items = [
+        ...(releaseVideoResult.data||[]).filter(r=>r.video_url).map(r=>({source:'release',id:r.id,title:r.title||'Untitled release',url:r.video_url,image:r.artwork_url,artistId:r.artist_id,artistName:artistsById.get(String(r.artist_id))||'',releaseTitle:String(r.type||'release').toUpperCase(),createdAt:r.created_at})),
         ...videos.map(video => ({
             source: "standalone",
             id: video.id,
@@ -3185,11 +3189,11 @@ async function loadVideos() {
         const meta = document.createElement("div");
         meta.className = "item-meta";
         meta.textContent = [
-            item.source === "song" ? "SONG VIDEO · " + item.releaseTitle : "STANDALONE VIDEO",
+            item.source === "release" ? item.releaseTitle + " VIDEO" : item.source === "song" ? "SONG VIDEO · " + item.releaseTitle : "STANDALONE VIDEO",
             item.artistName || "ARTIST NOT SET"
         ].join(" · ");
         const link = document.createElement("a");
-        link.href = item.source === "song"
+        link.href = item.source === "release" ? "video.html?release_id="+encodeURIComponent(item.id) : item.source === "song"
             ? "video.html?song_id=" + encodeURIComponent(item.id)
             : "video.html?video_id=" + encodeURIComponent(item.id);
         link.target = "_blank";
@@ -3219,12 +3223,12 @@ async function loadVideos() {
             edit.type = "button";
             edit.className = "button";
             edit.textContent = "EDIT";
-            edit.addEventListener("click", () => editSongVideo(item.id));
+            edit.addEventListener("click", () => item.source === "release" ? editReleaseVideo(item.id) : editSongVideo(item.id));
             const remove = document.createElement("button");
             remove.type = "button";
             remove.className = "button danger";
             remove.textContent = "REMOVE VIDEO";
-            remove.addEventListener("click", () => removeSongVideo(item.id));
+            remove.addEventListener("click", () => item.source === "release" ? removeReleaseVideo(item.id) : removeSongVideo(item.id));
             actions.append(edit, remove);
         }
         row.appendChild(actions);
@@ -3267,6 +3271,19 @@ async function replaceSongVideo(songId, file, input) {
     await loadVideos();
 }
 
+async function editReleaseVideo(id){
+ try{const result=await supabaseClient.from('artist_releases').select('id,title,artist_id,video_url').eq('id',id).single();if(result.error)throw result.error;
+ openVideoModal();editingSongVideo={...result.data,videoSourceTable:'artist_releases'};
+ document.getElementById('videoUploadModalTitle').textContent='EDIT ALBUM / EP VIDEO';
+ const submit=document.getElementById('videoUploadSubmit');submit.textContent='SAVE VIDEO';submit.onclick=saveEditedVideo;
+ document.getElementById('videoTitleInput').value=result.data.title;document.getElementById('videoTitleInput').readOnly=true;
+ document.getElementById('videoThumbnailField').style.display='none';
+ document.getElementById('videoArtistSelect').disabled=true;document.getElementById('videoReleaseSelect').disabled=true;
+ document.getElementById('videoFeatureArtistGroup').style.display='none';document.getElementById('videoExternalFeatureGroup').style.display='none';
+ document.getElementById('videoEditNote').textContent='Choose a replacement video. The album / EP, tracks, artwork and credits stay linked.';document.getElementById('videoEditNote').style.display='block';
+ }catch(error){alert('Could not open release video: '+error.message);}
+}
+async function removeReleaseVideo(id){if(!confirm('Remove this album / EP video? Its music, tracks and artwork will remain.'))return;const result=await supabaseClient.from('artist_releases').update({video_url:null}).eq('id',id);if(result.error){alert('Could not remove video: '+result.error.message);return;}await loadVideos();}
 async function removeSongVideo(songId) {
     if (!confirm("Remove the attached video from this song? The song and its audio will remain.")) return;
     const { error } = await supabaseClient.from("artist_songs").update({ video_url: null }).eq("id", songId);
@@ -3447,7 +3464,7 @@ async function saveEditedVideo() {
         if (imageFile) image = await upload(imageFile, "thumb");
 
         const result = songRecord
-            ? await supabaseClient.from("artist_songs").update({video_url: link}).eq("id", record.id)
+            ? await supabaseClient.from(songRecord.videoSourceTable||"artist_songs").update({video_url: link}).eq("id", record.id)
             : await supabaseClient.from("videos").update({title, link, image}).eq("id", record.id);
         if (result.error) throw new Error("Could not save video: " + result.error.message);
         recordSaved = true;
@@ -6826,5 +6843,6 @@ document.addEventListener("DOMContentLoaded", function(){
 </body>
 
 </html>
+
 
 

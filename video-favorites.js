@@ -423,8 +423,8 @@
     catalogObserver.observe(visionCatalog, { childList: true, subtree: true });
   }
   const params = new URLSearchParams(location.search);
-  const videoType = params.has("song_id") ? "song" : "video";
-  const videoId = params.get(videoType === "song" ? "song_id" : "video_id");
+  const videoType = params.has("release_id") ? "release" : params.has("song_id") ? "song" : "video";
+  const videoId = params.get(videoType === "release" ? "release_id" : videoType === "song" ? "song_id" : "video_id");
   if (videoId) {
     const host = document.getElementById("videoFavoriteHost");
     if (host && !host.querySelector("button")) { const button = makeButton(videoType, videoId, document.getElementById("videoTitle")?.textContent || "Video"); if (button) host.appendChild(button); }
@@ -449,4 +449,5 @@
     filterVisionCatalog();
   });
 })();
+
 

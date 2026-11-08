@@ -42,8 +42,8 @@ async function loadVideos(){
  if(songVideoResult.error)console.error("Could not load song videos:",songVideoResult.error);
  if(releaseVideoResult.error)console.error("Could not load album/EP videos:",releaseVideoResult.error);
  const videos=(videoResult.data||[]).filter(v=>v&&v.id!=null);
- const songVideos=(songVideoResult.data||[]).filter(song=>song&&song.video_url);
- const releaseVideos=(releaseVideoResult.data||[]).filter(release=>release&&release.video_url);
+ const songVideos=(songVideoResult.data||[]).filter(song=>song&&(song.video_url||song.has_video));
+ const releaseVideos=(releaseVideoResult.data||[]).filter(release=>release&&(release.video_url||release.has_video));
  if(videoResult.error&&songVideoResult.error&&releaseVideoResult.error){grid.innerHTML='<p class="status">VIDEOS COULD NOT BE LOADED. PLEASE TRY AGAIN LATER.</p>';return;}
  const items=[
   ...videos.map(video=>({...video,itemType:"video",link:video.link,image:video.image})),
@@ -72,7 +72,7 @@ async function loadVideos(){
  }
  grid.innerHTML="";
  items.forEach(item=>{
-  const card=document.createElement("article");card.className="video-card";card.dataset.fsbVideoFavoriteType=item.itemType;card.dataset.fsbVideoFavoriteId=String(item.id);card.tabIndex=0;card.setAttribute("role","link");card.setAttribute("aria-label","Watch "+(item.title||"video"));
+  const card=document.createElement("article");card.className="video-card";card.dataset.videoArtist=String(item.artist_id||"");card.dataset.videoKind=item.itemType;card.dataset.fsbVideoFavoriteType=item.itemType;card.dataset.fsbVideoFavoriteId=String(item.id);card.tabIndex=0;card.setAttribute("role","link");card.setAttribute("aria-label","Watch "+(item.title||"video"));
   const thumb=document.createElement("div");thumb.className="video-thumbnail";
   const img=document.createElement("img");img.src=item.image||"fsblogo.PNG";img.alt=(item.title||"Video")+" thumbnail";img.loading="lazy";thumb.appendChild(img);card.appendChild(thumb);
   const artist=document.createElement("div");artist.className="video-artist";
@@ -97,22 +97,24 @@ async function loadVideos(){
   });
   if(!creditCount)artist.textContent=item.artist||"";
   card.appendChild(artist);
-  const title=document.createElement("div");title.className="video-title";title.textContent=item.title||"Untitled Video";card.appendChild(title);
+  const title=document.createElement("div");title.className="video-title";title.textContent=item.title||"Untitled Video";card.appendChild(title);if(item.locked){const badge=document.createElement("p");badge.className="fsb-upcoming-label";badge.textContent=window.FSBRelease.label(item);card.appendChild(badge);}
   const actions=document.createElement("div");actions.className="video-actions";
   const favorite=window.fsbCreateVideoFavoriteButton?.(item.itemType,item.id,item.title);
   if(favorite){favorite.addEventListener("click",event=>event.stopPropagation());actions.appendChild(favorite);card.appendChild(actions)}
   const open=()=>window.location.href="video.html?"+(item.itemType==="song"?"song_id=":item.itemType==="release"?"release_id=":"video_id=")+encodeURIComponent(item.id)+"&v=70a51fd5";
   card.addEventListener("click",e=>{if(e.target.closest(".video-artist a"))return;open();});
-  card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){if(e.target.closest(".video-artist a"))return;e.preventDefault();open();}});
+  card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){if(e.target!==card)return;e.preventDefault();open();}});
   grid.appendChild(card);
  });
 }
-loadVideos();
+loadVideos().then(()=>window.FSBVideoLibrary?.refresh()).catch(()=>{document.getElementById("videoGrid").textContent="VIDEOS COULD NOT BE LOADED. PLEASE REFRESH.";});
 </script>
 <script src="shared-nav.js?v=20261107-orders"></script>
-<script src="video-favorites.js?v=7"></script>
+<script src="video-favorites.js?v=20261107"></script>
+<script src="video-library-controls.js?v=20261107"></script>
 </body>
 </html>
+
 
 
 
