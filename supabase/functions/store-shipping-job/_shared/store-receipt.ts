@@ -134,7 +134,8 @@ export async function sendStoreReceipts(orderId:number){
  if(!order||order.payment_status!=="paid"||order.payment_provider!=="stripe"||!String(order.stripe_session_id).startsWith("cs_live_"))throw Error("Only a paid live store order can receive a receipt");
  const items=await rest(`fsb_store_order_items?order_id=eq.${orderId}&select=*`) as any[];if(!items.length)throw Error("Order items missing");
  const results:Record<string,string>={};
- for(const kind of ["customer","support"]){
+ // Routine receipts go only to the customer; support receives action-needed alerts separately.
+ for(const kind of ["customer"]){
  const claimed=await claim(orderId,kind);if(claimed!=="claimed"){results[kind]=claimed;continue;}
  try{await sendOrderEmail(kind==="customer"?order.customer_email:SUPPORT_ADDRESS,order,items,kind);await rest(`fsb_store_email_deliveries?order_id=eq.${orderId}&kind=eq.${kind}`,{method:"PATCH",body:JSON.stringify({status:"sent",sent_at:new Date().toISOString(),updated_at:new Date().toISOString(),last_error:""})});results[kind]="sent";}
  catch{await rest(`fsb_store_email_deliveries?order_id=eq.${orderId}&kind=eq.${kind}`,{method:"PATCH",body:JSON.stringify({status:"failed",updated_at:new Date().toISOString(),last_error:"Zoho order email could not be delivered"})});results[kind]="failed";}
