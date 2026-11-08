@@ -145,6 +145,7 @@ async function loadMusicHub() {
     const type = document.getElementById("songTypeFilter").value;
     const sort = document.getElementById("songSort").value;
     visibleSongs = filterMusicCatalog(catalog, { term, artistId, type, sort });
+    window.FSBMusicBrowse?.setSongs(visibleSongs);
     const projectMode=type==='album'||type==='ep';
     const playAll=document.getElementById('playAllSongs');playAll.hidden=projectMode;
     catalogNode.classList.toggle('music-release-grid',projectMode);

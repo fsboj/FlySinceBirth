@@ -19,18 +19,18 @@ footer{padding:35px 6%;border-top:1px solid #202020;color:#555;font-size:9px;let
 </style>
 <link rel="stylesheet" href="public-polish.css?v=20261108-readable-links-16">
   <link rel="icon" type="image/png" href="fsb-favicon.png?v=4">
-</head>
+<link rel="stylesheet" href="browse-playback.css?v=20261108"></head>
 <body>
 <header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="my-fsb.html">FSB</a><a id="topnavArtist" href="artists.html">Artists</a><a id="topnavLibrary" href="music.html">Music</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav></header>
 <main class="page">
 <h1 class="heading">VIDEOS</h1>
-<div id="videoGrid" class="video-grid"><p class="status">LOADING VIDEOS...</p></div>
+<div class="browse-tools"><button id="playAllVideos" type="button" disabled>PLAY ALL</button><button id="shuffleVideos" type="button" disabled>SHUFFLE</button><button id="toggleVideoTracklist" type="button" aria-expanded="false" aria-controls="videoTracklist">TRACK LIST</button></div><section id="videoTracklist" class="browse-list-panel" hidden aria-labelledby="videoTrackTitle"><h2 id="videoTrackTitle">VIDEO TRACK LIST</h2><p class="browse-list-note">Choose a video to watch through this list. Upcoming videos stay locked.</p><ol id="videoTrackRows" class="browse-track-list"></ol></section><div id="videoGrid" class="video-grid"><p class="status">LOADING VIDEOS...</p></div>
 </main>
 <footer><span>© 2026 FLY SINCE BIRTH</span><span>FSB WORLDWIDE</span></footer>
-<script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="video-source.js?v=20261107"></script><script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseClient = supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co","sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
-</script><script src="music-library.js?v=20261105-release"></script><script>
+</script><script src="music-library.js?v=20261105-release"></script><script src="video-browse-playback.js?v=20261108"></script><script>
 async function loadVideos(){
  const grid=document.getElementById("videoGrid");
  const [videoResult,songVideoResult,releaseVideoResult]=await Promise.all([
@@ -70,6 +70,7 @@ async function loadVideos(){
   const result=await supabaseClient.from("artists").select("id,name").in("id",allArtistIds);
   if(!result.error)(result.data||[]).forEach(a=>artistNames[String(a.id)]=a.name||"");
  }
+ window.FSBVideoBrowse?.setItems(items,artistNames);
  grid.innerHTML="";
  items.forEach(item=>{
   const card=document.createElement("article");card.className="video-card";card.dataset.videoArtist=String(item.artist_id||"");card.dataset.videoKind=item.itemType;card.dataset.fsbVideoFavoriteType=item.itemType;card.dataset.fsbVideoFavoriteId=String(item.id);card.tabIndex=0;card.setAttribute("role","link");card.setAttribute("aria-label","Watch "+(item.title||"video"));
@@ -101,7 +102,7 @@ async function loadVideos(){
   const actions=document.createElement("div");actions.className="video-actions";
   const favorite=window.fsbCreateVideoFavoriteButton?.(item.itemType,item.id,item.title);
   if(favorite){favorite.addEventListener("click",event=>event.stopPropagation());actions.appendChild(favorite);card.appendChild(actions)}
-  const open=()=>window.location.href="video.html?"+(item.itemType==="song"?"song_id=":item.itemType==="release"?"release_id=":"video_id=")+encodeURIComponent(item.id)+"&v=70a51fd5";
+  const open=()=>window.FSBVideoBrowse.open(item);
   card.addEventListener("click",e=>{if(e.target.closest(".video-artist a"))return;open();});
   card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){if(e.target!==card)return;e.preventDefault();open();}});
   grid.appendChild(card);

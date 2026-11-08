@@ -9,7 +9,7 @@
 </style>
 <link rel="stylesheet" href="public-polish.css?v=5">
   <link rel="icon" type="image/png" href="fsb-favicon.png?v=4">
-</head>
+<link rel="stylesheet" href="browse-playback.css?v=20261108"></head>
 <body>
 <header class="public-nav"><a class="nav-logo" href="index.html" aria-label="Fly Since Birth home"><img src="fsblogo.PNG" alt="FSB"></a><nav class="public-nav-links" aria-label="Main navigation"><a id="topnavHome" href="index.html">Home</a><a id="topnavMusic" href="my-fsb.html">FSB</a><a id="topnavArtist" href="artists.html">Artists</a><a id="topnavLibrary" href="music.html">Music</a><a id="topnavShop" href="merch.html">Shop</a><a id="topnavVideos" href="videos.html">Videos</a><a id="topnavEvents" href="events.html">Events</a><a id="topnavAccount" href="account.html">Account</a></nav></header><main class="page">
 <div id="playerHost"><div class="empty">LOADING VIDEO...</div></div>
@@ -41,7 +41,7 @@ function videoPlayer(url,title){
  if(isFile){const v=document.createElement("video");v.className="video-player";v.controls=true;v.controlsList="nodownload";v.playsInline=true;v.preload="metadata";v.src=mediaSource.url;if(currentVideo?.image)v.poster=currentVideo.image;v.addEventListener("error",()=>{let note=document.createElement("p");note.className="empty";note.textContent="VIDEO COULD NOT PLAY. Please refresh or try another browser.";host.appendChild(note);},{once:true});v.setAttribute("aria-label",title||"Video player");host.appendChild(v);window.fsbTrackVideo?.(v,performanceVideoKey());return}
  const source=window.FSBVideoSource.parse(url);
  if(!source){const note=document.createElement('p');note.className='empty';note.textContent='THIS VIDEO CANNOT BE EMBEDDED. ';try{const u=new URL(url);if(u.protocol==='https:'){const a=document.createElement('a');a.href=u.href;a.target='_blank';a.rel='noopener noreferrer';a.textContent='OPEN VIDEO';note.appendChild(a);}}catch(_){}host.appendChild(note);return;}
- const frame=document.createElement('iframe');frame.className='video-player';const embedUrl=new URL(source.url);if(params.has('playlist_id')&&params.get('autoplay')==='1')embedUrl.searchParams.set('autoplay','1');frame.src=embedUrl.href;frame.title=title||'Video player';frame.allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';host.appendChild(frame);window.fsbTrackVideo?.(frame,performanceVideoKey());
+ const frame=document.createElement('iframe');frame.className='video-player';const embedUrl=new URL(source.url);if((params.has('playlist_id')||params.has('browse_queue'))&&params.get('autoplay')==='1')embedUrl.searchParams.set('autoplay','1');frame.src=embedUrl.href;frame.title=title||'Video player';frame.allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share';frame.allowFullscreen=true;frame.referrerPolicy='strict-origin-when-cross-origin';host.appendChild(frame);window.fsbTrackVideo?.(frame,performanceVideoKey());
 }
 function showUpcomingVideo(item){document.getElementById("videoTitle").textContent=item.title||"Upcoming video";document.getElementById("playerHost").innerHTML="";const note=document.createElement("p");note.className="fsb-release-note";note.textContent=window.FSBRelease.label(item)+" · This video is not playable yet.";document.getElementById("playerHost").appendChild(note);}
 async function loadPage(){
@@ -148,7 +148,7 @@ loadPage().catch(function(error){
 <script src="shared-nav.js?v=20261107-orders"></script>
 <script src="video-favorites.js?v=20261107"></script>
 <script src="video-playlists.js?v=20261108"></script>
-</body>
+<script src="video-browse-queue.js?v=20261108"></script></body>
 </html>
 
 
