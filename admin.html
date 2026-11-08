@@ -508,7 +508,7 @@ body {
 
 
 <style id="fsbAdminPasswordEyeStyles">#fsbAdminGate .gate-password-field{position:relative}#fsbAdminGate .gate-password-field input{padding-right:58px}#fsbAdminGate .gate-password-toggle{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:48px!important;height:42px;padding:9px!important;margin:0!important;background:transparent!important;color:#aaa!important;border:0!important;letter-spacing:0!important}#fsbAdminGate .gate-password-toggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7}</style>
-<div id="fsbAdminGate" role="dialog" aria-modal="true" aria-labelledby="fsbAdminGateTitle"><div class="gate-card"><img class="gate-logo" src="fsblogo.PNG" alt="FSB"><div class="gate-kicker">FLY SINCE BIRTH</div><h1 id="fsbAdminGateTitle">Admin Sign In</h1><p>Sign in with the authorized FSB admin account to manage the website and store.</p><form id="fsbAdminLoginForm"><label for="fsbAdminEmail">EMAIL</label><input id="fsbAdminEmail" type="email" autocomplete="username" required value="fsbthelabel01@gmail.com"><label for="fsbAdminPassword">PASSWORD</label><div class="gate-password-field"><input id="fsbAdminPassword" type="password" autocomplete="current-password" required><button id="fsbAdminPasswordToggle" class="gate-password-toggle" type="button" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div><button id="fsbAdminLoginButton" type="submit">SIGN IN</button><button id="fsbAdminResetButton" type="button" style="background:transparent;color:#aaa;border-color:#333;margin-top:10px">SEND PASSWORD RESET EMAIL</button><div id="fsbAdminGateStatus" class="gate-status" role="status"></div></form><form id="fsbAdminNewPasswordForm" style="display:none"><p style="margin-top:18px">Choose a new password for your FSB admin account.</p><label for="fsbAdminNewPassword">NEW PASSWORD</label><input id="fsbAdminNewPassword" type="password" autocomplete="new-password" minlength="8" required><label for="fsbAdminConfirmPassword">CONFIRM NEW PASSWORD</label><input id="fsbAdminConfirmPassword" type="password" autocomplete="new-password" minlength="8" required><button id="fsbAdminUpdatePasswordButton" type="submit">UPDATE PASSWORD</button></form></div></div>
+<div id="fsbAdminGate" role="dialog" aria-modal="true" aria-labelledby="fsbAdminGateTitle"><div class="gate-card"><img class="gate-logo" src="fsblogo.PNG" alt="FSB"><div class="gate-kicker">FLY SINCE BIRTH</div><h1 id="fsbAdminGateTitle">Admin Sign In</h1><p>Sign in with your FSB owner or assigned artist account.</p><form id="fsbAdminLoginForm"><label for="fsbAdminEmail">EMAIL</label><input id="fsbAdminEmail" type="email" autocomplete="username" required placeholder="Your FSB account email"><label for="fsbAdminPassword">PASSWORD</label><div class="gate-password-field"><input id="fsbAdminPassword" type="password" autocomplete="current-password" required><button id="fsbAdminPasswordToggle" class="gate-password-toggle" type="button" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div><button id="fsbAdminLoginButton" type="submit">SIGN IN</button><button id="fsbAdminResetButton" type="button" style="background:transparent;color:#aaa;border-color:#333;margin-top:10px">SEND PASSWORD RESET EMAIL</button><div id="fsbAdminGateStatus" class="gate-status" role="status"></div></form><form id="fsbAdminNewPasswordForm" style="display:none"><p style="margin-top:18px">Choose a new password for your FSB admin account.</p><label for="fsbAdminNewPassword">NEW PASSWORD</label><input id="fsbAdminNewPassword" type="password" autocomplete="new-password" minlength="8" required><label for="fsbAdminConfirmPassword">CONFIRM NEW PASSWORD</label><input id="fsbAdminConfirmPassword" type="password" autocomplete="new-password" minlength="8" required><button id="fsbAdminUpdatePasswordButton" type="submit">UPDATE PASSWORD</button></form></div></div>
 
 <div class="admin">
 
@@ -1468,20 +1468,19 @@ const supabaseClient = supabase.createClient(
 /* Private release uploads are configured by release-admin.js after this script. */
 
 </script>
+<script src="artist-access-admin.js?v=20261108-access"></script>
 
 <script>
 (function(){
  const gate=document.getElementById('fsbAdminGate'),form=document.getElementById('fsbAdminLoginForm'),status=document.getElementById('fsbAdminGateStatus'),button=document.getElementById('fsbAdminLoginButton'),resetForm=document.getElementById('fsbAdminNewPasswordForm');
- const allowedEmail='fsbthelabel01@gmail.com';
+
  function say(message,bad=true){status.textContent=message;status.style.color=bad?'#e9b7b7':'#a9d9ad'}
  const passwordInput=document.getElementById('fsbAdminPassword'),passwordToggle=document.getElementById('fsbAdminPasswordToggle');
  passwordToggle.addEventListener('click',function(){const visible=passwordInput.type==='password';passwordInput.type=visible?'text':'password';passwordToggle.setAttribute('aria-label',visible?'Hide password':'Show password');passwordToggle.setAttribute('aria-pressed',String(visible))});
  function showPasswordReset(){form.style.display='none';resetForm.style.display='block';document.body.classList.remove('fsb-admin-ready');say('Choose a new password for your FSB admin account.',false)}
  async function verifyAndEnter(session){
   if(!session||!session.user){document.body.classList.remove('fsb-admin-ready');return false}
-  if(String(session.user.email||'').toLowerCase()!==allowedEmail){await supabaseClient.auth.signOut();say('This account is not authorized for FSB admin.');return false}
-  const check=await supabaseClient.from('fsb_store_admins').select('user_id').eq('user_id',session.user.id).maybeSingle();
-  if(check.error||!check.data){await supabaseClient.auth.signOut();say('Admin access could not be verified.');return false}
+  if(!await window.FSBArtistAccess.enter(session)){await supabaseClient.auth.signOut();say('This account does not have active FSB admin or artist access.');return false}
   document.body.classList.add('fsb-admin-ready');return true;
  }
  async function finishRecoveryUrl(){
@@ -1498,7 +1497,7 @@ const supabaseClient = supabase.createClient(
   return false;
  }
  form.addEventListener('submit',async function(e){e.preventDefault();button.disabled=true;button.textContent='SIGNING IN…';say('');try{const result=await supabaseClient.auth.signInWithPassword({email:document.getElementById('fsbAdminEmail').value.trim(),password:document.getElementById('fsbAdminPassword').value});if(result.error)throw result.error;if(await verifyAndEnter(result.data.session)){location.reload()}}catch(err){say(err.message||'Sign in failed.')}finally{button.disabled=false;button.textContent='SIGN IN'}});
- document.getElementById('fsbAdminResetButton').addEventListener('click',async function(){const email=document.getElementById('fsbAdminEmail').value.trim();if(!email){say('Enter your account email first.');return}try{const r=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:'https://fsboj.github.io/FlySinceBirth/reset-password.html'});if(r.error)throw r.error;say('Reset email requested. Open the email and follow its link back to this page. Check spam if needed.',false)}catch(e){say(e.message||'Could not send reset email.')}});
+ document.getElementById('fsbAdminResetButton').addEventListener('click',async function(){const email=document.getElementById('fsbAdminEmail').value.trim();if(!email){say('Enter your account email first.');return}try{const r=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:'https://flysbirth.com/reset-password.html'});if(r.error)throw r.error;say('Reset email requested. Open the email and follow its link back to this page. Check spam if needed.',false)}catch(e){say(e.message||'Could not send reset email.')}});
  resetForm.addEventListener('submit',async function(e){e.preventDefault();const a=document.getElementById('fsbAdminNewPassword').value,b=document.getElementById('fsbAdminConfirmPassword').value,save=document.getElementById('fsbAdminUpdatePasswordButton');if(a.length<8){say('Use at least 8 characters.');return}if(a!==b){say('The passwords do not match.');return}save.disabled=true;save.textContent='UPDATING…';try{const r=await supabaseClient.auth.updateUser({password:a});if(r.error)throw r.error;say('Password updated. You can now sign in.',false);form.style.display='block';resetForm.style.display='none';document.getElementById('fsbAdminPassword').value=a}catch(e){say(e.message||'Could not update password. The recovery link may have expired or may not be valid.')}finally{save.disabled=false;save.textContent='UPDATE PASSWORD'}});
  (async function init(){try{
   const handled=await finishRecoveryUrl();
@@ -3372,8 +3371,8 @@ async function addVideo() {
     if (button) { button.disabled = true; button.textContent = "UPLOADING…"; }
     const suffix = Date.now() + "-" + Math.random().toString(36).slice(2);
     const safeName = file => file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const videoPath = "videos/" + suffix + "-" + safeName(videoFile);
-    const imagePath = "videos/" + suffix + "-thumb-" + safeName(imageFile);
+    const videoPath = (window.FSBArtistAccess?.isArtist()?String(selectedArtistPageId)+"/":"")+"videos/" + suffix + "-" + safeName(videoFile);
+    const imagePath = (window.FSBArtistAccess?.isArtist()?String(selectedArtistPageId)+"/":"")+"videos/" + suffix + "-thumb-" + safeName(imageFile);
     let videoUploaded = false;
     let imageUploaded = false;
 
@@ -3454,7 +3453,7 @@ async function saveEditedVideo() {
         let image = record.image || "";
         async function upload(file, label) {
             const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-            const path = "videos/" + suffix + (label ? "-" + label : "") + "-" + safeName;
+            const path = (window.FSBArtistAccess?.isArtist()?String(selectedArtistPageId)+"/":"")+"videos/" + suffix + (label ? "-" + label : "") + "-" + safeName;
             const result = await supabaseClient.storage.from("videos").upload(path, file);
             if (result.error) throw new Error("Could not upload " + (label ? "thumbnail" : "video") + ": " + result.error.message);
             uploadedPaths.push(path);
