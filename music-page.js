@@ -30,8 +30,9 @@ function songCard(song) {
   card.className = "hub-song";
   const credits = artistCreditLinks(song.artist_id, song.artist_name || "FLY SINCE BIRTH", song.feature_artist_ids, song.artistNames || new Map(), song.external_features);
   card.innerHTML = `<img src="${musicEsc(song.image_url || "fsblogo.PNG")}" alt=""><div class="hub-song-info"><strong>${musicEsc(song.title || "Untitled")}</strong><small>${credits || "FLY SINCE BIRTH"}</small></div><button class="hub-play" type="button" data-hub-play-song="${musicEsc(song.id)}">${song.audio_url ? "PLAY" : "UNAVAILABLE"}</button>`;
-  const releaseLabel = document.createElement("small");
+  const releaseLabel = document.createElement(song.release_id ? "a" : "small");
   releaseLabel.className = "hub-song-release";
+  if(song.release_id){releaseLabel.href="epalbum.html?id="+encodeURIComponent(song.release_id);releaseLabel.setAttribute("aria-label","Open "+(song.release_title||"album"));}
   releaseLabel.textContent = song.release_title ? (song.release_type === "ep" ? "EP" : "ALBUM") + " · " + song.release_title : "SINGLE";
   card.querySelector(".hub-song-info").appendChild(releaseLabel);
   const artwork = card.querySelector("img");
@@ -66,7 +67,7 @@ function filterMusicCatalog(catalog, { term = "", artistId = "", type = "", sort
 async function loadMusicHub() {
   const [allSongs, releases] = await Promise.all([
     loadAllMusicRows("artist_songs", "id,title,artist_id,audio_url,animated_artwork_url,image_url,release_id,track_number,external_features,created_at,release_date,lyrics"),
-    loadAllMusicRows("artist_releases", "id,title,type,artwork_url,release_date")
+    loadAllMusicRows("artist_releases", "id,title,type,artwork_url,release_date,artist_id")
   ]);
   const releaseById = new Map(releases.map(release => [String(release.id), release]));
   const songs = allSongs;
@@ -83,7 +84,7 @@ async function loadMusicHub() {
     ...(songFeatureResult.data || []).map(row => row.artist_id)
   ].filter(Boolean).map(String))];
   const names = new Map();
-  if (allArtistIds.length) {
+  if (allArtistIds.length || releases.length) {
     const result = { data: await loadAllMusicRows("artists", "id,name"), error: null };
     if (result.error) console.warn("Artist names could not be loaded:", result.error);
     (result.data || []).forEach(artist => names.set(String(artist.id), artist.name || ""));
@@ -144,6 +145,30 @@ async function loadMusicHub() {
     const type = document.getElementById("songTypeFilter").value;
     const sort = document.getElementById("songSort").value;
     visibleSongs = filterMusicCatalog(catalog, { term, artistId, type, sort });
+    const projectMode=type==='album'||type==='ep';
+    const playAll=document.getElementById('playAllSongs');playAll.hidden=projectMode;
+    catalogNode.classList.toggle('music-release-grid',projectMode);
+    if(projectMode){
+      const projects=releases.filter(release=>{
+        if(release.type!==type)return false;
+        const releaseSongs=catalog.filter(song=>String(song.release_id)===String(release.id));
+        const matchesArtist=!artistId||String(release.artist_id)===artistId||releaseSongs.some(song=>String(song.artist_id)===artistId||(song.feature_artist_ids||[]).map(String).includes(artistId));
+        const searchText=[release.title,names.get(String(release.artist_id)),...releaseSongs.map(song=>song.title)].join(' ').toLowerCase();
+        return matchesArtist&&(!term||searchText.includes(term));
+      }).sort((a,b)=>sort==='artist'?(names.get(String(a.artist_id))||'').localeCompare(names.get(String(b.artist_id))||''):(sort==='title'?(a.title||'').localeCompare(b.title||''):String(b.release_date||b.created_at||'').localeCompare(String(a.release_date||a.created_at||''))));
+      document.getElementById('catalogTitle').textContent=(selectedArtistId?(names.get(selectedArtistId)||'Artist')+' — ':'')+(type==='ep'?'EPs':'Albums');
+      catalogNode.replaceChildren();document.getElementById('songCount').textContent=projects.length+' projects';
+      if(!projects.length)catalogNode.innerHTML='<p class="empty">No '+(type==='ep'?'EPs':'albums')+' match these filters.</p>';
+      projects.forEach(release=>{
+        const card=document.createElement('a');card.className='music-release-card';card.href='epalbum.html?id='+encodeURIComponent(release.id);card.setAttribute('aria-label','Open '+(release.title||'release'));
+        const image=document.createElement('img');image.src=release.artwork_url||'fsblogo.PNG';image.alt='';image.loading='lazy';image.onerror=()=>{image.onerror=null;image.src='fsblogo.PNG';};
+        const title=document.createElement('strong');title.textContent=release.title||'Untitled';
+        const artist=document.createElement('span');artist.textContent=names.get(String(release.artist_id))||'FLY SINCE BIRTH';
+        const label=document.createElement('small');label.textContent=(type==='ep'?'EP':'ALBUM')+(release.locked?' · '+window.FSBRelease.label(release):'');
+        card.append(image,title,artist,label);catalogNode.append(card);
+      });
+      return;
+    }
     document.getElementById("catalogTitle").textContent = selectedArtistId ? (names.get(selectedArtistId) || "Artist") + " — Songs" : "All Songs";
     catalogNode.replaceChildren();
     document.getElementById("songCount").textContent = `${visibleSongs.length} of ${catalog.length} songs`;
