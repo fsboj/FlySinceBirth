@@ -1549,7 +1549,10 @@ footer {
         </div>
 
     </div>
-
+    <div id="appearsInSection" hidden style="margin-top:44px">
+        <h3 style="font-size:24px;line-height:1.3;letter-spacing:1px;margin-bottom:24px">APPEARS IN</h3>
+        <div id="appearsIn" class="video-grid"></div>
+    </div>
 </section>
 
 
@@ -2797,40 +2800,27 @@ async function loadArtistReleaseTracks(
 
 
 async function loadArtistVideos() {
-    const videoSection = document.getElementById("artistVideos");
-    if (!videoSection || !artistId) return;
-
-    const [videoResult, songVideoResult] = await Promise.all([
-        supabaseClient
-            .from("videos")
-            .select("*")
-            .eq("artist_id", artistId)
-            .order("created_at", { ascending: false }),
-        supabaseClient
-            .from("artist_songs")
-            .select("id,title,artist_id,video_url,image_url,created_at")
-            .eq("artist_id", artistId)
-            .not("video_url", "is", null)
-            .order("created_at", { ascending: false })
+    const ownHost=document.getElementById("artistVideos"),featureHost=document.getElementById("appearsIn"),featureSection=document.getElementById("appearsInSection");
+    if(!ownHost||!artistId)return;
+    const [catalog,videoRefs,songRefs]=await Promise.all([
+        window.FSBRelease.catalog(),
+        supabaseClient.from("video_artist_features").select("video_id").eq("artist_id",artistId),
+        supabaseClient.from("artist_song_features").select("song_id").eq("artist_id",artistId)
     ]);
-
-    if (videoResult.error) console.error("Could not load artist videos:", videoResult.error);
-    if (songVideoResult.error) console.error("Could not load song videos:", songVideoResult.error);
-
-    const items = [
-        ...(videoResult.data || []).map(video => ({ ...video, itemType: "video", link: video.link, image: video.image })),
-        ...(songVideoResult.data || [])
-            .filter(song => song.video_url || (song.locked && song.has_video))
-            .map(song => ({ ...song, itemType: "song", link: song.video_url, image: song.image_url }))
-    ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-
-    videoSection.innerHTML = "";
-
-    if (!items.length) {
-        videoSection.innerHTML = '<div class="empty-state">NO VIDEOS AVAILABLE</div>';
-        return;
-    }
-
+    const featuredVideos=new Set((videoRefs.data||[]).map(row=>String(row.video_id))),featuredSongs=new Set((songRefs.data||[]).map(row=>String(row.song_id)));
+    const candidates=[
+        ...catalog.artist_songs.filter(row=>row.video_url||row.has_video).map(row=>({...row,itemType:"song",link:row.video_url,image:row.image_url})),
+        ...catalog.artist_releases.filter(row=>row.video_url||row.has_video).map(row=>({...row,itemType:"release",link:row.video_url,image:row.artwork_url})),
+        ...catalog.videos.filter(row=>row.link||row.has_video).map(row=>({...row,itemType:"video"}))
+    ].sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")));
+    function unique(items){const seen=new Set();return items.filter(item=>{let identity=item.itemType+":"+item.id;if(item.link){if(window.FSBVideoSource)identity=window.FSBVideoSource.key(item.link);else{try{const url=new URL(item.link);url.searchParams.delete("token");identity=url.href;}catch(_){}}}if(seen.has(identity))return false;seen.add(identity);return true;});}
+    const own=unique(candidates.filter(item=>String(item.artist_id)===String(artistId)));
+    const featured=unique(candidates.filter(item=>String(item.artist_id)!==String(artistId)&&((item.itemType==="song"&&featuredSongs.has(String(item.id)))||(item.itemType==="video"&&featuredVideos.has(String(item.id))))));
+    ownHost.innerHTML="";
+    if(own.length)renderArtistVideoCards(ownHost,own);else ownHost.innerHTML='<div class="empty-state">NO VIDEOS AS LEAD ARTIST YET</div>';
+    if(featureHost&&featureSection){featureHost.innerHTML="";featureSection.hidden=!featured.length;if(featured.length)renderArtistVideoCards(featureHost,featured);else if(videoRefs.error||songRefs.error){featureSection.hidden=false;featureHost.textContent="FEATURED VIDEOS COULD NOT BE LOADED. PLEASE REFRESH.";}}
+}
+function renderArtistVideoCards(videoSection,items){
     items.forEach(function(item) {
         const card = document.createElement("div");
         card.className = "video-card";
@@ -2887,14 +2877,15 @@ async function loadArtistVideos() {
         title.className = "video-title";
         title.textContent = item.title || "Untitled Video";
         card.appendChild(title);
+        if(item.locked){const badge=document.createElement("p");badge.className="fsb-upcoming-label";badge.textContent=window.FSBRelease.label(item);card.appendChild(badge);}
 
         const open = function() {
-            const parameter = item.itemType === "song" ? "song_id" : "video_id";
+            const parameter = item.itemType === "song" ? "song_id" : item.itemType === "release" ? "release_id" : "video_id";
             window.location.href = "video.html?" + parameter + "=" + encodeURIComponent(item.id) + "&v=70a51fd5";
         };
         card.addEventListener("click", open);
         card.addEventListener("keydown", function(event) {
-            if (event.key === "Enter" || event.key === " ") {
+            if (event.target === card && (event.key === "Enter" || event.key === " ")) {
                 event.preventDefault();
                 open();
             }
@@ -2902,6 +2893,7 @@ async function loadArtistVideos() {
         videoSection.appendChild(card);
     });
 }
+
 
 
 /* =====================================================
@@ -2980,6 +2972,7 @@ loadArtist();
 
 
 <script src="shared-nav.js?v=20261107-orders"></script>
+<script src="video-source.js?v=20261107"></script>
 <script src="video-artist-credits.js?v=20261108"></script>
 </body>
 
