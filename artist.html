@@ -1517,6 +1517,13 @@ footer {
     </div>
 
 </section>
+<!-- Featured songs live separately from this artist's own releases. -->
+<section class="section" id="appearsOnSection" hidden>
+    <div class="section-label">FEATURES</div>
+    <h2 class="section-heading">APPEARS ON</h2>
+    <div id="appearsOn" class="compact-song-grid"></div>
+</section>
+
 <!-- =====================================================
      VIDEOS
 ===================================================== -->
@@ -2090,6 +2097,9 @@ async function loadArtistMusic() {
         if(!current||score>currentScore||(score===currentScore&&String(song.created_at||"")>String(current.created_at||"")))dedupedArtistSongs.set(key,song);
     });
     songs=[...dedupedArtistSongs.values()].sort((left,right)=>String(right.created_at||"").localeCompare(String(left.created_at||"")));
+const ownSongs=songs.filter(song=>String(song.artist_id)===String(artistId));
+const appearanceSongs=songs.filter(song=>String(song.artist_id)!==String(artistId)&&(song.feature_artist_ids||[]).map(String).includes(String(artistId)));
+function artistSongQueue(song){return String(song.artist_id)===String(artistId)?ownSongs:appearanceSongs;}
 function renderArtistSongCredits(node,song){
     node.replaceChildren();
     const ids=[...new Set([String(song.artist_id||""),...(song.feature_artist_ids||[]).map(String)].filter(Boolean))];
@@ -2110,7 +2120,7 @@ function createTopSongButton(song) {
         const index =
             songs.indexOf(song);
 
-        playSong(index);
+        playSong(index,artistSongQueue(song));
     };
 
 
@@ -2212,7 +2222,7 @@ function createCompactSongButton(song) {
         const index =
             songs.indexOf(song);
 
-        playSong(index);
+        playSong(index,artistSongQueue(song));
     };
 
 
@@ -2310,7 +2320,7 @@ if (musicSection) {
         songs.filter(
             function(song) {
 
-                return !song.release_id || String(song.artist_id)!==String(artistId);
+                return String(song.artist_id)===String(artistId)&&!song.release_id;
 
             }
         );
@@ -2448,7 +2458,7 @@ if (musicSection) {
         topSongs.innerHTML = "";
 
         const topSongList =
-            songs.filter(
+            ownSongs.filter(
                 function(song) {
 
                     return (
@@ -2493,7 +2503,7 @@ if (musicSection) {
         singles.innerHTML = "";
 
        const singleList =
-    songs.filter(
+    ownSongs.filter(
         function(song) {
 
             const isTopSong = song.is_top_song === true ||
@@ -2526,6 +2536,13 @@ if (musicSection) {
             );
         }
     }
+    const appearsOn=document.getElementById("appearsOn"),appearsOnSection=document.getElementById("appearsOnSection");
+    if(appearsOn&&appearsOnSection){
+        appearsOn.replaceChildren();
+        appearsOnSection.hidden=appearanceSongs.length===0;
+        appearanceSongs.forEach(song=>appearsOn.appendChild(createCompactSongButton(song)));
+    }
+
 }
 
  
