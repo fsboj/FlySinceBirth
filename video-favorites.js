@@ -38,7 +38,10 @@
     button.className = "fsb-video-favorite";
     button.dataset.videoFavoriteAction = keyOf(type, id);
     button.setAttribute("aria-label", `Favorite video ${title || "Untitled"}`);
-    button.textContent = "♡";
+    const active = favorites.has(keyOf(type, id));
+    button.setAttribute("aria-pressed", String(active));
+    button.textContent = active ? "♥" : "♡";
+    button.title = active ? "Remove video from favorites" : "Add video to favorites";
     button.hidden = !currentUser;
     button.disabled = !currentUser;
     return button;
@@ -164,6 +167,7 @@
     favorites = new Set((data || []).map(row => keyOf(row.content_type, row.content_id)));
     updateButtons();
     await Promise.all([renderFavoriteVideoCards(), renderSongFavoriteCards(), renderFavoriteReleaseCards()]);
+    updateButtons();
     filterVisionCatalog();
     await renderFavoriteList(data || []);
   }
@@ -444,9 +448,8 @@
   });
   window.addEventListener("fsb:favorites-changed", event => {
     if (Array.isArray(event.detail?.videoIds)) favorites = new Set(event.detail.videoIds);
-    renderFavoriteVideoCards();
-    renderSongFavoriteCards();
-    filterVisionCatalog();
+    updateButtons();
+    Promise.all([renderFavoriteVideoCards(), renderSongFavoriteCards(), renderFavoriteReleaseCards()]).then(() => { updateButtons(); filterVisionCatalog(); }).catch(error => console.error("Saved videos could not refresh:", error));
   });
 })();
 
