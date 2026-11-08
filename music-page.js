@@ -150,6 +150,8 @@ async function loadMusicHub() {
     document.querySelectorAll('[data-music-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.musicView===type)));
     const projectMode=type==='album'||type==='ep';
     const playAll=document.getElementById('playAllSongs');playAll.hidden=projectMode;
+    document.querySelector('.catalog-playback-actions').hidden=projectMode;
+    if(projectMode){document.getElementById('musicTracklist').hidden=true;document.getElementById('toggleMusicTracklist').setAttribute('aria-expanded','false');}
     catalogNode.classList.toggle('music-release-grid',projectMode);
     if(projectMode){
       const projects=releases.filter(release=>{
