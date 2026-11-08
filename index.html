@@ -1314,7 +1314,7 @@ footer {
      JAVASCRIPT
 ===================================================== -->
    
-<script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="video-source.js?v=20261107"></script><script src="release-catalog.js?v=20261105"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
@@ -1877,20 +1877,25 @@ grid.appendChild(card);
     const grid = document.getElementById("videoGrid");
     if (!grid) return;
 
-    const { data, error } = await supabaseClient
-        .from("videos")
-        .select("*")
-        .order("sort_order", { ascending: true });
-
-    if (error) {
-        console.error("Could not load videos:", error);
-        return;
-    }
-
-    grid.innerHTML = "";
-    const videos = (data || []).filter(function(video) {
-        return video && video.id != null;
+    const results = await Promise.all([
+        supabaseClient.from("videos").select("*").order("sort_order", {ascending:true}),
+        supabaseClient.from("artist_songs").select("*").not("video_url","is",null),
+        supabaseClient.from("artist_releases").select("*").not("video_url","is",null)
+    ]);
+    if(results.every(r=>r.error)){grid.textContent="VIDEOS COULD NOT BE LOADED. PLEASE REFRESH.";return;}
+    const [standalone,songs,releases]=results.map(r=>r.data||[]);
+    const candidates=[
+        ...songs.filter(s=>s.video_url||s.has_video).map(s=>({...s,itemType:"song",link:s.video_url,image:s.image_url})),
+        ...releases.filter(r=>r.video_url||r.has_video).map(r=>({...r,itemType:"release",link:r.video_url,image:r.artwork_url})),
+        ...standalone.map(v=>({...v,itemType:"video"}))
+    ];
+    const seen=new Set(),videos=candidates.filter(v=>{
+        if(v.id==null||(!v.link&&!v.has_video))return false;
+        const key=v.link?window.FSBVideoSource.key(v.link):v.itemType+":"+v.id;
+        if(seen.has(key))return false;seen.add(key);return true;
     });
+    grid.innerHTML="";
+    if(!videos.length){grid.textContent="NO VIDEOS AVAILABLE YET.";return;}
 
     // Randomize the homepage video selection/order on each load.
     for (let i = videos.length - 1; i > 0; i--) {
@@ -1898,10 +1903,15 @@ grid.appendChild(card);
         [videos[i], videos[j]] = [videos[j], videos[i]];
     }
 
-    const featureResult=videos.length?await supabaseClient.from("video_artist_features").select("video_id,artist_id,sort_order").in("video_id",videos.map(video=>video.id)).order("sort_order",{ascending:true}):{data:[],error:null};
+    const [videoFeatures,songFeatures]=await Promise.all([
+        standalone.length?supabaseClient.from("video_artist_features").select("video_id,artist_id,sort_order").in("video_id",standalone.map(v=>v.id)).order("sort_order"):Promise.resolve({data:[]}),
+        songs.length?supabaseClient.from("artist_song_features").select("song_id,artist_id,sort_order").in("song_id",songs.map(v=>v.id)).order("sort_order"):Promise.resolve({data:[]})
+    ]);
     const featureIdsByVideo=new Map();
-    (featureResult.data||[]).forEach(function(row){const key=String(row.video_id);if(!featureIdsByVideo.has(key))featureIdsByVideo.set(key,[]);featureIdsByVideo.get(key).push(String(row.artist_id))});
-    const artistIds = Array.from(new Set([...videos.map(function(video){return video.artist_id}),...(featureResult.data||[]).map(row=>row.artist_id)].filter(Boolean).map(String)));
+    for(const [type,rows,column] of [["video",videoFeatures.data||[],"video_id"],["song",songFeatures.data||[],"song_id"]]){
+        for(const row of rows){const key=type+":"+row[column];if(!featureIdsByVideo.has(key))featureIdsByVideo.set(key,[]);featureIdsByVideo.get(key).push(String(row.artist_id));}
+    }
+    const artistIds=Array.from(new Set([...videos.map(v=>v.artist_id),...(videoFeatures.data||[]).map(v=>v.artist_id),...(songFeatures.data||[]).map(v=>v.artist_id)].filter(Boolean).map(String)));
     const artistNames = {};
 
     if (artistIds.length) {
@@ -1939,7 +1949,7 @@ grid.appendChild(card);
 
         const artist = document.createElement("div");
         artist.className = "video-artist";
-        const ids=[...new Set([video.artist_id,...(featureIdsByVideo.get(String(video.id))||[])].filter(Boolean).map(String))];let creditCount=0;
+        const ids=[...new Set([video.artist_id,...(featureIdsByVideo.get(video.itemType+":"+video.id)||[])].filter(Boolean).map(String))];let creditCount=0;
         ids.forEach(function(id){const link=document.createElement("a");link.href="artist.html?id="+encodeURIComponent(id);link.textContent=artistNames[String(id)]||"Artist";link.style.color="inherit";link.addEventListener("click",event=>event.stopPropagation());if(creditCount)artist.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));artist.appendChild(link);creditCount++});
         (video.external_features||[]).forEach(function(credit){if(!credit||!credit.name||!credit.url)return;try{const url=new URL(credit.url);if(!["http:","https:"].includes(url.protocol))return;const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent=credit.name;link.style.color="inherit";link.addEventListener("click",event=>event.stopPropagation());if(creditCount)artist.appendChild(document.createTextNode(creditCount===1?" feat. ":", "));artist.appendChild(link);creditCount++}catch(_){}});
         if(!creditCount)artist.textContent=video.artist||"";
@@ -1949,13 +1959,14 @@ grid.appendChild(card);
         title.className = "video-title";
         title.textContent = video.title || "Untitled Video";
         card.appendChild(title);
+        if(video.locked){const badge=document.createElement("p");badge.className="fsb-upcoming-label";badge.textContent=window.FSBRelease.label(video);card.appendChild(badge);}
 
         function openVideoPage() {
-            window.location.href = "video.html?video_id=" + encodeURIComponent(video.id) + "&v=70a51fd5";
+            window.location.href = "video.html?"+video.itemType+"_id=" + encodeURIComponent(video.id) + "&v=70a51fd5";
         }
         card.addEventListener("click", openVideoPage);
         card.addEventListener("keydown", function(event) {
-            if (event.key === "Enter" || event.key === " ") {
+            if (event.target === card && (event.key === "Enter" || event.key === " ")) {
                 event.preventDefault();
                 openVideoPage();
             }
