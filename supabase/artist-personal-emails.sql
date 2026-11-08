@@ -1,0 +1,2 @@
+alter table public.artist_access drop constraint artist_access_email_check;
+alter table public.artist_access add constraint artist_access_email_check check(email=lower(btrim(email)) and length(email)<=254 and email ~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$');
