@@ -1,0 +1,46 @@
+/* Existing uploads remain attached unless explicitly replaced or removed. */
+(() => {
+ const project='https://ccvhvxugoebdqwxxankl.supabase.co';
+ const defs=kind=>[
+  {input:'mediaEditImage',remove:'mediaRemoveImage',field:kind==='release'?'artwork_url':'image_url',label:'Artwork',type:'image'},
+  ...(kind==='song'?[{input:'mediaEditAudio',remove:'mediaRemoveAudio',field:'audio_url',label:'Audio',type:'audio'}]:[]),
+  {input:'mediaEditVideo',remove:'mediaRemoveVideo',field:'video_url',label:'Music video',type:'video'},
+  ...(kind==='song'?[{input:'mediaEditMotion',remove:'mediaRemoveMotion',field:'animated_artwork_url',label:'Animated cover',type:'motion'}]:[])
+ ];
+ function node(tag,value,cls){const e=document.createElement(tag);if(value)e.textContent=value;if(cls)e.className=cls;return e;}
+ function filename(value){try{return decodeURIComponent(new URL(value).pathname.split('/').pop())||'Uploaded file';}catch{return 'Uploaded file';}}
+ async function previewUrl(value,client){const url=new URL(value);if(url.protocol!=='https:'||url.username||url.password)throw Error('Unsupported media address');const prefix='/storage/v1/object/public/release-media/';if(url.origin===project&&url.pathname.startsWith(prefix)){const path=decodeURIComponent(url.pathname.slice(prefix.length));const result=await client.storage.from('release-media').createSignedUrl(path,3600);if(result.error)throw result.error;return result.data.signedUrl;}return url.href;}
+ function removalPatch(kind,removed){const patch={};for(const asset of defs(kind))if(removed.has(asset.remove))patch[asset.field]=null;return patch;}
+ function mount(card,item,kind,client){
+  if(!document.getElementById('mediaAssetStyles')){const style=node('style',`.fsb-media-asset{border:1px solid #333;padding:16px;min-width:0;background:#0d0d0d}.fsb-media-asset h3{margin:0 0 10px;font:700 14px Arial;color:#eee}.fsb-media-asset p{font:12px/1.6 Arial;color:#aaa;overflow-wrap:anywhere;margin:8px 0}.fsb-media-asset img{display:block;max-width:100%;width:190px;max-height:190px;object-fit:contain;background:#080808}.fsb-media-asset video{display:block;width:100%;max-height:210px;background:#080808}.fsb-media-asset audio{display:block;width:100%;max-width:100%;margin:9px 0}.fsb-media-asset input[type=file]{max-width:100%;font-size:12px}.fsb-media-asset label{line-height:1.6}.fsb-media-asset a{color:#eee;text-decoration:underline;font:12px Arial}.fsb-media-remove{display:flex!important;align-items:center;gap:8px;margin-top:12px!important;font-size:12px!important}.fsb-media-remove[hidden]{display:none!important}.fsb-media-remove input{width:auto!important}.fsb-release-content{grid-column:1/-1;border-top:1px solid #333;padding-top:18px}.fsb-release-content h3{font:700 15px Arial;margin:0 0 14px}.fsb-release-content-row{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:13px 0;border-top:1px solid #262626}.fsb-release-content-row div{min-width:0}.fsb-release-content-row p{font:11px/1.6 Arial;color:#aaa;overflow-wrap:anywhere;margin:6px 0}`);style.id='mediaAssetStyles';document.head.appendChild(style);}
+  const controls=[],blobs=new Set();
+  for(const asset of defs(kind)){
+   const input=card.querySelector('#'+asset.input);if(!input)continue;const old=input.closest('.form-group');if(!old)continue;
+   const block=node('div',null,'form-group fsb-media-asset');block.appendChild(node('h3',asset.label));const status=node('p');status.setAttribute('role','status');const current=node('div');const attached=!!item[asset.field];const name=node('p',attached?filename(item[asset.field]):'No '+asset.label.toLowerCase()+' added.');block.append(status,name,current);
+   const link=node('a','OPEN CURRENT FILE');link.target='_blank';link.rel='noopener noreferrer';link.hidden=true;block.appendChild(link);
+   const label=node('label',(attached?'REPLACE ':'ADD ')+asset.label.toUpperCase());label.htmlFor=input.id;label.style.cssText='display:block;margin-top:14px';block.append(label,input);
+   let remove=card.querySelector('#'+asset.remove);if(remove){const oldLabel=remove.closest('label');if(oldLabel)oldLabel.remove();}else{remove=document.createElement('input');remove.type='checkbox';remove.id=asset.remove;}
+   const removeLabel=node('label',null,'fsb-media-remove');removeLabel.append(remove,document.createTextNode('REMOVE '+(asset.type==='video'?'CONNECTED VIDEO':asset.label.toUpperCase())));removeLabel.hidden=!attached;remove.disabled=!attached;block.appendChild(removeLabel);
+   if(asset.type==='motion')block.appendChild(node('p','MP4 or WebM · max 20 MB · up to 30 seconds. Plays silently.'));
+   block.appendChild(node('p','Leave the file picker empty to keep the current file. Changes apply when you save.'));
+   old.replaceWith(block);let version=0,currentSource=null;
+   const pause=()=>current.querySelectorAll('audio,video').forEach(el=>el.pause());
+   function render(url){pause();current.replaceChildren();if(!url)return;const media=document.createElement(asset.type==='image'?'img':asset.type==='audio'?'audio':'video');media.src=url;media.setAttribute('aria-label',asset.label+' preview');if(asset.type==='image')media.alt=(item.title||'Release')+' artwork';else{media.controls=true;media.preload='metadata';if(media.tagName==='VIDEO')media.playsInline=true;if(asset.type==='motion'){media.muted=true;media.defaultMuted=true;media.loop=true;}}media.addEventListener('error',()=>{if(current.contains(media))status.textContent='File attached; this browser could not preview it. You can replace or remove it.';},{once:true});current.appendChild(media);}
+   function sync(){version++;if(remove.checked){input.value='';input.disabled=true;pause();status.textContent='Will be removed when you save.';name.textContent=attached?filename(item[asset.field]):'';return;}input.disabled=false;const file=input.files[0];status.textContent=file?'Replacement selected — save to apply.':attached?'ATTACHED':'NOT ADDED';name.textContent=file?file.name:attached?filename(item[asset.field]):'No '+asset.label.toLowerCase()+' added.';if(file){const url=URL.createObjectURL(file);blobs.add(url);render(url);}else render(currentSource);}
+   remove.addEventListener('change',sync);input.addEventListener('change',()=>{if(input.files[0])remove.checked=false;sync();});
+   controls.push({asset,remove,input});sync();
+   if(attached){const start=version;previewUrl(item[asset.field],client).then(url=>{if(!block.isConnected)return;currentSource=url;link.href=url;link.hidden=false;if(start===version&&!remove.checked&&!input.files[0])render(url);}).catch(()=>{if(block.isConnected&&start===version)status.textContent='ATTACHED · Preview unavailable. You can replace or remove this file.';});}
+  }
+  const cleanup=new MutationObserver(()=>{if(card.isConnected)return;for(const url of blobs)URL.revokeObjectURL(url);blobs.clear();cleanup.disconnect();});cleanup.observe(document.body,{childList:true,subtree:true});
+  return {apply(data){const removed=new Set(controls.filter(c=>c.remove.checked).map(c=>c.asset.remove));Object.assign(data,removalPatch(kind,removed));}};
+ }
+ async function releaseContents(card,item,client){
+  const host=node('section',null,'fsb-release-content');host.appendChild(node('h3','Tracks & extra videos'));const info=node('p','Loading attached content…');host.appendChild(info);card.querySelector('.form-grid').appendChild(host);
+  const [songs,videos]=await Promise.all([client.from('artist_songs').select('id,title,track_number,audio_url,image_url,video_url,animated_artwork_url,lyrics').eq('release_id',item.id).order('track_number'),client.from('videos').select('id,title,link,image').eq('release_id',item.id).order('sort_order')]);if(!host.isConnected)return;
+  if(songs.error||videos.error){info.textContent='Some attached content could not be loaded. Close and reopen this editor to try again.';}else info.textContent='Edit each track to manage its audio, artwork, music video, animated cover, lyrics and credits.';
+  let dirty=false;card.addEventListener('input',()=>dirty=true);card.addEventListener('change',()=>dirty=true);
+  for(const [type,rows]of [['song',songs.data||[]],['video',videos.data||[]]])for(const row of rows){const entry=node('div',null,'fsb-release-content-row'),details=node('div');details.appendChild(node('strong',(type==='song'&&row.track_number?row.track_number+'. ':'')+(row.title||'Untitled')));const flags=type==='song'?[[row.audio_url,'Audio'],[row.image_url,'Artwork'],[row.video_url,'Video'],[row.animated_artwork_url,'Animated cover'],[row.lyrics?.trim(),'Lyrics']]:[[row.link,'Video'],[row.image,'Thumbnail']];details.appendChild(node('p',flags.map(([value,label])=>label+': '+(value?'added':'not added')).join(' · ')));const edit=node('button',type==='song'?'EDIT TRACK':'EDIT VIDEO','button');edit.type='button';edit.addEventListener('click',()=>{if(dirty&&!confirm('Discard unsaved release changes and open this editor?'))return;card.closest('#artistMediaEditor').remove();if(type==='song')window.editArtistSong(row.id);else window.editVideo(row.id);});entry.append(details,edit);host.appendChild(entry);}
+  if(!songs.error&&!videos.error&&!songs.data.length&&!videos.data.length)info.textContent='No tracks or extra videos are attached to this release.';
+ }
+ window.FSBMediaAssets={mount,releaseContents,removalPatch,filename,previewUrl};
+})();
