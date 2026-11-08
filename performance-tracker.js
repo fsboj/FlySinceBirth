@@ -49,13 +49,14 @@
       url.searchParams.set('enablejsapi','1');url.searchParams.set('origin',location.origin);element.src=url.href;
       ytPromise ||= new Promise((resolve,reject)=>{if(window.YT?.Player)return resolve();const prev=window.onYouTubeIframeAPIReady;window.onYouTubeIframeAPIReady=()=>{prev?.();resolve();};loadSdk('https://www.youtube.com/iframe_api',()=>!!window.YT?.Player).catch(reject);});
       ytPromise.then(()=>{if(!element.isConnected)return;let playing=false;
-        const player=new YT.Player(element,{events:{onStateChange:e=>{playing=e.data===1;if(playing){if(s.finished){s.id=crypto.randomUUID();s.sent.clear();s.seconds=0;s.finished=false;}send(s,'start');s.last=performance.now();}else{s.last=0;if(e.data===0)s.finished=true;}}}});
+        const player=new YT.Player(element,{events:{onStateChange:e=>{playing=e.data===1;if(playing){if(s.finished){s.id=crypto.randomUUID();s.sent.clear();s.seconds=0;s.finished=false;}send(s,'start');s.last=performance.now();}else{s.last=0;if(e.data===0){s.finished=true;window.dispatchEvent(new CustomEvent("fsb:video-ended",{detail:{content}}));}}}}});
         const timer=setInterval(()=>{if(!element.isConnected){clearInterval(timer);return;}try{progress(s,playing,player.getDuration());}catch(_){}},1000);
       }).catch(()=>{});
     }else if(url.hostname==='player.vimeo.com'){
       vmPromise ||= loadSdk('https://player.vimeo.com/api/player.js',()=>!!window.Vimeo?.Player);
-      vmPromise.then(()=>{const player=new Vimeo.Player(element);player.on('play',()=>{if(s.finished){s.id=crypto.randomUUID();s.sent.clear();s.seconds=0;s.finished=false;}send(s,'start');s.last=performance.now();});player.on('timeupdate',d=>progress(s,true,d.duration));player.on('pause',()=>{s.last=0;});player.on('ended',()=>{s.last=0;s.finished=true;});}).catch(()=>{});
+      vmPromise.then(()=>{const player=new Vimeo.Player(element);player.on('play',()=>{if(s.finished){s.id=crypto.randomUUID();s.sent.clear();s.seconds=0;s.finished=false;}send(s,'start');s.last=performance.now();});player.on('timeupdate',d=>progress(s,true,d.duration));player.on('pause',()=>{s.last=0;});player.on('ended',()=>{s.last=0;s.finished=true;window.dispatchEvent(new CustomEvent('fsb:video-ended',{detail:{content}}));});}).catch(()=>{});
     }
   };
 })();
+
 
