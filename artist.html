@@ -2817,6 +2817,7 @@ async function loadArtistVideos() {
     items.forEach(function(item) {
         const card = document.createElement("div");
         card.className = "video-card";
+        card.dataset.videoType=item.itemType;card.dataset.videoId=String(item.id);
         card.tabIndex = 0;
         card.setAttribute("role", "link");
         card.setAttribute("aria-label", "Watch " + (item.title || "video"));
@@ -2961,6 +2962,7 @@ loadArtist();
 
 
 <script src="shared-nav.js?v=20261107-orders"></script>
+<script src="video-artist-credits.js?v=20261108"></script>
 </body>
 
 </html>

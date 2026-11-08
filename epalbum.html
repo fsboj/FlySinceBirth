@@ -326,8 +326,8 @@ if (artistError) {
     console.error("Artist error:", artistError);
 }
 
-document.getElementById("releaseArtist").textContent =
-    artist?.name || release.artist_name || "";
+const releaseArtistHost=document.getElementById("releaseArtist");releaseArtistHost.replaceChildren();
+if(release.artist_id){const artistLink=document.createElement("a");artistLink.href="artist.html?id="+encodeURIComponent(release.artist_id);artistLink.textContent=artist?.name||release.artist_name||"Artist";releaseArtistHost.appendChild(artistLink);}else releaseArtistHost.textContent=artist?.name||release.artist_name||"";
 
 if (release.release_date) {
 
