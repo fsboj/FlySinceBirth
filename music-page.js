@@ -58,7 +58,7 @@ function filterMusicCatalog(catalog, { term = "", artistId = "", type = "", sort
       (!type || song.release_type === type) &&
       `${song.title || ""} ${credits} ${song.release_title || ""}`.toLocaleLowerCase().includes(query);
   }).sort((a, b) => {
-    if (sort === "title") return (a.title || "").localeCompare(b.title || "") || String(a.id).localeCompare(String(b.id));
+    if (sort === "title") return (a.title || "").localeCompare(b.title || "",undefined,{sensitivity:"base",numeric:true}) || String(a.id).localeCompare(String(b.id));
     if (sort === "artist") return (a.artist_name || "").localeCompare(b.artist_name || "") || (a.title || "").localeCompare(b.title || "");
     return String(b.release_date || b.created_at || "").localeCompare(String(a.release_date || a.created_at || "")) || (a.title || "").localeCompare(b.title || "");
   });
@@ -106,6 +106,7 @@ async function loadMusicHub() {
   const bySongId = new Map(catalog.map(song => [String(song.id), song]));
 
   let selectedArtistId = "";
+  let selectedReleaseType = "";
   const artistSearch = document.getElementById("artistSearch");
   const artistList = document.getElementById("artistIndex");
   const artistEntries = [...names.entries()].map(([id, name]) => ({
@@ -142,10 +143,11 @@ async function loadMusicHub() {
   const renderCatalog = () => {
     const term = document.getElementById("songSearch").value.trim().toLowerCase();
     const artistId = selectedArtistId;
-    const type = document.getElementById("songTypeFilter").value;
-    const sort = document.getElementById("songSort").value;
+    const type = selectedReleaseType;
+    const sort = "title";
     visibleSongs = filterMusicCatalog(catalog, { term, artistId, type, sort });
     window.FSBMusicBrowse?.setSongs(visibleSongs);
+    document.querySelectorAll('[data-music-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.musicView===type)));
     const projectMode=type==='album'||type==='ep';
     const playAll=document.getElementById('playAllSongs');playAll.hidden=projectMode;
     catalogNode.classList.toggle('music-release-grid',projectMode);
@@ -181,7 +183,7 @@ async function loadMusicHub() {
   renderCatalog();
   artistSearch.addEventListener("input", renderArtists);
   document.getElementById("songSearch").addEventListener("input", renderCatalog);
-  [document.getElementById("songTypeFilter"), document.getElementById("songSort")].forEach(control => control.addEventListener("change", renderCatalog));
+  document.querySelectorAll('[data-music-view]').forEach(button=>button.addEventListener('click',()=>{selectedReleaseType=button.dataset.musicView;renderCatalog();}));
   document.getElementById("playAllSongs").addEventListener("click", () => {
     const playable = visibleSongs.filter(song => song.audio_url);
     if (playable.length) startSong(playable[0], playable);
