@@ -1787,6 +1787,7 @@ async function loadArtists() {
             .order("sort_order", {
                 ascending: true
             })
+            .order("id",{ascending:true})
             .limit(10);
 
 
@@ -1801,16 +1802,8 @@ async function loadArtists() {
     }
 
 
-    let artists = data || [];
-
-    if (!artists.length) {
-        const fallback = await supabaseClient
-            .from("artists")
-            .select("*")
-            .order("sort_order", { ascending: true })
-            .limit(10);
-        if (!fallback.error) artists = fallback.data || [];
-    }
+    const artists = data || [];
+    const artistSection=grid.closest("section");if(artistSection)artistSection.hidden=artists.length===0;
 
     grid.innerHTML = "";
 
