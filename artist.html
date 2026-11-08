@@ -2904,12 +2904,13 @@ async function loadArtistLinks() {
             .from("artist_links")
             .select("*")
             .eq("artist_id", artistId)
+            .order("sort_order", {ascending:true})
             .order(
                 "created_at",
                 {
                     ascending: true
                 }
-            );
+            ).order("id", {ascending:true});
 
     if (error) {
 

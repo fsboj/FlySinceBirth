@@ -4785,88 +4785,28 @@ async function uploadArtistSong() {
    ARTIST LINKS ADMIN
 ===================================================== */
 
-async function loadArtistLinksAdmin() {
-
-    const list =
-        document.getElementById(
-            "artistLinksAdminList"
-        );
-
-    if (!list) {
-        return;
-    }
-
-    if (!selectedArtistPageId) {
-        list.innerHTML = "";
-        return;
-    }
-
-    const { data, error } =
-        await supabaseClient
-            .from("artist_links")
-            .select("*")
-            .eq(
-                "artist_id",
-                selectedArtistPageId
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: true
-                }
-            );
-
-    if (error) {
-        console.error(
-            "Could not load artist links:",
-            error
-        );
-        return;
-    }
-
-    list.innerHTML = "";
-
-    if (!data || data.length === 0) {
-        list.innerHTML =
-            '<div class="empty-state">NO LINKS ADDED</div>';
-
-        return;
-    }
-
-    data.forEach(function(link) {
-
-        const row =
-            document.createElement("div");
-
-        row.className = "admin-item";
-
-        row.style.marginBottom = "10px";
-
-        row.innerHTML = `
-            <div>
-                <div class="item-name">
-                    ${link.title}
-                </div>
-
-                <div
-                    class="item-meta"
-                    style="margin-top:6px;"
-                >
-                    ${link.url}
-                </div>
-            </div>
-
-            <div class="actions" style="margin-top:0;display:flex;gap:8px;flex-shrink:0">
-                <button class="button" type="button" onclick="editArtistLink(${link.id})">EDIT</button>
-                <button class="button danger" type="button" onclick="deleteArtistLink(${link.id})">DELETE</button>
-            </div>
-        `;
-
-        list.appendChild(row);
-
-    });
+let artistLinksLoadVersion=0,artistLinkMoveBusy=false;
+async function loadArtistLinksAdmin(){
+ const list=document.getElementById('artistLinksAdminList');if(!list)return;
+ const version=++artistLinksLoadVersion,artist=selectedArtistPageId;if(!artist){list.replaceChildren();return;}
+ let status=document.getElementById('artistLinkOrderStatus');if(!status){status=document.createElement('p');status.id='artistLinkOrderStatus';status.className='item-meta';status.setAttribute('role','status');status.setAttribute('aria-live','polite');list.before(status);}status.textContent='Use Move up / Move down to set the order shown on the artist page. Changes save automatically.';
+ const result=await supabaseClient.from('artist_links').select('*').eq('artist_id',artist).order('sort_order',{ascending:true}).order('created_at',{ascending:true}).order('id',{ascending:true});
+ if(version!==artistLinksLoadVersion||String(artist)!==String(selectedArtistPageId))return;
+ if(result.error){status.textContent='Could not load artist links: '+result.error.message;return;}
+ list.replaceChildren();const links=result.data||[];if(!links.length){const empty=document.createElement('p');empty.className='empty-state';empty.textContent='NO LINKS ADDED';list.appendChild(empty);return;}
+ links.forEach((link,index)=>{const row=document.createElement('div');row.className='admin-item';row.dataset.artistLink=String(link.id);row.style.cssText='margin-bottom:10px;flex-wrap:wrap;gap:12px';const info=document.createElement('div');info.style.cssText='flex:1;min-width:140px;overflow-wrap:anywhere';const title=document.createElement('div');title.className='item-name';title.textContent=link.title||'Link';const url=document.createElement('div');url.className='item-meta';url.style.marginTop='6px';url.textContent=link.url||'';info.append(title,url);const actions=document.createElement('div');actions.className='actions';actions.style.cssText='margin-top:0;display:flex;gap:8px;flex-wrap:wrap';
+  function control(label,action){const b=document.createElement('button');b.type='button';b.className='button';b.textContent=label;b.addEventListener('click',action);actions.appendChild(b);return b;}
+  const up=control('↑ MOVE UP',()=>moveArtistLink(artist,link.id,-1));up.setAttribute('aria-label','Move '+(link.title||'link')+' up');up.disabled=index===0||artistLinkMoveBusy;
+  const down=control('↓ MOVE DOWN',()=>moveArtistLink(artist,link.id,1));down.setAttribute('aria-label','Move '+(link.title||'link')+' down');down.disabled=index===links.length-1||artistLinkMoveBusy;
+  control('EDIT',()=>editArtistLink(link.id)).disabled=artistLinkMoveBusy;const remove=control('DELETE',()=>deleteArtistLink(link.id));remove.classList.add('danger');remove.disabled=artistLinkMoveBusy;row.append(info,actions);list.appendChild(row);
+ });
 }
-
+async function moveArtistLink(artist,id,direction){
+ if(artistLinkMoveBusy)return;artistLinkMoveBusy=true;document.getElementById('artistLinksAdminList')?.querySelectorAll('button').forEach(b=>b.disabled=true);let message='LINK ORDER SAVED';
+ try{const result=await supabaseClient.rpc('move_artist_link',{p_artist_id:artist,p_link_id:id,p_direction:direction});if(result.error)throw result.error;}
+ catch(error){message='Could not save link order: '+(error.message||error);}
+ finally{artistLinkMoveBusy=false;await loadArtistLinksAdmin();if(String(artist)===String(selectedArtistPageId)){const status=document.getElementById('artistLinkOrderStatus');if(status)status.textContent=message;}}
+}
 
 async function addArtistLink() {
 
