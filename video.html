@@ -16,7 +16,7 @@
 <h1 class="video-title" id="videoTitle"></h1>
 <div class="video-byline" id="videoByline"></div>
 <div id="videoFavoriteHost" class="video-byline"></div>
-<section><h2 class="section-heading">UP NEXT</h2><div class="next-grid" id="nextVideos"><div class="empty">LOADING VIDEOS...</div></div></section>
+<section id="nextVideoSection" hidden><h2 class="section-heading">UP NEXT</h2><div class="next-grid" id="nextVideos"><div class="empty">LOADING VIDEOS...</div></div></section>
 </main>
 <footer><div>© 2026 FLY SINCE BIRTH</div><div>FSB WORLDWIDE</div></footer>
 <script src="video-source.js?v=20261107"></script>
@@ -97,6 +97,7 @@ async function loadPage(){
  await loadNextVideos();
 }
 async function loadNextVideos(){
+ document.getElementById("nextVideoSection").hidden=false;
  const host=document.getElementById("nextVideos");
  if(!currentVideo||!currentVideo.artist_id){host.innerHTML='<div class="empty">NO OTHER VIDEOS AVAILABLE</div>';return}
  const [videoResult,songResult,releaseResult]=await Promise.all([
