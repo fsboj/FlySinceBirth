@@ -70,6 +70,8 @@
       if (configuration.mode === "test") note.append(document.createTextNode(" TEST MODE: no real payment will be taken or products shipped."));
       checkoutButton.textContent = configuration.mode === "test" ? "TEST CHECKOUT" : "CONTINUE TO CHECKOUT";
       checkoutButton.disabled = !Array.isArray(cart) || cart.length === 0;
+    } else if(configuration.shopOpen===false){
+      note.textContent="The FSB shop is temporarily closed. Your bag is saved for when we reopen.";checkoutButton.textContent="SHOP CLOSED";checkoutButton.disabled=true;
     } else {
       note.replaceChildren();
       const heading = document.createElement("strong");

@@ -47,6 +47,39 @@ async function rest(path: string, init: RequestInit = {}) {
   return data;
 }
 
+
+async function shopIsOpen() {
+  const rows=await rest("site_content?key=eq.shop_open&select=value") as Array<{value:string}>;
+  return !rows.length || rows[0].value==="true";
+}
+async function requireOpenShop(){if(!await shopIsOpen())throw new Error("The FSB shop is temporarily closed. Please come back soon.");}
+async function expireCheckout(id:string) {
+  const secret=Deno.env.get("MERCH_STRIPE_SECRET_KEY")||Deno.env.get("STRIPE_SECRET_KEY");
+  const headers={Authorization:`Bearer ${secret}`};
+  const r=await fetch("https://api.stripe.com/v1/checkout/sessions/"+encodeURIComponent(id)+"/expire",{method:"POST",headers});
+  if(r.ok)return true;
+  const check=await fetch("https://api.stripe.com/v1/checkout/sessions/"+encodeURIComponent(id),{headers});
+  if(check.ok){const data=await check.json();if(data.status==="complete"||data.status==="expired")return true;}
+  return false;
+}
+async function setShopState(customer:{id:string;email:string},open:unknown) {
+  if(typeof open!=="boolean")throw new Error("Choose Open or Closed.");
+  const admins=await rest("fsb_store_admins?user_id=eq."+encodeURIComponent(customer.id)+"&select=email") as Array<{email:string}>;
+  if(!admins.some(a=>a.email.toLowerCase()===customer.email.toLowerCase()))return response({error:"Only the FSB owner can open or close the shop."},403);
+  await rest("site_content?on_conflict=key",{method:"POST",headers:{Prefer:"resolution=merge-duplicates"},body:JSON.stringify({key:"shop_open",value:String(open),updated_at:new Date().toISOString()})});
+  let expired=0,failed=0;
+  if(!open){
+    let cursor=0;
+    while(true){
+      const rows=await rest("fsb_store_orders?payment_status=eq.pending&stripe_session_id=not.is.null&checkout_expires_at=gt."+encodeURIComponent(new Date().toISOString())+"&id=gt."+cursor+"&order=id.asc&limit=100&select=id,stripe_session_id") as Array<{id:number;stripe_session_id:string}>;
+      if(!rows.length)break;
+      for(let offset=0;offset<rows.length;offset+=5){const results=await Promise.allSettled(rows.slice(offset,offset+5).map(row=>expireCheckout(row.stripe_session_id)));for(const r of results){if(r.status==="fulfilled"&&r.value)expired++;else failed++;}}
+      cursor=rows[rows.length-1].id;
+    }
+  }
+  return response({shopOpen:open,expiredCheckouts:expired,warning:failed?"Shop closed, but "+failed+" existing unpaid checkout links could not be expired. Retry Close Shop to try again.":""});
+}
+
 function checkoutStatus() {
   const stripe = (Deno.env.get("MERCH_STRIPE_SECRET_KEY") || Deno.env.get("STRIPE_SECRET_KEY")) || "";
   const webhook = (Deno.env.get("MERCH_STRIPE_WEBHOOK_SECRET") || Deno.env.get("STRIPE_WEBHOOK_SECRET")) || "";
@@ -263,7 +296,9 @@ Deno.serve(async (request: Request) => {
   try {
     if (!supabaseUrl) throw new Error("Supabase URL is not configured.");
     const body = await request.json();
-    if (body.action === "status") return response({ ...checkoutStatus(), provider: "stripe", fulfillment: "printful" });
+    if (body.action === "status") {const shopOpen=await shopIsOpen();const config=checkoutStatus();return response({ ...config, enabled:config.enabled&&shopOpen,shopOpen, provider:"stripe",fulfillment:"printful" });}
+    if(body.action==="set_shop_state")return await setShopState(await customerFromRequest(request),body.open);
+    if(body.action==="quote"||body.action==="start")await requireOpenShop();
     if (!checkoutStatus().enabled) return response({ error: "FSB checkout is not configured yet. No order or charge will be created." }, 503);
     const customer = await customerFromRequest(request);
     const artistPricing = await hasArtistPricing(customer);
@@ -353,6 +388,7 @@ Deno.serve(async (request: Request) => {
       form.set("shipping_options[0][shipping_rate_data][fixed_amount][currency]", "usd");
       form.set("shipping_options[0][shipping_rate_data][display_name]", rate.name.slice(0, 100));
       form.set("shipping_options[0][shipping_rate_data][tax_behavior]", "exclusive");
+      await requireOpenShop();
       const checkoutResult = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { Authorization: `Bearer ${stripeSecret}`, "Content-Type": "application/x-www-form-urlencoded", "Idempotency-Key": `fsb-merch-session-${order.id}` }, body: form });
       const checkout = await checkoutResult.json();
       if (!checkoutResult.ok || !checkout.id || !checkout.url) {
@@ -360,6 +396,7 @@ Deno.serve(async (request: Request) => {
         throw new Error("Stripe could not start checkout. No payment was taken.");
       }
       await rest(`fsb_store_orders?id=eq.${order.id}`, { method: "PATCH", body: JSON.stringify({ stripe_session_id: checkout.id, payment_reference: checkout.id }) });
+      try{await requireOpenShop();}catch(error){await expireCheckout(String(checkout.id));throw error;}
       await rest(`fsb_store_checkout_quotes?id=eq.${id}&user_id=eq.${customer.id}&consumed_at=is.null`, { method: "PATCH", body: JSON.stringify({ consumed_at: new Date().toISOString() }) });
       return response({ checkoutUrl: checkout.url });
     }
