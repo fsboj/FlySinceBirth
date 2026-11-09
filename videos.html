@@ -104,7 +104,7 @@ async function loadVideos(){
   const favorite=window.fsbCreateVideoFavoriteButton?.(item.itemType,item.id,item.title);
   if(favorite){favorite.addEventListener("click",event=>event.stopPropagation());actions.appendChild(favorite);card.appendChild(actions)}
   const project=item.itemType==='release'?item:releasesById.get(String(item.release_id));
-  if(project){const album=document.createElement('a');album.className='video-project-link';album.href='epalbum.html?id='+encodeURIComponent(project.id);album.textContent=(project.type==='ep'?'EP':'ALBUM')+' · '+project.title;album.style.cssText='display:block;margin-top:8px;color:#aaa;font-size:13px;line-height:1.6';album.addEventListener('click',event=>event.stopPropagation());card.appendChild(album);}
+  if(project){const album=document.createElement('a');album.className='video-project-link';album.href='epalbum.html?id='+encodeURIComponent(project.id);album.textContent=project.title||'Release';album.style.cssText='display:block;margin-top:8px;color:#aaa;font-size:13px;line-height:1.6';album.addEventListener('click',event=>event.stopPropagation());card.appendChild(album);}
   const open=()=>window.FSBVideoBrowse.open(item);
   card.addEventListener("click",e=>{if(e.target.closest(".video-artist a"))return;open();});
   card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){if(e.target!==card)return;e.preventDefault();open();}});

@@ -10,9 +10,9 @@
  async function enter(session){
   const owner=await from('fsb_store_admins').select('user_id').eq('user_id',session.user.id).maybeSingle();if(owner.error)throw owner.error;
   if(owner.data){mode='owner';await ready();mountOwner();return true;}
-  const r=await from('artist_access').select('*').eq('user_id',session.user.id).eq('enabled',true).maybeSingle();if(r.error)throw r.error;
+  const r=await from('artist_access').select('*,artists(name)').eq('user_id',session.user.id).eq('enabled',true).maybeSingle();if(r.error)throw r.error;
   if(!r.data?.artist_id||!session.user.email_confirmed_at||r.data.email!==String(session.user.email||'').toLowerCase())return false;
-  mode='artist';artist=r.data;document.body.classList.add('fsb-artist-account');await ready();await scopeArtist();return true;
+  mode='artist';artist={...r.data,artist_name:r.data.artists?.name||r.data.artist_name};document.body.classList.add('fsb-artist-account');await ready();await scopeArtist();return true;
  }
  function lockSelectors(){if(mode!=='artist')return;for(const id of ['artistPageSelect','artistReleaseArtist','videoArtistSelect','videoManageArtistSelect']){const s=byId(id);if(!s)continue;if(s.options.length!==1||s.options[0].value!==String(artist.artist_id)){s.replaceChildren(new Option(artist.artist_name,String(artist.artist_id)));}s.value=String(artist.artist_id);s.disabled=true;}}
  async function scopeArtist(){
@@ -53,7 +53,7 @@
     await refresh(false);
    }catch(e){status.textContent='Could not update access: '+e.message;list.querySelectorAll('button').forEach(b=>b.disabled=false);}
   }
-  async function refresh(clear=true){if(clear)status.textContent='Loading…';const r=await from('artist_access').select('*').order('artist_name');if(r.error){status.textContent=r.error.message;return;}list.replaceChildren();for(const row of r.data){const item=node('div',null,'admin-item');item.style.cssText='display:flex;justify-content:space-between;gap:20px;align-items:center;flex-wrap:wrap';const info=node('div');info.append(node('div',row.artist_name,'item-name'),node('div',row.email,'item-meta'),node('div',row.enabled?'INVITED / ACCESS ENABLED':'NOT ACTIVE','item-meta'));const actions=node('div',null,'actions');actions.append(button('CHANGE EMAIL',()=>action(row,'change_email')));actions.append(button(row.invited_at?'RESEND INVITATION':'INVITE ARTIST',()=>action(row,'invite')));if(row.enabled)actions.append(button('DISABLE ACCESS',()=>action(row,'revoke')));item.append(info,actions);list.append(item);}if(clear)status.textContent='Only you can invite or disable artists. Inactive accounts cannot edit content.';}
+  async function refresh(clear=true){if(clear)status.textContent='Loading…';const r=await from('artist_access').select('*').order('artist_name');if(r.error){status.textContent=r.error.message;return;}list.replaceChildren();for(const raw of r.data){const row={...raw,artist_name:raw.artists?.name||raw.artist_name};const item=node('div',null,'admin-item');item.style.cssText='display:flex;justify-content:space-between;gap:20px;align-items:center;flex-wrap:wrap';const info=node('div');info.append(node('div',row.artist_name,'item-name'),node('div',row.email,'item-meta'),node('div',row.enabled?'INVITED / ACCESS ENABLED':'NOT ACTIVE','item-meta'));const actions=node('div',null,'actions');actions.append(button('CHANGE EMAIL',()=>action(row,'change_email')));actions.append(button(row.invited_at?'RESEND INVITATION':'INVITE ARTIST',()=>action(row,'invite')));if(row.enabled)actions.append(button('DISABLE ACCESS',()=>action(row,'revoke')));item.append(info,actions);list.append(item);}if(clear)status.textContent='Only you can invite or disable artists. Inactive accounts cannot edit content.';}
  }
  window.FSBArtistAccess={enter,isArtist:()=>mode==='artist'};
 })();

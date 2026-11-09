@@ -33,7 +33,7 @@ function songCard(song) {
   const releaseLabel = document.createElement(song.release_id ? "a" : "small");
   releaseLabel.className = "hub-song-release";
   if(song.release_id){releaseLabel.href="epalbum.html?id="+encodeURIComponent(song.release_id);releaseLabel.setAttribute("aria-label","Open "+(song.release_title||"album"));}
-  releaseLabel.textContent = song.release_title ? (song.release_type === "ep" ? "EP" : "ALBUM") + " · " + song.release_title : "SINGLE";
+  releaseLabel.textContent = song.release_title ? song.release_title : "SINGLE";
   card.querySelector(".hub-song-info").appendChild(releaseLabel);
   const artwork = card.querySelector("img");
   artwork.onerror = () => { artwork.onerror = null; artwork.src = "fsblogo.PNG"; };
