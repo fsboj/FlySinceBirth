@@ -50,7 +50,7 @@ async function rest(path: string, init: RequestInit = {}) {
 
 async function shopIsOpen() {
   const rows=await rest("site_content?key=eq.shop_open&select=value") as Array<{value:string}>;
-  return !rows.length || rows[0].value==="true";
+  return rows[0]?.value==="true";
 }
 async function requireOpenShop(){if(!await shopIsOpen())throw new Error("The FSB shop is temporarily closed. Please come back soon.");}
 async function expireCheckout(id:string) {
