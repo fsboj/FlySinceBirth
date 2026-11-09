@@ -1042,6 +1042,7 @@ footer {
 <link rel="stylesheet" href="public-polish.css?v=5">
   <link rel="icon" type="image/png" href="fsb-favicon.png?v=4">
 <script src="continuous-navigation.js?v=20261109-v2"></script>
+<link rel="stylesheet" href="home-mobile.css?v=20261109">
 </head>
 
 <body>
@@ -1132,15 +1133,6 @@ footer {
                 music, clothing, culture and visual
                 expression.
             </p>
-
-
-            <a
-                href="#music"
-                class="outline-button">
-
-                LEARN MORE
-
-            </a>
 
         </div>
 
@@ -2257,19 +2249,6 @@ async function loadSiteContent() {
             element.textContent = content.project_description;
         }
     }
-
-    if (content.project_learn_more) {
-        const element = document.querySelector(".project-text .outline-button");
-
-        if (element) {
-            element.textContent = content.project_learn_more;
-        }
-    }
-
-
-
-   
-
 
     /* =====================================================
        ARTISTS
