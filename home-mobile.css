@@ -18,3 +18,5 @@
  #project .project{padding:24px 18px;gap:20px}
  #project .project-image{height:220px;width:min(100%,220px)}
 }
+
+@media(max-width:800px){.hero-content .fsb-wordmark{width:100%;max-width:100%}.hero-content{padding-left:22px;padding-right:22px}}

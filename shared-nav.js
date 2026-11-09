@@ -111,3 +111,6 @@
 })();
 
 
+
+/* Readable, finger-sized navigation links on narrow screens. */
+(()=>{const style=document.createElement('style');style.textContent='@media(max-width:760px){.public-nav-links{min-width:0;overflow-x:auto;overscroll-behavior-x:contain}.public-nav-links a{font-size:11px!important;min-height:44px;display:inline-flex;align-items:center;letter-spacing:1px}.public-nav .fsb-nav-brand{gap:8px}}';document.head.append(style);})();

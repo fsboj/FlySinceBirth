@@ -197,6 +197,6 @@ if(hasPasswordRecovery)openPasswordResetCompletion();
 supabaseClient.auth.onAuthStateChange(event=>{if(event==="PASSWORD_RECOVERY")openPasswordResetCompletion()});
 supabaseClient.auth.getSession().then(({data,error})=>{if(error)message(error.message);else if(data.session?.user)routeSignedInUser(data.session.user).catch(err=>message("Your account could not load: "+err.message))});
 window.addEventListener("focus",()=>{if($("dashboard").style.display!=="block")return;supabaseClient.auth.getUser().then(({data})=>{if(data?.user)return refreshAccountArtistName(data.user)}).catch(()=>{});});
-</script><script src="shared-nav.js?v=20261107-orders"></script><script src="video-favorites.js?v=7"></script>
+</script><script src="shared-nav.js?v=20261109-mobile"></script><script src="video-favorites.js?v=7"></script>
 <script src="password-visibility.js?v=20261108"></script>
 <script src="account-admin-link.js?v=20261108"></script></body></html>
