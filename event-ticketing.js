@@ -85,7 +85,7 @@
         submit.disabled = false;
         return;
       }
-      window.location.assign(started.data.checkoutUrl);
+      window.top.location.assign(started.data.checkoutUrl);
     });
     panel.appendChild(form); host.appendChild(panel);
   }
