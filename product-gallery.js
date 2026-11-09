@@ -1,0 +1,12 @@
+/* Product-only views, with thumbnails and color-specific galleries. */
+(() => {
+ function label(product,url){for(const variant of product?.variants||[]){const view=variant.image_views?.find(x=>x.url===url);if(view)return [view.label,variant.color].filter(Boolean).join(' · ');}return '';}
+ window.FSBProductGallery={render(product,color,images,index,select){
+  const area=document.querySelector('#productModal .modal-image');if(!area)return;
+  let wrapper=area.parentElement;if(!wrapper.classList.contains('product-gallery')){wrapper=document.createElement('div');wrapper.className='product-gallery';area.before(wrapper);wrapper.append(area);const picker=document.createElement('div');picker.className='product-view-picker';picker.setAttribute('aria-label','Product views');wrapper.append(picker);}
+  const picker=wrapper.querySelector('.product-view-picker');picker.replaceChildren();picker.hidden=images.length<2;
+  images.forEach((url,n)=>{const view=label(product,url)||'View '+(n+1);const b=document.createElement('button');b.type='button';b.className='product-view-thumb';b.setAttribute('aria-label','Show '+view);b.setAttribute('aria-pressed',String(n===index));const img=document.createElement('img');img.src=url;img.alt='';img.loading='lazy';const text=document.createElement('span');text.textContent=view;b.append(img,text);b.onclick=()=>select(n);picker.append(b);});
+  const current=label(product,images[index]);if(current){document.getElementById('modalImage').alt=product.name+' · '+current;document.getElementById('productImageCount').textContent=current+' · '+(index+1)+' / '+images.length;}
+ }};
+ const style=document.createElement('style');style.textContent='.product-gallery{min-width:0;background:#111}.product-view-picker{display:flex;gap:8px;padding:12px;overflow-x:auto;border-top:1px solid #333}.product-view-picker[hidden]{display:none}.product-view-thumb{flex:0 0 88px;width:88px;padding:4px;border:1px solid #444;background:#171717;color:#ccc;cursor:pointer}.product-view-thumb[aria-pressed=true]{border:2px solid #fff;padding:3px;color:#fff}.product-view-thumb img{display:block;width:100%;height:68px;object-fit:contain;background:#eee}.product-view-thumb span{display:block;font:10px/1.4 Arial;padding-top:5px}.product-view-thumb:focus-visible{outline:2px solid white;outline-offset:2px}';document.head.append(style);
+})();
