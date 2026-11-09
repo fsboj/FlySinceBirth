@@ -14,7 +14,7 @@
  function navigate(value,push=true){
   const url=new URL(value,location.href);
   url.searchParams.delete('_fsb_page');
-  const pageURL=new URL(url);pageURL.searchParams.set('_fsb_page','20261109');
+  const pageURL=new URL(url);pageURL.searchParams.set('_fsb_page','20261109-v2');
   if(!frame){
    const style=document.createElement('style');style.textContent='body.fsb-continuous-site> :not(#miniPlayer):not(#fsbSitePage):not(script):not(style){display:none!important}body.fsb-continuous-site{overflow:hidden!important;padding:0!important}#fsbSitePage{position:fixed;inset:0;width:100%;height:auto;border:0;z-index:900;background:#080808}body.fsb-continuous-site>#miniPlayer{z-index:1000}';document.head.append(style);
    frame=document.createElement('iframe');frame.id='fsbSitePage';frame.title='Fly Since Birth website';frame.allow='autoplay; fullscreen';
