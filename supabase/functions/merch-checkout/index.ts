@@ -73,6 +73,40 @@ async function customerFromRequest(request: Request) {
   return { id: String(user.id), email: String(user.email) };
 }
 
+
+async function hasArtistPricing(customer: {id: string; email: string}) {
+  const rows = await rest(`artist_access?user_id=eq.${encodeURIComponent(customer.id)}&enabled=eq.true&artist_id=not.is.null&select=email,artist_id&limit=1`) as Array<{email: string; artist_id: number}>;
+  return rows.some(row => row.artist_id && row.email.toLowerCase().trim() === customer.email.toLowerCase().trim());
+}
+
+async function artistCostLines(lines: PricedLine[], address: Record<string,string>): Promise<PricedLine[]> {
+  const output: PricedLine[] = [];
+  // Limit supplier requests; never use catalog base prices that omit the design.
+  for (let start=0;start<lines.length;start+=3) {
+    output.push(...await Promise.all(lines.slice(start,start+3).map(async line => {
+      if(line.fulfillment_method !== "printful") return line;
+      const token=Deno.env.get("PRINTFUL_API_TOKEN");
+      if(!token) throw new Error("Artist pricing is temporarily unavailable. Please try again later.");
+      const result=await fetch("https://api.printful.com/orders/estimate-costs",{
+        method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},
+        body:JSON.stringify({recipient:address,items:[{sync_variant_id:Number(line.printful_variant_id),quantity:line.quantity}],retail_costs:{currency:"USD"}})
+      });
+      const data=await result.json(),costs=data.result?.costs;
+      const cents=(value:unknown,required=false)=>{
+        if(value==null){if(required)throw new Error("Artist production pricing could not be confirmed.");return 0;}
+        const amount=Number(value);if(!Number.isFinite(amount)||amount<0)throw new Error("Artist production pricing could not be confirmed.");return Math.round(amount*100);
+      };
+      if(!result.ok||data.code!==200||!costs||costs.currency!=="USD")throw new Error("Artist production pricing could not be confirmed. Please try again later.");
+      const production=cents(costs.subtotal,true)-cents(costs.discount)+cents(costs.digitization)+cents(costs.additional_fee)+cents(costs.fulfillment_fee);
+      if(production<=0)throw new Error("Artist production pricing could not be confirmed.");
+      // Stripe line items require whole cents per unit.
+      const unit=Math.ceil(production/line.quantity)/100;
+      return {...line,unit_price:unit,retail_unit_price:line.unit_price,pricing_tier:"artist" as const};
+    })));
+  }
+  return output;
+}
+
 function cleanAddress(value: Record<string, unknown>) {
   const address = {
     name: String(value.name || "").trim().slice(0, 120),
@@ -97,6 +131,7 @@ type PricedLine = {
   variant_color: string | null; quantity: number; unit_price: number; fulfillment_method: string;
   printful_variant_id: string; printful_catalog_variant_id?: string; supplier_name: string | null;
   shipping_price: number | null; shipping_countries: string[];
+  retail_unit_price?: number; pricing_tier?: "artist";
 };
 
 async function resolveCart(raw: unknown): Promise<PricedLine[]> {
@@ -231,10 +266,13 @@ Deno.serve(async (request: Request) => {
     if (body.action === "status") return response({ ...checkoutStatus(), provider: "stripe", fulfillment: "printful" });
     if (!checkoutStatus().enabled) return response({ error: "FSB checkout is not configured yet. No order or charge will be created." }, 503);
     const customer = await customerFromRequest(request);
+    const artistPricing = await hasArtistPricing(customer);
+    if (body.action === "pricing") return response({ artistPricing });
 
     if (body.action === "quote") {
       const address = cleanAddress(body.address || {});
-      const lines = await resolveCart(body.items);
+      const retailLines = await resolveCart(body.items);
+      const lines = artistPricing ? await artistCostLines(retailLines,address) : retailLines;
       const rates = await shippingRates(address, lines);
       const quote = { address, lines, rates };
       const created = await rest("fsb_store_checkout_quotes?select=id,expires_at", {
@@ -242,7 +280,7 @@ Deno.serve(async (request: Request) => {
         body: JSON.stringify({ user_id: customer.id, quote, expires_at: new Date(Date.now() + 20 * 60 * 1000).toISOString() }),
       }) as Array<{ id: string; expires_at: string }>;
       if (!created[0]?.id) throw new Error("Could not save your shipping quote. Please try again.");
-      return response({ quoteId: created[0].id, expiresAt: created[0].expires_at, rates });
+      return response({ quoteId: created[0].id, expiresAt: created[0].expires_at, rates, artistPricing, lines: lines.map(line=>({product_id:line.product_id,product_name:line.product_name,variant_size:line.variant_size,variant_color:line.variant_color,quantity:line.quantity,unit_price:line.unit_price,artist_price:line.pricing_tier==="artist"})), subtotal: lines.reduce((sum,line)=>sum+Math.round(line.unit_price*100)*line.quantity,0)/100 });
     }
 
     if (body.action === "start") {
@@ -252,8 +290,9 @@ Deno.serve(async (request: Request) => {
       const quotes = await rest(`fsb_store_checkout_quotes?id=eq.${id}&user_id=eq.${customer.id}&consumed_at=is.null&expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=id,quote,expires_at`) as Array<{ id: string; quote: { address: Record<string, string>; lines: PricedLine[]; rates: Array<Record<string, unknown>> }; expires_at: string }>;
       const saved = quotes[0];
       if (!saved) throw new Error("Your shipping quote expired. Please request new rates.");
-      const freshLines = await resolveCart(saved.quote.lines.map(line => ({ id: line.product_id, size: line.variant_size || "", color: line.variant_color || "", quantity: line.quantity })));
-      if (stableQuoteValue(freshLines) !== stableQuoteValue(saved.quote.lines)) throw new Error("An item changed. Request new shipping options.");
+      const retailLines = await resolveCart(saved.quote.lines.map(line => ({ id: line.product_id, size: line.variant_size || "", color: line.variant_color || "", quantity: line.quantity })));
+      const freshLines = artistPricing ? await artistCostLines(retailLines,saved.quote.address) : retailLines;
+      if (stableQuoteValue(freshLines) !== stableQuoteValue(saved.quote.lines)) throw new Error("An item price or your pricing eligibility changed. Request new shipping options.");
       const currentRates = await shippingRates(saved.quote.address, freshLines);
       const rate = currentRates.find((item) => item.id === rateId);
       const quotedRate = saved.quote.rates.find(item => item.id === rateId);

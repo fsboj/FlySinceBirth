@@ -31,6 +31,11 @@
   let checkoutAvailable = false;
   let currentQuoteId = "";
   let lastAddress = null;
+  let pricingEpoch=0;
+  const artistNotice=document.createElement("p");artistNotice.id="artistPricingNotice";artistNotice.className="merch-checkout-status";artistNotice.hidden=true;note.insertAdjacentElement("beforebegin",artistNotice);
+  const breakdown=document.createElement("div");breakdown.id="artistPriceBreakdown";breakdown.className="merch-checkout-status";$("merchCheckoutRates").insertAdjacentElement("beforebegin",breakdown);
+  async function refreshArtistPricing(){const epoch=++pricingEpoch;try{const result=await invoke({action:"pricing"});if(epoch!==pricingEpoch)return;artistNotice.hidden=!result.artistPricing;artistNotice.textContent=result.artistPricing?"ARTIST PRICING · Production cost applies to eligible products. Enter your delivery address to see your exact item prices, shipping, and subtotal before payment. Other products keep their regular price.":"";}catch(_){if(epoch===pricingEpoch){artistNotice.hidden=true;artistNotice.textContent="";}}}
+  function showPrices(result){breakdown.replaceChildren();if(!result.artistPricing)return;const heading=document.createElement("strong");heading.textContent="YOUR ARTIST PRICES";breakdown.append(heading);for(const line of result.lines||[]){const row=document.createElement("p");row.textContent=[line.product_name,line.variant_size,line.variant_color].filter(Boolean).join(" · ")+" — "+line.quantity+" × "+money(line.unit_price)+(line.artist_price?" · Artist price":" · Regular price");breakdown.append(row);}const total=document.createElement("strong");total.textContent="ITEM SUBTOTAL: "+money(result.subtotal)+" · Shipping below; applicable tax at Stripe.";breakdown.append(total);}
 
   function setStatus(message) { $("merchCheckoutStatus").textContent = message; }
   function addressValue() {
@@ -77,6 +82,7 @@
   function invalidateQuote(message = "") {
     currentQuoteId = "";
     lastAddress = null;
+    breakdown.replaceChildren();
     $("merchCheckoutRates").replaceChildren();
     $("payForMerch").disabled = true;
     if (message) setStatus(message);
@@ -99,18 +105,22 @@
     button.disabled = true;
     button.textContent = "CHECKING RATES…";
     currentQuoteId = "";
+    breakdown.replaceChildren();
     $("merchCheckoutRates").replaceChildren();
     $("payForMerch").disabled = true;
     setStatus("Getting shipping options for your bag…");
     try {
       const items = cartInput();
+      const accountEpoch=pricingEpoch;
       const result = await invoke({ action: "quote", address, items });
+      if(accountEpoch!==pricingEpoch){invalidateQuote("Account changed. Get updated shipping options.");return;}
       if (JSON.stringify(addressValue()) !== JSON.stringify(address) || JSON.stringify(cartInput()) !== JSON.stringify(items)) {
         invalidateQuote("Your bag or address changed. Get updated shipping options.");
         return;
       }
       currentQuoteId = result.quoteId;
       lastAddress = address;
+      showPrices(result);
       const host = $("merchCheckoutRates");
       for (const [index, rate] of (result.rates || []).entries()) {
         const label = document.createElement("label");
@@ -145,6 +155,9 @@
   if (params.has("checkout_cancelled")) { notify("Checkout was cancelled. No payment was taken."); history.replaceState({}, "", location.pathname); }
   if (params.has("store_order")) { notify("Stripe is confirming your payment. Check Your Account → Store Orders for the latest status."); history.replaceState({}, "", location.pathname); }
   refreshAvailability();
+  refreshArtistPricing();
+  supabaseClient.auth?.onAuthStateChange(()=>{pricingEpoch++;invalidateQuote("Account changed. Get updated shipping options.");setTimeout(refreshArtistPricing,0);});
+  window.addEventListener("focus",refreshArtistPricing);
   const cartObserver = new MutationObserver(() => {
     if (checkoutAvailable) checkoutButton.disabled = !Array.isArray(cart) || cart.length === 0;
     invalidateQuote(form.classList.contains("open") ? "Your bag changed. Get updated shipping options." : "");
