@@ -1041,7 +1041,7 @@ footer {
 </script>
 <link rel="stylesheet" href="public-polish.css?v=5">
   <link rel="icon" type="image/png" href="fsb-favicon.png?v=4">
-</head>
+<script src="continuous-navigation.js?v=20261109"></script>\n</head>
 
 <body>
 
@@ -1245,8 +1245,8 @@ footer {
     <h2 class="section-heading" role="link" tabindex="0"
         aria-label="Open Videos page"
         style="cursor:pointer;"
-        onclick="window.location.href='videos.html'"
-        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='videos.html';}">
+        onclick="window.FSBNavigation.go('videos.html')"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.FSBNavigation.go('videos.html');}">
         <a href="videos.html" aria-label="View all videos" style="color:inherit;text-decoration:none;">VIDEOS</a>
     </h2>
 <div
@@ -1272,7 +1272,7 @@ footer {
     id="events"
     class="section events">
 
-    <h2 class="section-heading" role="link" tabindex="0" style="cursor:pointer" onclick="window.location.href='events.html'" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='events.html';}"><a href="events.html" style="color:inherit;text-decoration:none">EVENTS</a></h2>
+    <h2 class="section-heading" role="link" tabindex="0" style="cursor:pointer" onclick="window.FSBNavigation.go('events.html')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.FSBNavigation.go('events.html');}"><a href="events.html" style="color:inherit;text-decoration:none">EVENTS</a></h2>
 
 
     <div id="events-featured"></div>
@@ -1765,7 +1765,7 @@ async function loadSiteImages() {
         });
         if (!creditCount) creditLine.textContent = music.artist;
 
-        card.onclick = function() { window.location.href = music.link; };
+        card.onclick = function() { window.FSBNavigation.go(music.link); };
         grid.appendChild(card);
     });
     grid.dataset.homeMusicLoad = "loaded";
@@ -1856,9 +1856,8 @@ card.style.cursor = "pointer";
 
 card.onclick = function() {
 
-    window.location.href =
-        "artist.html?id=" +
-        encodeURIComponent(artist.id);
+    window.FSBNavigation.go("artist.html?id=" +
+        encodeURIComponent(artist.id));
 
 };
 
@@ -1955,7 +1954,7 @@ grid.appendChild(card);
         if(video.locked){const badge=document.createElement("p");badge.className="fsb-upcoming-label";badge.textContent=window.FSBRelease.label(video);card.appendChild(badge);}
 
         function openVideoPage() {
-            window.location.href = "video.html?"+video.itemType+"_id=" + encodeURIComponent(video.id) + "&v=70a51fd5";
+            window.FSBNavigation.go("video.html?"+video.itemType+"_id=" + encodeURIComponent(video.id) + "&v=70a51fd5");
         }
         card.addEventListener("click", openVideoPage);
         card.addEventListener("keydown", function(event) {
@@ -2435,7 +2434,7 @@ async function loadVipMusic() {
         card.innerHTML = '<div><div class="card-title">' + escapeHtml(item.title) +
             '</div><div class="card-artist">' + escapeHtml(item.artist) +
             '</div><div class="card-subtitle">VIP MUSIC</div></div>';
-        card.onclick = function() { window.location.href = item.link; };
+        card.onclick = function() { window.FSBNavigation.go(item.link); };
         grid.appendChild(card);
     });
 }

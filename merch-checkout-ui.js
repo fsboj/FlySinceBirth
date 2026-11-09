@@ -136,7 +136,7 @@
     try {
       const result = await invoke({ action: "start", quoteId: currentQuoteId, rateId: selected.dataset.rateId });
       if (!result.checkoutUrl) throw new Error("Stripe did not return a checkout link.");
-      window.location.assign(result.checkoutUrl);
+      window.top.location.assign(result.checkoutUrl);
     } catch (error) { setStatus(error.message || "Could not start checkout."); button.disabled = false; button.textContent = "CONTINUE TO SECURE PAYMENT"; }
   });
 

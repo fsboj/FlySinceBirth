@@ -1,6 +1,15 @@
 /* One bottom music player, with a queue supplied by the current listening context. */
 (() => {
  if(window.FSBPlayer)return;
+ if(window.parent!==window && window.parent.FSBNavigation && window.parent.FSBPlayer){
+  const owner=window.parent.FSBPlayer,listeners=[];
+  const audio=new Proxy(owner.audio,{get(target,key){if(key==='addEventListener')return(type,listener,options)=>{listeners.push([type,listener,options]);target.addEventListener(type,listener,options);};const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value;},set(target,key,value){return Reflect.set(target,key,value,target);}});
+  window.FSBPlayer={play:owner.play,playAt:owner.playAt,close:owner.close,audio,getState:owner.getState};
+  const relay=()=>window.dispatchEvent(new CustomEvent('fsb:player-change',{detail:owner.getState()}));window.parent.addEventListener('fsb:player-change',relay);
+  const clean=()=>{window.parent.removeEventListener('fsb:player-change',relay);listeners.forEach(args=>owner.audio.removeEventListener(...args));};window.addEventListener('pagehide',clean,{once:true});
+  const local=document.getElementById('miniPlayer');if(local)local.hidden=true;
+  return;
+ }
  let bar=document.getElementById('miniPlayer'),audio=document.getElementById('audioPlayer')||document.getElementById('releaseAudioPlayer');
  if(!bar){bar=document.createElement('aside');bar.id='miniPlayer';bar.className='mini-player';bar.hidden=true;bar.setAttribute('aria-label','Music player');bar.innerHTML='<div class="mini-player-info"><strong id="nowTitle">Choose a song</strong><span id="nowArtist">FLY SINCE BIRTH</span></div><span class="mini-player-status" id="playerStatus" role="status" aria-live="polite"></span><button class="mini-player-close" id="closeMiniPlayer" type="button" aria-label="Close music player">×</button>';document.body.append(bar);}
  if(!audio){audio=document.createElement('audio');audio.id='audioPlayer';}

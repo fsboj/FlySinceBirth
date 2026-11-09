@@ -1309,7 +1309,7 @@ footer {
 .section .section-heading { letter-spacing: 0; line-height: 1.1; }
 </style>
   <link rel="icon" type="image/png" href="fsb-favicon.png?v=4">
-<script src="player-credits.js?v=20261107"></script></head>
+<script src="player-credits.js?v=20261107"></script><script src="continuous-navigation.js?v=20261109"></script>\n</head>
 
 
 <body>
@@ -2019,9 +2019,8 @@ function createNewestReleaseButton(release) {
 
 button.onclick = function() {
 
-    window.location.href =
-        "epalbum.html?id=" +
-        encodeURIComponent(release.id) + "&v=70a51fd5";
+    window.FSBNavigation.go("epalbum.html?id=" +
+        encodeURIComponent(release.id) + "&v=70a51fd5");
 
 };
 
@@ -2696,9 +2695,8 @@ function createArtistReleaseCard(release) {
 
 card.onclick = function() {
 
-    window.location.href =
-        "epalbum.html?id=" +
-        encodeURIComponent(release.id) + "&v=70a51fd5";
+    window.FSBNavigation.go("epalbum.html?id=" +
+        encodeURIComponent(release.id) + "&v=70a51fd5");
 
 };
 
@@ -2881,7 +2879,7 @@ function renderArtistVideoCards(videoSection,items){
 
         const open = function() {
             const parameter = item.itemType === "song" ? "song_id" : item.itemType === "release" ? "release_id" : "video_id";
-            window.location.href = "video.html?" + parameter + "=" + encodeURIComponent(item.id) + "&v=70a51fd5";
+            window.FSBNavigation.go("video.html?" + parameter + "=" + encodeURIComponent(item.id) + "&v=70a51fd5");
         };
         card.addEventListener("click", open);
         card.addEventListener("keydown", function(event) {
