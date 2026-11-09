@@ -55,7 +55,7 @@ Deno.serve(async(request:Request)=>{
  if(request.method!=="POST"||request.headers.get("origin")!==SITE_ORIGIN)return response({error:"Not allowed."},403);
  try{await owner(request);const body=await request.json();const id=Number(body.productId);
  const rows=await rest("merch_products?active=eq.true&fulfillment_method=eq.printful&select=id,name,images,variants,printful_product_id"+(id?"&id=eq."+id:"")) as any[];
- if(body.action==="list")return response({products:rows.map(p=>({id:p.id,name:p.name}))});
+ if(body.action==="list")return response({products:rows.map(p=>({id:p.id,name:p.name,ready:p.variants?.length>0&&p.variants.every((v:any)=>v.image_views?.some((x:any)=>x.label==="Back"))}))});
  if(rows.length!==1)throw new Error("Choose a Printful product.");const p=rows[0];
  const data=await pf("/store/products/"+p.printful_product_id);const variants=data.sync_variants||[];const colors=[...new Map(variants.map((v:any)=>[v.color,v])).values()] as any[];
  const catalog=colors[0]?.product?.product_id;if(!catalog)throw new Error("Missing catalog product.");
@@ -89,13 +89,13 @@ Deno.serve(async(request:Request)=>{
    if(!views.length)throw new Error("Printful returned no confirmed product-only back images.");
    if(body.action==="status")return response({status:"completed",views});
    const stored:any[]=[];for(const view of views){
-     const url=new URL(view.url);if(url.protocol!=="https:"||!(/(^|\\.)(printful\\.com|printful\\.io|amazonaws\\.com)$/.test(url.hostname)))throw new Error("Unexpected image host.");
+     const url=new URL(view.url);if(url.protocol!=="https:"||!["printful.com","printful.io","amazonaws.com"].some(host=>url.hostname===host||url.hostname.endsWith("."+host)))throw new Error("Unexpected image host.");
      const image=await fetch(url.href);if(!image.ok)throw new Error("Could not download product image.");const bytes=await image.arrayBuffer();if(bytes.byteLength>10*1024*1024)throw new Error("Product image is too large.");
      const path="merch-products/views/"+p.id+"/"+crypto.randomUUID()+".jpg";const credentials=serviceKey();const headers:Record<string,string>={apikey:credentials.key,"Content-Type":"image/jpeg","x-upsert":"false"};if(!credentials.secret)headers.Authorization="Bearer "+credentials.key;
      const upload=await fetch(supabaseUrl+"/storage/v1/object/site-images/"+path,{method:"POST",headers,body:bytes});if(!upload.ok)throw new Error("Could not save product image.");
      stored.push({...view,url:supabaseUrl+"/storage/v1/object/public/site-images/"+path});
    }
-   const updated=(p.variants||[]).map((v:any)=>{const sync=variants.find((x:any)=>String(x.id)===String(v.printful_variant_id));const backs=stored.filter(x=>x.variant_ids.includes(Number(sync?.variant_id)));const front=sync?.files?.find((f:any)=>f.type==="preview"&&/front/i.test(f.filename||"")&&!/model|lifestyle|person/i.test(f.filename||""));if(!front||!backs.length)throw new Error("Missing a front or back view for "+v.color+". Existing photos were kept.");const image=front.preview_url;return {...v,image,images:[image,...backs.map(x=>x.url)],image_views:[{url:image,label:"Front"},...backs.map(x=>({url:x.url,label:x.label}))]};});
+   const updated=(p.variants||[]).map((v:any)=>{const sync=variants.find((x:any)=>String(x.id)===String(v.printful_variant_id));const representative=colors.find((x:any)=>x.color===sync?.color);const backs=stored.filter(x=>x.variant_ids.includes(Number(representative?.variant_id)));const front=sync?.files?.find((f:any)=>f.type==="preview"&&/front/i.test(f.filename||"")&&!/model|lifestyle|person/i.test(f.filename||""));if(!front||!backs.length)throw new Error("Missing a front or back view for "+v.color+". Existing photos were kept.");const image=front.preview_url;return {...v,image,images:[image,...backs.map(x=>x.url)],image_views:[{url:image,label:"Front"},...backs.map(x=>({url:x.url,label:x.label}))]};});
    const images=[...new Set(updated.flatMap((v:any)=>v.images))];await rest("merch_products?id=eq."+p.id,{method:"PATCH",body:JSON.stringify({images,variants:updated,updated_at:new Date().toISOString()})});
    return response({status:"saved",name:p.name,images:images.length,colors:colors.length});
  }
