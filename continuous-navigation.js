@@ -8,18 +8,20 @@
   document.addEventListener('play',event=>{if(event.target instanceof HTMLVideoElement)window.parent.FSBPlayer?.audio.pause();},true);
   return;
  }
- let frame=null,observer=null;
+ let frame=null,observer=null,titleObserver=null;
  function active(){return !!window.FSBPlayer?.getState().queue.length;}
  function resize(){if(frame){const height=document.getElementById('miniPlayer')?.hidden?0:document.getElementById('miniPlayer')?.getBoundingClientRect().height||0;frame.style.bottom=height+'px';frame.style.height='calc(100% - '+height+'px)';}}
  function navigate(value,push=true){
   const url=new URL(value,location.href);
+  url.searchParams.delete('_fsb_page');
+  const pageURL=new URL(url);pageURL.searchParams.set('_fsb_page','20261109');
   if(!frame){
    const style=document.createElement('style');style.textContent='body.fsb-continuous-site> :not(#miniPlayer):not(#fsbSitePage):not(script):not(style){display:none!important}body.fsb-continuous-site{overflow:hidden!important;padding:0!important}#fsbSitePage{position:fixed;inset:0;width:100%;height:auto;border:0;z-index:900;background:#080808}body.fsb-continuous-site>#miniPlayer{z-index:1000}';document.head.append(style);
    frame=document.createElement('iframe');frame.id='fsbSitePage';frame.title='Fly Since Birth website';frame.allow='autoplay; fullscreen';
-   frame.addEventListener('load',()=>{try{const child=frame.contentWindow;if(child.location.origin!==location.origin)return;document.title=child.document.title;const destination=child.location.href;if(destination!==location.href)history.replaceState({fsbContinuous:true},'',destination);resize();}catch(_){}});
-   frame.src=url.href;document.body.append(frame);document.body.classList.add('fsb-continuous-site');
+   frame.addEventListener('load',()=>{try{const child=frame.contentWindow;if(child.location.origin!==location.origin)return;document.title=child.document.title;titleObserver?.disconnect();titleObserver=new MutationObserver(()=>{document.title=child.document.title;});titleObserver.observe(child.document.head,{childList:true,subtree:true,characterData:true});const destination=new URL(child.location.href);destination.searchParams.delete('_fsb_page');if(destination.href!==location.href)history.replaceState({fsbContinuous:true},'',destination.href);resize();}catch(_){}});
+   frame.src=pageURL.href;document.body.append(frame);document.body.classList.add('fsb-continuous-site');
    observer=new ResizeObserver(resize);const bar=document.getElementById('miniPlayer');if(bar)observer.observe(bar);window.addEventListener('resize',resize);resize();
-  }else frame.contentWindow.location.replace(url.href);
+  }else frame.contentWindow.location.replace(pageURL.href);
   if(push)history.pushState({fsbContinuous:true},'',url.href);
  }
  function follow(event){
