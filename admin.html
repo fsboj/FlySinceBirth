@@ -1032,7 +1032,7 @@ body {
 
     <div class="panel-header" style="margin-top:35px;">
       <div class="panel-title">MERCH IMAGES</div>
-      <div class="panel-description">Six merch image slots. Upload from your device. The homepage cycles through up to 6 filled slots every 10 seconds.</div>
+      <div class="panel-description">Six homepage image slots. Auto uses product photos, with newest products prioritized in slots 1–4 and random products in slots 5–6. Turn Auto off for any slot to use its saved manual upload. Rotation follows the timing set above.</div>
     </div>
     <div id="merchRotationAdminList" class="item-list">
       <div class="admin-item" id="merchSlotRow1">
@@ -1878,7 +1878,7 @@ async function saveMerchRotationSettings(){
 }
 async function loadMerchRotationAdmin(){
  var list=document.getElementById("merchRotationAdminList");if(!list)return;
- var r=await supabaseClient.from("merch_image_rotation").select("*").order("sort_order",{ascending:true});
+ var r=await supabaseClient.from("merch_image_rotation").select("*").order("sort_order",{ascending:true}).order("id",{ascending:true});
  if(r.error){console.error("Merch rotation load failed:",r.error);return}
  var rows=r.data||[];
 
@@ -1927,7 +1927,7 @@ async function uploadMerchRotationSlot(slot,input){
  var up=await supabaseClient.storage.from("site-images").upload(path,file);
  if(up.error){alert(up.error.message);input.value="";return}
  var url=supabaseClient.storage.from("site-images").getPublicUrl(path).data.publicUrl;
- var existing=await supabaseClient.from("merch_image_rotation").select("id").eq("sort_order",slot).maybeSingle();
+ var existing=await supabaseClient.from("merch_image_rotation").select("id").eq("sort_order",slot).order("id",{ascending:true}).limit(1).maybeSingle();
  var result;
  if(existing.data)result=await supabaseClient.from("merch_image_rotation").update({image_url:url,visible:true}).eq("id",existing.data.id);
  else result=await supabaseClient.from("merch_image_rotation").insert({image_url:url,sort_order:slot,visible:true});
@@ -6803,6 +6803,8 @@ document.addEventListener("DOMContentLoaded", function(){
 <script src="admin-session-controls.js?v=20261108-back-to-site"></script>
 <script src="product-photo-admin.js?v=20261109-templates"></script>
 <script src="shop-availability-admin.js?v=20261109"></script>
+<script src="merch-rotation.js?v=20261109"></script>
+<script src="merch-rotation-admin.js?v=20261109"></script>
 </body>
 
 </html>
