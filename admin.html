@@ -6568,6 +6568,7 @@ async function openArtistMediaEditor(kind,id,newRelease){
   var imageFile=card.querySelector("#mediaEditImage").files[0],videoFile=card.querySelector("#mediaEditVideo").files[0],audioFile=kind==="song"?card.querySelector("#mediaEditAudio").files[0]:null;
   if(newRelease&&!audioFile){alert("Select an audio file for the new track.");return;}
   var saveButton=card.querySelector("#mediaEditSave");saveButton.disabled=true;saveButton.textContent="SAVING…";
+  if(newRelease)data.image_url=newRelease.artwork_url||null;
   mediaAssets.apply(data);
   if(card.querySelector("#mediaRemoveVideo")?.checked)data.video_url=null;
   if(card.querySelector("#mediaRemoveImage").checked)data[kind==="release"?"artwork_url":"image_url"]=null;
