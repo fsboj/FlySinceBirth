@@ -6499,11 +6499,12 @@ document.addEventListener("DOMContentLoaded",function(){setupMainPagePanels();lo
 const adminOriginalShowPanelV2=window.showPanel;
 window.showPanel=function(panelId,button){adminOriginalShowPanelV2(panelId,button);if(panelId==="mainPage"){var first=document.querySelector(".main-page-tabs .button");showMainSubPanel("site",first)}if(panelId==="artistPages"){loadArtistPageSelector()}if(panelId==="upcoming"){loadArtistsForUpcoming();loadUpcomingReleases()}};
 
-async function openArtistMediaEditor(kind,id){
+async function openArtistMediaEditor(kind,id,newRelease){
  var table=kind==="release"?"artist_releases":"artist_songs";
- var result=await supabaseClient.from(table).select("*").eq("id",id).single();
+ var result=newRelease?{data:{artist_id:newRelease.artist_id,title:"",release_id:newRelease.id,track_number:newRelease.next_track_number,sections:[newRelease.type==="ep"?"eps":"albums"],release_date:null},error:null}:await supabaseClient.from(table).select("*").eq("id",id).single();
  if(result.error){alert("Could not load this item: "+result.error.message);return}
  var item=result.data,overlay=document.createElement("div");
+ var itemArtistId=item.artist_id;
  overlay.id="artistMediaEditor";overlay.setAttribute("role","dialog");overlay.setAttribute("aria-modal","true");overlay.setAttribute("aria-label",kind==="release"?"Edit release":"Edit song");
  overlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:10000;display:flex;align-items:center;justify-content:center;padding:18px";
  var sectionOptions=kind==="song"?'<div class="form-group full" style="margin-top:18px"><label>MUSIC SECTIONS</label><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">'+["singles","albums","eps","top"].map(function(section){return '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px;border:1px solid #333"><input class="mediaEditSection" type="checkbox" value="'+section+'" '+(Array.isArray(item.sections)&&item.sections.includes(section)?"checked":"")+'> '+section.toUpperCase()+'</label>'}).join("")+"</div></div>":"";
@@ -6512,7 +6513,8 @@ async function openArtistMediaEditor(kind,id){
  var typeOptions=kind==="release"?'<div class="form-group"><label>RELEASE TYPE</label><select id="mediaEditType"><option value="album">ALBUM</option><option value="ep">EP</option></select></div><div class="form-group"><label>RELEASE DATE</label><input id="mediaEditDate" type="date"></div><div class="form-group full"><label><input id="mediaEditHideNames" type="checkbox" style="width:auto;margin-right:8px"> HIDE TRACK NAMES UNTIL RELEASE</label></div>':'<div class="form-group"><label>RELEASE DATE · MIDNIGHT EASTERN</label><input id="mediaEditDate" type="date"></div>';
  if(kind==='song'&&item.release_id)typeOptions+='<div class="form-group"><label for="mediaEditTrackNumber">TRACK NUMBER</label><input id="mediaEditTrackNumber" type="number" min="1" step="1"></div>';
  if(kind==='song'&&item.release_id)typeOptions+='<div class="form-group full"><label style="display:flex;gap:8px;align-items:center"><input id="mediaEditReleaseEarly" type="checkbox" style="width:auto"> RELEASE THIS TRACK EARLY</label><small>Use the release date above for an early date, or leave it blank to release this track when you save. Other album tracks stay locked.</small></div>';
- typeOptions+='<div class="form-group full"><label for="mediaEditVideoDate">VIDEO RELEASE DATE · MIDNIGHT EASTERN</label><input id="mediaEditVideoDate" type="date"><small>Blank follows the music release date. Choose a different date to release the connected video independently.</small></div>';
+ if(kind==='song'&&item.release_id)typeOptions+='<div class="form-group full"><label><input id="mediaEditHideTrackName" type="checkbox" style="width:auto"> HIDE THIS TRACK NAME UNTIL PROJECT RELEASE</label><small>The project-wide hide setting also applies. Names appear as Track 01, Track 02, etc.</small></div>';
+ typeOptions+='<div class="form-group full"><label for="mediaEditVideoDate">VIDEO RELEASE DATE · MIDNIGHT EASTERN</label><input id="mediaEditVideoDate" type="date"><small>Blank follows the album/EP release date for project tracks, even when audio releases early. A separate date overrides that schedule.</small></div>';
  overlay.innerHTML='<div style="background:#090909;border:1px solid #333;border-radius:12px;padding:24px;width:min(760px,100%);max-height:92vh;overflow:auto"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div class="panel-title">'+(kind==="release"?"EDIT RELEASE":"EDIT SONG")+'</div><button type="button" class="button" id="mediaEditCancel">CLOSE</button></div><div class="form-grid" style="margin-top:18px"><div class="form-group"><label>NAME</label><input id="mediaEditName"></div>'+typeOptions+'<div class="form-group"><label>REPLACE ARTWORK FROM DEVICE</label><input id="mediaEditImage" type="file" accept="image/*"></div>'+(kind==="song"?'<div class="form-group"><label>REPLACE AUDIO FROM DEVICE</label><input id="mediaEditAudio" type="file" accept="audio/*"></div>':"")+'<div class="form-group"><label for="mediaEditVideo">CONNECTED VIDEO</label><div class="item-meta" style="margin:8px 0">'+(item.video_url?'<strong>VIDEO ATTACHED</strong> · <a href="video.html?'+(kind==="song"?'song_id=':'release_id=')+encodeURIComponent(id)+'" target="_blank" rel="noopener noreferrer">VIEW CURRENT VIDEO</a>':'No video attached.')+'</div><label for="mediaEditVideo">ADD / REPLACE VIDEO FROM DEVICE</label><input id="mediaEditVideo" type="file" accept="video/*">'+(item.video_url?'<label style="display:flex;align-items:center;gap:8px;margin-top:12px"><input id="mediaRemoveVideo" type="checkbox" style="width:auto"> REMOVE CONNECTED VIDEO</label><small style="display:block;margin-top:7px;color:#aaa">Applies when you save changes. The music and artwork stay in place.</small>':'')+'</div>'+(kind==="song"?"<div class=\"form-group full\"><label for=\"mediaEditMotion\">ANIMATED COVER (OPTIONAL)</label><input id=\"mediaEditMotion\" type=\"file\" accept=\"video/mp4,video/webm\" data-motion-upload><small>MP4 or WebM · max 20 MB · up to 30 seconds. Silent loop. Keep the regular cover as fallback.</small><div data-motion-preview></div></div><label class=\"form-group full\"><input id=\"mediaRemoveMotion\" type=\"checkbox\" style=\"width:auto\"> REMOVE ANIMATED COVER (KEEP STILL IMAGE)</label>":"")+sectionOptions+featureOptions+lyricsOptions+'</div><label style="display:flex;gap:8px;margin-top:18px"><input id="mediaRemoveImage" type="checkbox"> REMOVE CURRENT ARTWORK</label><div class="actions"><button class="button primary" id="mediaEditSave">SAVE CHANGES</button></div></div>';
  document.body.appendChild(overlay);
  var card=overlay.firstElementChild;
@@ -6525,6 +6527,7 @@ async function openArtistMediaEditor(kind,id){
  card.querySelector("#mediaEditName").value=item.title||"";
  card.querySelector("#mediaEditVideoDate").value=item.video_release_date||"";
  var trackNumberInput=card.querySelector("#mediaEditTrackNumber");if(trackNumberInput)trackNumberInput.value=item.track_number||"";
+ var trackHideInput=card.querySelector("#mediaEditHideTrackName");if(trackHideInput)trackHideInput.checked=!!item.hide_track_name;
  var earlyInput=card.querySelector("#mediaEditReleaseEarly");if(earlyInput)earlyInput.checked=!!item.release_early;
  var dateInput=card.querySelector("#mediaEditDate");if(dateInput)dateInput.value=item.release_date||"";
  var hideNames=card.querySelector("#mediaEditHideNames");if(hideNames)hideNames.checked=!!item.hide_track_names;
@@ -6536,7 +6539,7 @@ async function openArtistMediaEditor(kind,id){
   var syncLyricsStatus=function(){lyricsStatus.textContent=lyricsField.value.trim()?"Lyrics added":"No lyrics yet"};
   lyricsField.addEventListener("input",syncLyricsStatus);syncLyricsStatus();
   var featureSelect=card.querySelector("#mediaEditFeatureArtistSelect");
-  var featureRows=await supabaseClient.from("artist_song_features").select("artist_id").eq("song_id",id);
+  var featureRows=newRelease?{data:[],error:null}:await supabaseClient.from("artist_song_features").select("artist_id").eq("song_id",id);
   if(featureRows.error){overlay.remove();alert("Could not load featured artists: "+featureRows.error.message);return}
   var originalFeatureIds=(featureRows.data||[]).map(function(row){return row.artist_id});
   var featureSelectionTouched=false;
@@ -6552,10 +6555,10 @@ async function openArtistMediaEditor(kind,id){
    var sections=Array.from(card.querySelectorAll(".mediaEditSection:checked")).map(function(x){return x.value});
    if(!sections.length){alert("Select at least one music section.");return}
    if(item.release_id){var trackNumber=Number(card.querySelector("#mediaEditTrackNumber").value);if(!Number.isInteger(trackNumber)||trackNumber<1){alert("Enter a valid track number.");return;}data.track_number=trackNumber;}
-   if(item.release_id)data.release_early=!!card.querySelector("#mediaEditReleaseEarly").checked;
+   if(item.release_id){data.release_early=!!card.querySelector("#mediaEditReleaseEarly").checked;data.hide_track_name=!!card.querySelector("#mediaEditHideTrackName").checked;}
    data.lyrics=card.querySelector("#mediaEditLyrics").value.trim()||null;
    data.sections=sections;data.is_top_song=sections.includes("top");
-   try{await window.assertArtistTopSongLimit(selectedArtistPageId,id,sections)}catch(e){alert(e.message||e);return}
+   try{await window.assertArtistTopSongLimit(itemArtistId,id,sections)}catch(e){alert(e.message||e);return}
    try{data.external_features=window.collectExternalFeatureCredits("mediaEditExternalFeatures")}catch(e){alert(e.message);return}
   }else{
    data.type=card.querySelector("#mediaEditType").value;
@@ -6563,21 +6566,27 @@ async function openArtistMediaEditor(kind,id){
    data.release_date=card.querySelector("#mediaEditDate").value||null;
   }
   var imageFile=card.querySelector("#mediaEditImage").files[0],videoFile=card.querySelector("#mediaEditVideo").files[0],audioFile=kind==="song"?card.querySelector("#mediaEditAudio").files[0]:null;
+  if(newRelease&&!audioFile){alert("Select an audio file for the new track.");return;}
+  var saveButton=card.querySelector("#mediaEditSave");saveButton.disabled=true;saveButton.textContent="SAVING…";
   mediaAssets.apply(data);
   if(card.querySelector("#mediaRemoveVideo")?.checked)data.video_url=null;
   if(card.querySelector("#mediaRemoveImage").checked)data[kind==="release"?"artwork_url":"image_url"]=null;
-  async function upload(bucket,file,folder){if(!file)return null;var path=selectedArtistPageId+"/"+folder+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"-"+file.name;var up=await supabaseClient.storage.from(bucket).upload(path,file);if(up.error)throw up.error;return supabaseClient.storage.from(bucket).getPublicUrl(path).data.publicUrl}
+  async function upload(bucket,file,folder){if(!file)return null;var path=itemArtistId+"/"+folder+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"-"+file.name;var up=await supabaseClient.storage.from(bucket).upload(path,file);if(up.error)throw up.error;return supabaseClient.storage.from(bucket).getPublicUrl(path).data.publicUrl}
   try{
-   if(kind==="song"){var motionUrl=await window.FSBMotionAdmin.upload(card.querySelector("#mediaEditMotion").files[0],selectedArtistPageId);if(motionUrl)data.animated_artwork_url=motionUrl;else if(card.querySelector("#mediaRemoveMotion").checked)data.animated_artwork_url=null;}
+   if(kind==="song"){var motionUrl=await window.FSBMotionAdmin.upload(card.querySelector("#mediaEditMotion").files[0],itemArtistId);if(motionUrl)data.animated_artwork_url=motionUrl;else if(card.querySelector("#mediaRemoveMotion").checked)data.animated_artwork_url=null;}
    var imageUrl=await upload("artist-artwork",imageFile,"artist-edits");if(imageUrl)data[kind==="release"?"artwork_url":"image_url"]=imageUrl;
    var videoUrl=await upload("videos",videoFile,"artist-videos");if(videoUrl)data.video_url=videoUrl;
    var audioUrl=await upload("artist-music",audioFile,"artist-audio");if(audioUrl)data.audio_url=audioUrl;
-   var update=await supabaseClient.from(table).update(data).eq("id",id);if(update.error)throw update.error;
-   if(kind==="song"){var selectedFeatureIds=featureSelectionTouched?[...card.querySelector("#mediaEditFeatureArtistSelect").selectedOptions].map(function(option){return option.value}):originalFeatureIds;await window.saveArtistFeatureLinks("artist_song_features","song_id",id,selectedFeatureIds,selectedArtistPageId)}
+   var update;
+   if(newRelease){data.artist_id=itemArtistId;data.release_id=item.release_id;data.section=newRelease.type==="ep"?"eps":"albums";data.sort_order=data.track_number;update=await supabaseClient.from(table).insert(data).select("id").single();if(!update.error)id=update.data.id;}
+   else update=await supabaseClient.from(table).update(data).eq("id",id).select("id").single();
+   if(update.error)throw update.error;
+   newRelease=null;
+   if(kind==="song"){var selectedFeatureIds=featureSelectionTouched?[...card.querySelector("#mediaEditFeatureArtistSelect").selectedOptions].map(function(option){return option.value}):originalFeatureIds;await window.saveArtistFeatureLinks("artist_song_features","song_id",id,selectedFeatureIds,itemArtistId)}
    overlay.remove();
    if(window.renderArtistMusic)await window.renderArtistMusic(selectedArtistPageId);else{if(window.loadArtistSongsAdmin)await window.loadArtistSongsAdmin();if(window.loadArtistReleasesAdmin)await window.loadArtistReleasesAdmin()}
    if(typeof setStatus==="function")setStatus(kind==="release"?"RELEASE UPDATED":"SONG UPDATED");
-  }catch(e){alert("Could not save changes: "+(e.message||e))}
+  }catch(e){alert("Could not save changes: "+(e.message||e))}finally{saveButton.disabled=false;saveButton.textContent="SAVE CHANGES";}
  };
 }
 window.editArtistRelease=function(id){openArtistMediaEditor("release",id)};
@@ -6730,7 +6739,7 @@ document.addEventListener("DOMContentLoaded", function(){
 })();
 </script>
 <script src="motion-admin.js?v=20261107"></script>
-<script src="admin-tabs-fix.js?v=20261108-video-dates"></script>
+<script src="admin-tabs-fix.js?v=20261110-project-edits"></script>
 <script src="store-aisles.js?v=20261018-store-aisle-system"></script>
 
 <script>
@@ -6797,7 +6806,7 @@ document.addEventListener("DOMContentLoaded", function(){
 <script src="ticket-admin.js?v=20261103-live-stripe"></script>
 <script src="performance-admin.js?v=20261108-orders-on-demand"></script>
 <script src="release-admin.js?v=20261105"></script>
-<script src="media-editor-assets.js?v=20261108-current-files"></script>
+<script src="media-editor-assets.js?v=20261110-project-edits"></script>
 <script src="homepage-artists-admin.js?v=20261108-top-bottom"></script>
 <script src="password-visibility.js?v=20261108"></script>
 <script src="admin-session-controls.js?v=20261108-back-to-site"></script>
@@ -6808,6 +6817,7 @@ document.addEventListener("DOMContentLoaded", function(){
 </body>
 
 </html>
+
 
 
 
