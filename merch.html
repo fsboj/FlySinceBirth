@@ -294,7 +294,7 @@ $("shopSearch").addEventListener("input",renderProducts);$("shopSizeFilter").add
 renderCart();loadProducts().then(()=>Promise.all([resumePendingCartAdd(),resumePendingSavedProduct()])).catch(error=>{console.error("Store initialization failed",error);$("productGrid").innerHTML='<div class="empty"><strong>THE STORE COULD NOT START.</strong>Please try again. <button type="button" class="outline" id="retryStoreLoad">RETRY</button></div>';$("retryStoreLoad")?.addEventListener("click",loadProducts)});
 </script>
 <script src="merch-checkout-ui.js?v=20261109-shop-open"></script>
-<script src="shared-nav.js?v=20261109-mobile"></script>
+<script src="shared-nav.js?v=20261112-contact"></script>
 <script src="shop-dialog-controls.js?v=20261108"></script>
 <script src="product-gallery.js?v=20261109"></script>
 </body>

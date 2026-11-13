@@ -21,13 +21,23 @@
     artistLink.insertAdjacentElement("afterend", libraryLink);
   }
 
+  const accountLink = document.getElementById("topnavAccount");
+  if (accountLink && !document.getElementById("topnavContact")) {
+    const contactLink = document.createElement("a");
+    contactLink.id = "topnavContact";
+    contactLink.href = "account.html#supportForm";
+    contactLink.textContent = "Contact FSB";
+    accountLink.insertAdjacentElement("beforebegin", contactLink);
+  }
+
   function markCurrentPage() {
     const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
     const aliases = { "artist.html": "artists.html", "epalbum.html": "music.html", "video.html": "videos.html" };
     const current = aliases[file] || file;
-    document.querySelectorAll("#topnavHome, #topnavMusic, #topnavArtist, #topnavLibrary, #topnavShop, #topnavVideos, #topnavEvents, #topnavAccount").forEach(function (link) {
+    const isContact = file === "account.html" && location.hash === "#supportForm";
+    document.querySelectorAll("#topnavHome, #topnavMusic, #topnavArtist, #topnavLibrary, #topnavShop, #topnavVideos, #topnavEvents, #topnavContact, #topnavAccount").forEach(function (link) {
       const target = (link.getAttribute("href") || "").split("#")[0].toLowerCase();
-      if (target === current) link.setAttribute("aria-current", "page");
+      if (target === current && (link.id === "topnavContact" ? isContact : link.id === "topnavAccount" ? !isContact : true)) link.setAttribute("aria-current", "page");
       else link.removeAttribute("aria-current");
     });
   }
@@ -37,7 +47,7 @@
       if (footer.querySelector("[data-fsb-support-link]")) return;
       const link = document.createElement("a");
       link.href = "account.html#supportForm";
-      link.textContent = "CONTACT FSB SUPPORT";
+      link.textContent = "CONTACT FSB";
       link.setAttribute("data-fsb-support-link", "true");
       link.style.color = "inherit";
       link.style.textDecoration = "underline";
@@ -106,6 +116,7 @@
 
   addBackButton();
   markCurrentPage();
+  window.addEventListener("hashchange", markCurrentPage);
   addSupportLink();
   loadNavigationLabels();
 })();

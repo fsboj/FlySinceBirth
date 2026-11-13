@@ -610,6 +610,10 @@ body {
     display: block;
 }
 
+.artist-card[data-artist-id="3"] img {
+    object-position: center top;
+}
+
 .artist-info {
     position: relative;
     z-index: 2;
@@ -1767,6 +1771,7 @@ async function loadArtists() {
 
         card.className =
             "artist-card";
+        card.dataset.artistId = String(artist.id);
 
 
         const image =
@@ -2448,7 +2453,7 @@ loadVideos();
 loadEvents();
 </script>
 
-<script src="shared-nav.js?v=20261109-mobile"></script>
+<script src="shared-nav.js?v=20261112-contact"></script>
 </body>
 </html>
 
