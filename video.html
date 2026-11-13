@@ -24,7 +24,7 @@
 <script src="performance-tracker.js?v=20261108-video-playlists"></script><script src="release-catalog.js?v=20261108-video-dates"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabaseClient=supabase.createClient("https://ccvhvxugoebdqwxxankl.supabase.co","sb_publishable_vXhQFYGVd6hOHsX4i-ePnw_y687N16Z");
-</script><script src="music-library.js?v=20261105-release"></script><script>
+</script><script src="music-library.js?v=20261105-release"></script><script src="video-recommendations.js?v=20261112"></script><script>
 const params=new URLSearchParams(location.search);
 const videoId=params.get("video_id");
 const songId=params.get("song_id");
@@ -69,6 +69,11 @@ async function loadPage(){
  const favoriteId=favoriteType==="release"?currentVideo.release_id:currentVideo.song_id||currentVideo.id;
  const favoriteButton=window.fsbCreateVideoFavoriteButton?.(favoriteType,favoriteId,currentVideo.title);
  if(favoriteButton&&!document.getElementById("videoFavoriteHost").querySelector("button")){favoriteButton.setAttribute("aria-label","Favorite video: "+(currentVideo.title||"Untitled Video"));document.getElementById("videoFavoriteHost").appendChild(favoriteButton)}
+ loadNextVideos().catch(function(error){
+  console.warn("Could not load video suggestions:",error);
+  document.getElementById("nextVideoSection").hidden=false;
+  document.getElementById("nextVideos").innerHTML='<div class="empty">MORE VIDEOS COULD NOT BE LOADED. PLEASE REFRESH TO TRY AGAIN.</div>';
+ });
  videoPlayer(currentVideo.link,currentVideo.title);window.dispatchEvent(new CustomEvent("fsb:video-ready"));
  let artist=null,release=null;
  if(currentVideo.artist_id){
@@ -95,34 +100,18 @@ async function loadPage(){
  if(artist&&release){const dot=document.createElement("span");dot.className="separator";dot.textContent="·";byline.appendChild(dot)}
  if(release){const a=document.createElement("a");a.className="release-link";a.href="epalbum.html?id="+encodeURIComponent(release.id) + "&v=70a51fd5";a.textContent=release.title||"Release";byline.appendChild(a);}
  // The artist profile is linked in the byline; no separate backArtist element exists.
- await loadNextVideos();
+
 }
 async function loadNextVideos(){
  document.getElementById("nextVideoSection").hidden=false;
  const host=document.getElementById("nextVideos");
- if(!currentVideo||!currentVideo.artist_id){host.innerHTML='<div class="empty">NO OTHER VIDEOS AVAILABLE</div>';return}
- const [videoResult,songResult,releaseResult]=await Promise.all([
-  supabaseClient.from("videos").select("id,title,image,link,artist_id").eq("artist_id",currentVideo.artist_id),
-  supabaseClient.from("artist_songs").select("id,title,image_url,video_url,artist_id").eq("artist_id",currentVideo.artist_id).not("video_url","is",null),
-  supabaseClient.from("artist_releases").select("id,title,artwork_url,video_url,artist_id,type").eq("artist_id",currentVideo.artist_id).not("video_url","is",null)
- ]);
- if(videoResult.error&&songResult.error&&releaseResult.error){host.innerHTML='<div class="empty">COULD NOT LOAD VIDEOS</div>';return}
- const candidates=[
-  ...(videoResult.data||[]).map(item=>({...item,itemType:"video",playUrl:item.link,imageUrl:item.image})),
-  ...(songResult.data||[]).map(item=>({...item,itemType:"song",playUrl:item.video_url,imageUrl:item.image_url})),
-  ...(releaseResult.data||[]).map(item=>({...item,itemType:"release",playUrl:item.video_url,imageUrl:item.artwork_url}))
- ];
- const normalize=value=>{try{const u=new URL(value,location.href);return window.FSBVideoSource.key(value)}catch(_){return String(value||"").trim().toLowerCase()}};
- const currentUrl=normalize(currentVideo.link),seen=new Set(currentUrl?[currentUrl]:[]);
- const unique=candidates.filter(item=>{
-  if(item.locked||!item.playUrl)return false;
-  if(currentVideo.song_id&&item.itemType==="song"&&String(item.id)===String(currentVideo.song_id))return false;
-  if(currentVideo.release_id&&item.itemType==="release"&&String(item.id)===String(currentVideo.release_id))return false;
-  if(!currentVideo.song_id&&!currentVideo.release_id&&item.itemType==="video"&&String(item.id)===String(params.get("video_id")))return false;
-  const url=normalize(item.playUrl);if(!url||seen.has(url))return false;seen.add(url);return true;
+ if(!currentVideo)return;
+ const catalog=await window.FSBRelease.catalog();
+ const picks=window.FSBVideoRecommendations.select(catalog,{
+  type:releaseId?'release':songId?'song':'video',
+  id:releaseId||songId||videoId,
+  artist_id:currentVideo.artist_id,release_id:currentVideo.release_id,url:currentVideo.link
  });
- for(let i=unique.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[unique[i],unique[j]]=[unique[j],unique[i]]}
- const picks=unique.slice(0,9);
  host.innerHTML="";
  if(!picks.length){host.innerHTML='<div class="empty">NO OTHER VIDEOS AVAILABLE</div>';return}
  picks.forEach(function(item){
