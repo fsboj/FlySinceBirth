@@ -27,7 +27,7 @@
     contactLink.id = "topnavContact";
     contactLink.href = "account.html#supportForm";
     contactLink.textContent = "Contact FSB";
-    accountLink.insertAdjacentElement("beforebegin", contactLink);
+    accountLink.insertAdjacentElement("afterend", contactLink);
   }
 
   function markCurrentPage() {
